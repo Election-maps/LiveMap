@@ -672,8 +672,8 @@
       online: "ఆన్‌లైన్",
       sharingOff: "లొకేషన్ షేరింగ్ ఆఫ్‌లో ఉంది",
       sharingOffSub: "పేరు ఎంటర్ చేసి షేరింగ్ ప్రారంభించండి",
-      sharingOn: "లైవ్ లొకేషన్ షేర్ అవుతోంది",
-      sharingOnSub: "మీ కదలికలు మ్యాప్‌లో లైవ్‌గా కనిపిస్తున్నాయి",
+      sharingOn: "లైవ్ లొకేషన్ నిరంతరం షేర్ అవుతోంది",
+      sharingOnSub: "మీ లొకేషన్ మ్యాప్‌లో స్థిరంగా ఉంటుంది (స్క్రీన్ ఆన్‌లో ఉంచబడుతుంది)",
       btnStart: "షేర్ చేయండి",
       btnStop: "ఆపండి",
       inputPlaceholder: "మీ పేరు నమోదు చేయండి (ఉదా: రాజు)",
@@ -811,15 +811,39 @@
   // Structure: { [userId]: { name, lat, lng, speed, accuracy, lastUpdated, marker, circle } }
   const members = {};
 
-  function createCustomMarkerIcon(name, isMe = false) {
+  function timeAgo(timestamp) {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 15) return currentLang === 'te' ? 'ఇప్పుడే' : 'Just now';
+    if (seconds < 60) return `${seconds}${currentLang === 'te' ? ' సెక. క్రితం' : 's ago'}`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}${currentLang === 'te' ? ' నిమి. క్రితం' : 'm ago'}`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}${currentLang === 'te' ? ' గంటల క్రితం' : 'h ago'}`;
+  }
+
+  function getMemberStatus(lastUpdated) {
+    const diff = Date.now() - lastUpdated;
+    if (diff <= 30000) {
+      return { label: currentLang === 'te' ? '● లైవ్' : '● Live', color: '#10b981', isLive: true };
+    } else if (diff <= 180000) { // up to 3 mins
+      return { label: currentLang === 'te' ? 'నిశ్చలంగా' : 'Idle', color: '#f59e0b', isLive: false };
+    } else {
+      return { label: timeAgo(lastUpdated), color: '#94a3b8', isLive: false };
+    }
+  }
+
+  function createCustomMarkerIcon(name, isMe = false, isLive = true) {
     const color = hashColor(name || 'User');
     const initial = (name || 'U').charAt(0).toUpperCase();
+    const opacity = isLive ? '1' : '0.85';
     return L.divIcon({
       className: 'custom-leaflet-marker',
       html: `
-        <div class="custom-marker-container">
-          <div class="marker-label">${name}${isMe ? ' (You)' : ''}</div>
-          ${isMe ? '<div class="marker-pulse"></div>' : ''}
+        <div class="custom-marker-container" style="opacity: ${opacity};">
+          <div class="marker-label" style="border-color: ${isLive ? 'var(--wa-green)' : 'rgba(255,255,255,0.3)'};">
+            ${isLive ? '<span style="color:#10b981;">● </span>' : ''}${name}${isMe ? ' (You)' : ''}
+          </div>
+          ${isMe && isLive ? '<div class="marker-pulse"></div>' : ''}
           <div class="marker-pin" style="background: ${color};">
             ${initial}
           </div>
@@ -833,11 +857,12 @@
   function updateMemberOnMap(id, data) {
     const isMe = (id === userId);
     const color = hashColor(data.name || 'User');
+    const status = getMemberStatus(data.lastUpdated || Date.now());
 
     if (!members[id]) {
       // New member
       const marker = L.marker([data.lat, data.lng], {
-        icon: createCustomMarkerIcon(data.name, isMe)
+        icon: createCustomMarkerIcon(data.name, isMe, status.isLive)
       }).addTo(map);
 
       // Accuracy circle
@@ -850,10 +875,11 @@
       }).addTo(map);
 
       marker.bindPopup(`
-        <div style="font-family: sans-serif; min-width: 130px;">
+        <div style="font-family: sans-serif; min-width: 140px;">
           <strong style="color: ${color}; font-size: 14px;">${data.name}</strong> ${isMe ? '(మీరు)' : ''}<br/>
           <span style="font-size: 11px; color: #555;">⚡ వేగం: ${data.speed ? Math.round(data.speed * 3.6) : 0} km/h</span><br/>
-          <span style="font-size: 11px; color: #555;">🎯 ఖచ్చితత్వం: ±${Math.round(data.accuracy || 0)} మీటర్లు</span>
+          <span style="font-size: 11px; color: #555;">🎯 ఖచ్చితత్వం: ±${Math.round(data.accuracy || 0)} మీటర్లు</span><br/>
+          <span style="font-size: 10px; color: #888;">🕒 అప్‌డేట్: ${timeAgo(data.lastUpdated || Date.now())}</span>
         </div>
       `);
 
@@ -874,11 +900,11 @@
       m.lng = data.lng;
       m.speed = data.speed;
       m.accuracy = data.accuracy;
-      m.lastUpdated = data.lastUpdated;
+      m.lastUpdated = data.lastUpdated || Date.now();
 
-      // Animate marker move
+      // Update position and icon
       m.marker.setLatLng([data.lat, data.lng]);
-      m.marker.setIcon(createCustomMarkerIcon(data.name, isMe));
+      m.marker.setIcon(createCustomMarkerIcon(data.name, isMe, status.isLive));
       m.circle.setLatLng([data.lat, data.lng]);
       m.circle.setRadius(data.accuracy || 20);
     }
@@ -886,18 +912,16 @@
     renderMembersList();
   }
 
-  function removeInactiveMembers() {
-    const now = Date.now();
+  // Refresh member cards & status every 5 seconds (Keep markers permanent - do NOT delete abruptly!)
+  function refreshMembersDisplay() {
     for (const id in members) {
-      if (id !== userId && (now - members[id].lastUpdated > 45000)) { // 45s timeout
-        map.removeLayer(members[id].marker);
-        map.removeLayer(members[id].circle);
-        delete members[id];
-      }
+      const isMe = (id === userId);
+      const status = getMemberStatus(members[id].lastUpdated);
+      members[id].marker.setIcon(createCustomMarkerIcon(members[id].name, isMe, status.isLive));
     }
     renderMembersList();
   }
-  setInterval(removeInactiveMembers, 10000);
+  setInterval(refreshMembersDisplay, 5000);
 
   function renderMembersList() {
     const listContainer = document.getElementById('members-list');
@@ -923,6 +947,7 @@
       const color = hashColor(m.name || 'User');
       const initial = (m.name || 'U').charAt(0).toUpperCase();
       const speedKmh = m.speed ? Math.round(m.speed * 3.6) : 0;
+      const status = getMemberStatus(m.lastUpdated);
 
       html += `
         <div class="member-item" onclick="focusOnMember('${id}')">
@@ -930,10 +955,10 @@
             <div class="member-avatar" style="background: ${color};">${initial}</div>
             <div>
               <div class="member-name">${m.name} ${isMe ? '<span style="color:#38bdf8; font-size:11px;">(You)</span>' : ''}</div>
-              <div class="member-meta">⚡ ${speedKmh} km/h • ±${Math.round(m.accuracy || 0)}m</div>
+              <div class="member-meta">⚡ ${speedKmh} km/h • ±${Math.round(m.accuracy || 0)}m • ${timeAgo(m.lastUpdated)}</div>
             </div>
           </div>
-          <span class="member-badge">● లైవ్</span>
+          <span class="member-badge" style="color: ${status.color}; background: rgba(255,255,255,0.06);">${status.label}</span>
         </div>
       `;
     });
@@ -948,21 +973,20 @@
   };
 
   // -------------------------------------------------------------
-  // Real-time MQTT Connection over WebSockets
+  // Real-time MQTT Connection over WebSockets with Fallback & Peer Discovery
   // -------------------------------------------------------------
-  // We use public secure MQTT brokers for instant zero-server real-time sync
   const topic = `whatsapp_live_tracker/${roomCode}/locations`;
   let mqttClient = null;
 
   function initMQTT() {
-    // Primary: EMQX public broker over WSS
     const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
     
     mqttClient = mqtt.connect(brokerUrl, {
       clientId: `tracker_${userId}_${Math.random().toString(16).substring(2, 8)}`,
       clean: true,
-      connectTimeout: 4000,
-      reconnectPeriod: 3000
+      connectTimeout: 5000,
+      reconnectPeriod: 2500,
+      keepalive: 20
     });
 
     mqttClient.on('connect', () => {
@@ -970,6 +994,8 @@
       mqttClient.subscribe(topic, (err) => {
         if (!err) {
           console.log(`Subscribed to room topic: ${topic}`);
+          // Send sync request to get everyone's location immediately
+          requestRoomSync();
         }
       });
     });
@@ -977,6 +1003,16 @@
     mqttClient.on('message', (t, message) => {
       try {
         const payload = JSON.parse(message.toString());
+        
+        // Peer is asking for current positions
+        if (payload.type === 'sync_request') {
+          if (isTracking && lastLat !== null && lastLng !== null && payload.from !== userId) {
+            publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+          }
+          return;
+        }
+
+        // Received member location
         if (payload.userId && payload.userId !== userId) {
           updateMemberOnMap(payload.userId, payload);
         }
@@ -988,14 +1024,25 @@
     mqttClient.on('error', (err) => {
       console.warn('MQTT Connection Warning, retrying...', err);
     });
+
+    mqttClient.on('close', () => {
+      console.warn('MQTT disconnected, reconnecting...');
+    });
   }
 
   initMQTT();
+
+  function requestRoomSync() {
+    if (mqttClient && mqttClient.connected) {
+      mqttClient.publish(topic, JSON.stringify({ type: 'sync_request', from: userId }), { qos: 0 });
+    }
+  }
 
   function publishMyLocation(lat, lng, speed, accuracy) {
     if (!mqttClient || !mqttClient.connected) return;
 
     const payload = {
+      type: 'location',
       userId: userId,
       name: userName || 'యూజర్',
       lat: lat,
@@ -1011,12 +1058,54 @@
   }
 
   // -------------------------------------------------------------
-  // GPS Geolocation Tracking
+  // Mobile Screen Wake Lock (Keep phone screen awake & GPS alive)
+  // -------------------------------------------------------------
+  let wakeLockSentinel = null;
+
+  async function acquireWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+        });
+        console.log('Screen Wake Lock is active.');
+      }
+    } catch (err) {
+      console.log('Wake lock request failed:', err);
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLockSentinel !== null) {
+      wakeLockSentinel.release();
+      wakeLockSentinel = null;
+    }
+  }
+
+  // If user returns to tab, re-acquire wake lock and send sync
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (isTracking) {
+        acquireWakeLock();
+        if (lastLat !== null && lastLng !== null) {
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+        }
+      }
+      requestRoomSync();
+    }
+  });
+
+  // -------------------------------------------------------------
+  // Continuous GPS Tracking with Stationary Heartbeat
   // -------------------------------------------------------------
   let watchId = null;
   let isTracking = false;
   let lastLat = null;
   let lastLng = null;
+  let lastSpeed = 0;
+  let lastAccuracy = 10;
+  let heartbeatInterval = null;
 
   function startTracking() {
     const nameInput = document.getElementById('user-name-input').value.trim();
@@ -1039,23 +1128,28 @@
     document.getElementById('btn-toggle-track').classList.add('active');
     document.getElementById('speed-meter').style.display = 'block';
 
+    // Keep screen awake so GPS does not pause
+    acquireWakeLock();
+
     const options = {
       enableHighAccuracy: true,
-      maximumAge: 3000,
+      maximumAge: 2000,
       timeout: 10000
     };
 
+    // 1. Continuous Watch Position for real movement
     watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, speed, accuracy } = pos.coords;
         lastLat = latitude;
         lastLng = longitude;
+        lastSpeed = speed || 0;
+        lastAccuracy = accuracy || 10;
 
-        // Speed in km/h
         const kmh = speed ? Math.round(speed * 3.6) : 0;
         document.getElementById('speed-meter').innerText = `${kmh} km/h`;
 
-        // If first fix, fly to location
+        // Center on first fix
         if (!members[userId]) {
           map.flyTo([latitude, longitude], 16, { duration: 1.5 });
         }
@@ -1072,7 +1166,19 @@
       options
     );
 
-    showToast('మీ లైవ్ లొకేషన్ షేర్ అవుతోంది!');
+    // 2. Stationary Heartbeat: Send position every 4 seconds EVEN IF stationary!
+    // This solves "not staying for long time" completely!
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      if (isTracking && lastLat !== null && lastLng !== null) {
+        publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+      }
+    }, 4000);
+
+    // Request others to share too
+    requestRoomSync();
+
+    showToast(currentLang === 'te' ? 'లైవ్ లొకేషన్ నిరంతరం షేర్ అవుతోంది!' : 'Live location is sharing continuously!');
   }
 
   function stopTracking() {
@@ -1081,6 +1187,12 @@
       navigator.geolocation.clearWatch(watchId);
       watchId = null;
     }
+    if (heartbeatInterval !== null) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    releaseWakeLock();
     updateStatusText();
     document.getElementById('btn-toggle-track').classList.remove('active');
     document.getElementById('speed-meter').style.display = 'none';
@@ -1092,7 +1204,7 @@
       delete members[userId];
       renderMembersList();
     }
-    showToast('లొకేషన్ షేరింగ్ ఆపివేయబడింది');
+    showToast(currentLang === 'te' ? 'లొకేషన్ షేరింగ్ ఆపివేయబడింది' : 'Location sharing stopped');
   }
 
   document.getElementById('btn-toggle-track').addEventListener('click', () => {
