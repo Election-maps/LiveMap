@@ -613,6 +613,12 @@
       </button>
     </div>
 
+    <!-- Mobile Background Tip Banner -->
+    <div id="bg-tip-banner" style="margin-top: 8px; font-size: 11px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 6px 10px; color: #93c5fd; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-circle-info" style="color: #60a5fa; font-size: 13px;"></i>
+      <span id="txt-bg-tip">💡 మొబైల్‌లో బ్యాక్‌గ్రౌండ్‌లో పనిచేయడానికి Back బటన్ బదులు <strong>Home బటన్</strong> నొక్కి మినిమైజ్ చేయండి.</span>
+    </div>
+
     <!-- Active Members Section -->
     <div class="members-section">
       <div class="members-title">
@@ -1058,9 +1064,37 @@
   }
 
   // -------------------------------------------------------------
-  // Mobile Screen Wake Lock (Keep phone screen awake & GPS alive)
+  // Mobile Screen Wake Lock & Background Audio Keep-Alive
   // -------------------------------------------------------------
   let wakeLockSentinel = null;
+  let silentAudio = null;
+
+  function startBackgroundAudio() {
+    try {
+      if (!silentAudio) {
+        // Base64 1-second silent WAV
+        silentAudio = new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==');
+        silentAudio.loop = true;
+      }
+      silentAudio.play().then(() => {
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: currentLang === 'te' ? 'లైవ్ లొకేషన్ షేర్ అవుతోంది' : 'Live Location Sharing Active',
+            artist: currentLang === 'te' ? 'బ్యాక్‌గ్రౌండ్‌లో ట్రాకింగ్ నడుస్తోంది' : 'Background GPS Tracking Running',
+            album: 'Live Map'
+          });
+        }
+      }).catch(err => console.log('Audio autoplay notice:', err));
+    } catch (e) {
+      console.warn('Audio keep-alive not available', e);
+    }
+  }
+
+  function stopBackgroundAudio() {
+    if (silentAudio) {
+      try { silentAudio.pause(); } catch(e){}
+    }
+  }
 
   async function acquireWakeLock() {
     try {
@@ -1083,11 +1117,45 @@
     }
   }
 
+  // -------------------------------------------------------------
+  // Dedicated Background Web Worker (runs even when tab is minimized)
+  // -------------------------------------------------------------
+  let bgWorker = null;
+  function initBackgroundWorker() {
+    try {
+      const blobCode = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data === 'start') {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => {
+              self.postMessage('ping');
+            }, 3500);
+          } else if (e.data === 'stop') {
+            if (timer) clearInterval(timer);
+            timer = null;
+          }
+        };
+      `;
+      const blob = new Blob([blobCode], { type: 'application/javascript' });
+      bgWorker = new Worker(URL.createObjectURL(blob));
+      bgWorker.onmessage = function(e) {
+        if (e.data === 'ping' && isTracking && lastLat !== null && lastLng !== null) {
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+        }
+      };
+    } catch (err) {
+      console.warn('Web Worker fallback to setInterval', err);
+    }
+  }
+  initBackgroundWorker();
+
   // If user returns to tab, re-acquire wake lock and send sync
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       if (isTracking) {
         acquireWakeLock();
+        startBackgroundAudio();
         if (lastLat !== null && lastLng !== null) {
           publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
         }
@@ -1095,6 +1163,33 @@
       requestRoomSync();
     }
   });
+
+  // -------------------------------------------------------------
+  // Mobile Back Button Navigation Trap & Confirmation
+  // -------------------------------------------------------------
+  function setupBackButtonGuard() {
+    window.history.pushState({ page: 'livemap' }, '', window.location.href);
+    window.addEventListener('popstate', () => {
+      if (isTracking) {
+        window.history.pushState({ page: 'livemap' }, '', window.location.href);
+        const confirmExit = confirm(currentLang === 'te' 
+          ? "⚠️ లొకేషన్ షేరింగ్ నడుస్తోంది!\n\nమీరు వాట్సాప్ లేదా ఇతర యాప్స్ చూడాలంటే 'Cancel' నొక్కి మీ మొబైల్ HOME బటన్ వాడండి (బ్రౌజర్ బ్యాక్‌గ్రౌండ్‌లో పనిచేస్తుంది).\n\nపూర్తిగా ఆపివేయాలనుకుంటున్నారా?"
+          : "⚠️ Location sharing is running!\n\nTo view WhatsApp or other apps, tap 'Cancel' and press your phone's HOME button to keep it running in the background.\n\nDo you want to stop sharing completely?"
+        );
+        if (confirmExit) {
+          stopTracking();
+        }
+      }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (isTracking) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+  setupBackButtonGuard();
 
   // -------------------------------------------------------------
   // Continuous GPS Tracking with Stationary Heartbeat
@@ -1130,6 +1225,10 @@
 
     // Keep screen awake so GPS does not pause
     acquireWakeLock();
+    // Start background audio keep-alive for Android/iOS background mode
+    startBackgroundAudio();
+    // Start background web worker
+    if (bgWorker) bgWorker.postMessage('start');
 
     const options = {
       enableHighAccuracy: true,
@@ -1166,14 +1265,13 @@
       options
     );
 
-    // 2. Stationary Heartbeat: Send position every 4 seconds EVEN IF stationary!
-    // This solves "not staying for long time" completely!
+    // 2. Stationary Heartbeat: Send position every 3.5 seconds EVEN IF stationary!
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
       if (isTracking && lastLat !== null && lastLng !== null) {
         publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
       }
-    }, 4000);
+    }, 3500);
 
     // Request others to share too
     requestRoomSync();
@@ -1191,8 +1289,10 @@
       clearInterval(heartbeatInterval);
       heartbeatInterval = null;
     }
+    if (bgWorker) bgWorker.postMessage('stop');
 
     releaseWakeLock();
+    stopBackgroundAudio();
     updateStatusText();
     document.getElementById('btn-toggle-track').classList.remove('active');
     document.getElementById('speed-meter').style.display = 'none';
