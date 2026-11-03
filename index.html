@@ -12,7 +12,7 @@
   <!-- MQTT.js library for real-time synchronization -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <!-- Pre-loaded Route Mobiles Data from Excel -->
-  <script src="route_mobiles_data.js"></script>
+  <script src="route_mobiles_data.js?v=20261103"></script>
 
   <style>
     :root {
@@ -75,15 +75,15 @@
     }
 
     .brand-badge {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--police-gold) 0%, #d97706 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #0b1a2e;
-      font-size: 20px;
+      font-size: 18px;
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
     }
 
@@ -137,13 +137,20 @@
       background: rgba(255, 255, 255, 0.22);
     }
 
-    .btn-header.highlight {
-      background: var(--wa-green);
+    .btn-header.btn-track-action {
+      background: #10b981;
       color: #0a1128;
-      border-color: var(--wa-green);
+      border-color: #10b981;
+      font-weight: 700;
     }
 
-    /* Map Canvas */
+    .btn-header.btn-wa-action {
+      background: rgba(37, 211, 102, 0.2);
+      color: #34d399;
+      border-color: rgba(37, 211, 102, 0.4);
+    }
+
+    /* 100% Full Screen Map Canvas */
     #map {
       flex: 1;
       width: 100%;
@@ -152,12 +159,11 @@
       background: #0f172a;
     }
 
-    /* Floating KPI Stats Bar */
+    /* Floating KPI Stats Bar (Top Left) */
     .kpi-bar {
       position: absolute;
       top: 60px;
       left: 12px;
-      right: 12px;
       z-index: 999;
       display: flex;
       gap: 8px;
@@ -205,7 +211,7 @@
     /* Action Buttons bottom right */
     .map-fab-stack {
       position: absolute;
-      bottom: 110px;
+      bottom: 24px;
       right: 14px;
       z-index: 999;
       display: flex;
@@ -214,8 +220,8 @@
     }
 
     .fab {
-      width: 46px;
-      height: 46px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: #1e293b;
       color: white;
@@ -225,7 +231,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 17px;
+      font-size: 16px;
       transition: transform 0.2s, background 0.2s;
     }
 
@@ -236,58 +242,42 @@
     .fab-whatsapp {
       background: var(--wa-green);
       color: #082f1b;
-      font-size: 20px;
+      font-size: 18px;
     }
 
-    /* Bottom Control Sheet */
-    .bottom-sheet {
+    /* Floating Pill only shown WHEN actively tracking */
+    .active-tracking-pill {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--card-bg);
-      border-radius: 20px 20px 0 0;
-      box-shadow: 0 -4px 25px rgba(0,0,0,0.5);
-      z-index: 1000;
-      padding: 12px 16px 18px;
-      border-top: 1px solid rgba(255,255,255,0.12);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: rgba(14, 23, 38, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 7px 16px;
+      border-radius: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      border: 1px solid var(--success);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
-    .sheet-handle {
-      width: 44px;
-      height: 4px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 2px;
-      margin: 0 auto 10px;
+    .btn-pill-stop {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    .status-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .status-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .status-text {
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-sub {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
+    /* Officer Selection Grid inside Modal */
     .officer-selection-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -328,7 +318,7 @@
       border: 1px dashed rgba(255,255,255,0.15);
       border-radius: 8px;
       padding: 8px 12px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       font-size: 12px;
       display: flex;
       justify-content: space-between;
@@ -337,14 +327,7 @@
       gap: 6px;
     }
 
-    .user-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
     .btn-track {
-      flex: 1;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
       border: none;
@@ -364,21 +347,6 @@
     .btn-track.active {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-    }
-
-    .btn-view-all {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
     }
 
     /* Custom Leaflet Police Route Markers */
@@ -435,7 +403,7 @@
       100% { transform: scale(1.9); opacity: 0; }
     }
 
-    /* Modal / Drawer Backdrop */
+    /* Modal Backdrop */
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -668,7 +636,7 @@
 <body>
 
 <div id="app">
-  <!-- Top Navigation Header -->
+  <!-- Top Police Header -->
   <header>
     <div class="brand">
       <div class="brand-badge">
@@ -683,20 +651,29 @@
       </div>
     </div>
     <div class="nav-actions">
+      <!-- Officer Location Share Trigger Button -->
+      <button class="btn-header btn-track-action" id="btn-open-track-modal" title="మీ రూట్ లొకేషన్ షేర్ చేయండి">
+        <i class="fa-solid fa-location-arrow"></i>
+        <span id="txt-btn-share-loc">లొకేషన్ షేర్</span>
+      </button>
+
       <!-- Open Directory & Control Room Drawer -->
       <button class="btn-header" id="btn-open-directory" title="అన్ని 271 రూట్ మొబైల్స్ వివరాలు & స్టేటస్">
         <i class="fa-solid fa-list-check"></i>
         <span id="txt-btn-routes">రూట్ మొబైల్స్ (271)</span>
       </button>
+
       <!-- Share Broadcast Link in WhatsApp Group -->
-      <button class="btn-header highlight" id="btn-share-modal" title="వాట్సాప్ గ్రూప్‌లో లింక్ పంపండి">
+      <button class="btn-header btn-wa-action" id="btn-share-modal" title="వాట్సాప్ గ్రూప్‌లో లింక్ పంపండి">
         <i class="fa-brands fa-whatsapp"></i>
         <span id="txt-btn-group-wa">గ్రూప్ షేర్</span>
       </button>
+
       <!-- Toggle Map Layer (Street / Satellite) -->
       <button class="btn-header" id="btn-toggle-layer" title="శాటిలైట్ / సాధారణ మ్యాప్ మార్చండి">
         <i class="fa-solid fa-layer-group"></i>
       </button>
+
       <!-- Language Toggle -->
       <button class="btn-header" id="btn-lang" title="భాషను మార్చండి (Telugu / English)">
         <span>EN</span>
@@ -704,7 +681,7 @@
     </div>
   </header>
 
-  <!-- Live Map Viewport -->
+  <!-- Live Map Viewport - 100% Unobstructed Clean View -->
   <div id="map"></div>
 
   <!-- Top Floating KPI Stats Bar -->
@@ -739,67 +716,72 @@
     </button>
   </div>
 
-  <!-- Bottom Sheet Controls for Field Officer -->
-  <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle" id="sheet-handle"></div>
+  <!-- Sleek Active Tracking Floating Pill (ONLY visible when THIS device is sharing location) -->
+  <div class="active-tracking-pill" id="active-tracking-pill" style="display: none;">
+    <span class="dot dot-live"></span>
+    <span id="active-track-label">లైవ్ లొకేషన్ షేరింగ్ అవుతోంది</span>
+    <span id="speed-meter" style="color: #38bdf8; font-weight: bold; margin-left: 4px;">⚡ 0 km/h</span>
+    <button id="btn-quick-stop" class="btn-pill-stop" title="లొకేషన్ షేరింగ్ ఆపండి">ఆపండి (Stop)</button>
+  </div>
+</div>
 
-    <div class="status-row">
-      <div class="status-info">
-        <div class="status-text">
-          <i class="fa-solid fa-circle-dot" id="status-icon" style="color: var(--text-muted); font-size: 10px;"></i>
-          <span id="tracking-status-text">లొకేషన్ షేరింగ్ ఆఫ్‌లో ఉంది</span>
+<!-- Field Officer Location Sharing Modal (Only appears when officer clicks 'లొకేషన్ షేర్' or opens with parameter) -->
+<div class="modal-backdrop" id="modal-track">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-location-crosshairs" style="color: #10b981;"></i>
+        <span id="txt-modal-track-title">మీ రూట్ మొబైల్ లొకేషన్ షేర్ చేయండి</span>
+      </h3>
+      <button class="btn-close" id="btn-close-track">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);" id="tracking-status-sub">
+        మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకుని షేరింగ్ ప్రారంభించండి.
+      </div>
+
+      <!-- Police Station & Route Selection -->
+      <div class="officer-selection-grid">
+        <div>
+          <div class="select-label" id="txt-lbl-ps">1. పోలీస్ స్టేషన్ ఎంచుకోండి (Select PS):</div>
+          <select class="custom-select" id="select-ps">
+            <option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>
+          </select>
         </div>
-        <div class="status-sub" id="tracking-status-sub">మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకుని షేరింగ్ ప్రారంభించండి</div>
+        <div>
+          <div class="select-label" id="txt-lbl-rm">2. రూట్ నెంబర్ (Select Route Mobile):</div>
+          <select class="custom-select" id="select-route">
+            <option value="">-- మొదట PS ఎంచుకోండి --</option>
+          </select>
+        </div>
       </div>
-      <div id="speed-meter" style="font-size: 13px; color: #38bdf8; font-weight: bold; display: none;">
-        ⚡ 0 km/h
-      </div>
-    </div>
 
-    <!-- Police Station & Route Selection -->
-    <div class="officer-selection-grid">
-      <div>
-        <div class="select-label" id="txt-lbl-ps">1. పోలీస్ స్టేషన్ ఎంచుకోండి (Select PS):</div>
-        <select class="custom-select" id="select-ps">
-          <option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>
-        </select>
+      <!-- Auto-filled Officer Details -->
+      <div class="officer-meta-row" id="officer-meta-preview">
+        <div>
+          <span style="color: var(--text-muted);" id="txt-officer-lbl">ఆఫీసర్: </span>
+          <strong id="meta-officer-name" style="color: #67e8f9;">--</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted);" id="txt-phone-lbl">ఫోన్: </span>
+          <strong id="meta-officer-phone" style="color: #fde047;">--</strong>
+        </div>
       </div>
-      <div>
-        <div class="select-label" id="txt-lbl-rm">2. రూట్ నెంబర్ (Select Route Mobile):</div>
-        <select class="custom-select" id="select-route">
-          <option value="">-- మొదట PS ఎంచుకోండి --</option>
-        </select>
-      </div>
-    </div>
 
-    <!-- Auto-filled Officer Details -->
-    <div class="officer-meta-row" id="officer-meta-preview">
-      <div>
-        <span style="color: var(--text-muted);" id="txt-officer-lbl">ఆఫీసర్: </span>
-        <strong id="meta-officer-name" style="color: #67e8f9;">--</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted);" id="txt-phone-lbl">ఫోన్: </span>
-        <strong id="meta-officer-phone" style="color: #fde047;">--</strong>
-      </div>
-    </div>
-
-    <!-- Start Tracking Button & Actions -->
-    <div class="user-controls">
-      <button class="btn-track" id="btn-toggle-track">
+      <!-- Start Tracking Button -->
+      <button class="btn-track" style="width: 100%; margin-bottom: 12px;" id="btn-toggle-track">
         <i class="fa-solid fa-play"></i>
         <span id="txt-btn-track">లైవ్ లొకేషన్ ప్రారంభించండి</span>
       </button>
-      <button class="btn-view-all" id="btn-open-dir-bottom">
-        <i class="fa-solid fa-list"></i>
-        <span id="txt-btn-dir-bottom">జాబితా (271)</span>
-      </button>
-    </div>
 
-    <!-- Mobile Background Tip Banner -->
-    <div id="bg-tip-banner" style="margin-top: 8px; font-size: 11px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 6px 10px; color: #93c5fd; display: flex; align-items: center; gap: 8px;">
-      <i class="fa-solid fa-circle-info" style="color: #60a5fa; font-size: 13px;"></i>
-      <span id="txt-bg-tip">💡 మొబైల్‌లో బ్యాక్‌గ్రౌండ్‌లో పనిచేయడానికి Back బటన్ బదులు <strong>Home బటన్</strong> నొక్కి వాట్సాప్ చూసుకోండి. లొకేషన్ నిరంతరం ట్రాక్ అవుతుంది.</span>
+      <!-- Mobile Background Tip Banner -->
+      <div id="bg-tip-banner" style="font-size: 11px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 8px 10px; color: #93c5fd; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-circle-info" style="color: #60a5fa; font-size: 14px;"></i>
+        <span id="txt-bg-tip">💡 మొబైల్‌లో బ్యాక్‌గ్రౌండ్‌లో పనిచేయడానికి Back బటన్ బదులు <strong>Home బటన్</strong> నొక్కి వాట్సాప్ చూసుకోండి. లొకేషన్ నిరంతరం ట్రాక్ అవుతుంది.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-close" id="btn-close-track-footer">మూసివేయి (Close)</button>
     </div>
   </div>
 </div>
@@ -868,7 +850,7 @@ https://...
         <span id="txt-btn-wa-broadcast">వాట్సాప్ గ్రూప్‌లో పంపండి</span>
       </button>
 
-      <button class="btn-view-all" style="width: 100%; justify-content: center;" id="btn-copy-wa-broadcast">
+      <button class="btn-header" style="width: 100%; justify-content: center; padding: 10px;" id="btn-copy-wa-broadcast">
         <i class="fa-regular fa-copy"></i>
         <span id="txt-btn-copy-broadcast">లింక్ కాపీ చేయండి</span>
       </button>
@@ -891,7 +873,6 @@ https://...
   // -------------------------------------------------------------
   let routeMobilesData = window.ROUTE_MOBILES_DATA || [];
 
-  // If window.ROUTE_MOBILES_DATA is not populated, attempt fetch fallback
   if (!routeMobilesData || routeMobilesData.length === 0) {
     fetch('route_mobiles.json')
       .then(res => res.json())
@@ -911,11 +892,10 @@ https://...
     te: {
       title: "శ్రీకాకుళం జిల్లా రూట్ మొబైల్స్ లైవ్ మ్యాప్",
       subtitle: "రియల్-టైమ్ రూట్ మొబైల్స్ ట్రాకింగ్",
+      btnShareLoc: "లొకేషన్ షేర్",
       btnRoutes: "రూట్ మొబైల్స్ (271)",
       btnGroupWa: "గ్రూప్ షేర్",
-      sharingOff: "లొకేషన్ షేరింగ్ ఆఫ్‌లో ఉంది",
       sharingOffSub: "మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకుని షేరింగ్ ప్రారంభించండి",
-      sharingOn: "లైవ్ లొకేషన్ నిరంతరం షేర్ అవుతోంది",
       sharingOnSub: "కంట్రోల్ రూమ్ మ్యాప్‌లో మీ లొకేషన్ లైవ్‌గా కనిపిస్తోంది",
       btnStart: "లైవ్ లొకేషన్ ప్రారంభించండి",
       btnStop: "లొకేషన్ షేరింగ్ ఆపండి",
@@ -931,11 +911,10 @@ https://...
     en: {
       title: "Srikakulam Dist Route Mobiles Live Map",
       subtitle: "Real-time Police Route Mobiles Tracker",
+      btnShareLoc: "Share Location",
       btnRoutes: "Route Mobiles (271)",
       btnGroupWa: "Group Share",
-      sharingOff: "Location sharing is OFF",
       sharingOffSub: "Select your Police Station & Route No to start sharing",
-      sharingOn: "Live Location is sharing continuously",
       sharingOnSub: "Your location is visible on the Control Room map in real-time",
       btnStart: "Start Live Tracking",
       btnStop: "Stop Tracking",
@@ -955,6 +934,7 @@ https://...
     const t = i18n[lang];
     document.getElementById('txt-title').innerText = t.title;
     document.getElementById('txt-subtitle').innerText = t.subtitle;
+    document.getElementById('txt-btn-share-loc').innerText = t.btnShareLoc;
     document.getElementById('txt-btn-routes').innerText = t.btnRoutes;
     document.getElementById('txt-btn-group-wa').innerText = t.btnGroupWa;
     document.getElementById('btn-lang').innerText = lang === 'te' ? 'EN' : 'TE';
@@ -967,16 +947,15 @@ https://...
 
   function updateStatusText() {
     const t = i18n[currentLang];
+    const trackPill = document.getElementById('active-tracking-pill');
     if (isTracking) {
-      document.getElementById('tracking-status-text').innerText = t.sharingOn;
       document.getElementById('tracking-status-sub').innerText = t.sharingOnSub;
       document.getElementById('txt-btn-track').innerText = t.btnStop;
-      document.getElementById('status-icon').style.color = '#10b981';
+      trackPill.style.display = 'flex';
     } else {
-      document.getElementById('tracking-status-text').innerText = t.sharingOff;
       document.getElementById('tracking-status-sub').innerText = t.sharingOffSub;
       document.getElementById('txt-btn-track').innerText = t.btnStart;
-      document.getElementById('status-icon').style.color = 'var(--text-muted)';
+      trackPill.style.display = 'none';
     }
   }
 
@@ -984,19 +963,18 @@ https://...
   // Room and User Identification
   // -------------------------------------------------------------
   const urlParams = new URLSearchParams(window.location.search);
-  // Default room is SrikakulamPolice so all route mobiles join automatically
   let roomCode = urlParams.get('room') || urlParams.get('group') || 'SrikakulamPolice';
   roomCode = roomCode.replace(/[^a-zA-Z0-9_-]/g, '') || 'SrikakulamPolice';
 
   const initialParamPS = urlParams.get('ps') || '';
   const initialParamRoute = urlParams.get('route') || urlParams.get('rm') || '';
+  const initialShouldTrack = urlParams.get('track') === '1' || urlParams.get('track') === 'true';
 
   const userId = 'officer_' + Math.random().toString(36).substring(2, 9);
 
   // -------------------------------------------------------------
   // Map Setup (Centered on Srikakulam District)
   // -------------------------------------------------------------
-  // Srikakulam center coordinates: 18.2969 N, 83.8968 E
   const SRIKAKULAM_CENTER = [18.2969, 83.8968];
 
   const map = L.map('map', {
@@ -1034,7 +1012,6 @@ https://...
   // -------------------------------------------------------------
   // Live Members & Active Route Mobiles State
   // -------------------------------------------------------------
-  // Structure: { [routeKey]: { userId, ps, route, name, phone, lat, lng, speed, accuracy, lastUpdated, marker, circle } }
   const activeMobiles = {};
 
   function makeRouteKey(ps, route) {
@@ -1097,7 +1074,6 @@ https://...
     const status = getMemberStatus(data.lastUpdated || Date.now());
 
     if (!activeMobiles[key]) {
-      // New Live Route Mobile Marker
       const marker = L.marker([data.lat, data.lng], {
         icon: createPoliceMarkerIcon(data.ps, data.route, data.name, isMe, status.isLive)
       }).addTo(map);
@@ -1141,7 +1117,6 @@ https://...
         showToast(`${data.ps} (${data.route}) లైవ్ లోకి వచ్చారు!`);
       }
     } else {
-      // Existing Member Update
       const m = activeMobiles[key];
       m.ps = data.ps || m.ps;
       m.route = data.route || m.route;
@@ -1171,7 +1146,6 @@ https://...
     document.getElementById('kpi-offline').innerText = offlineCount;
   }
 
-  // Refresh icons every 5 seconds for status updates
   setInterval(() => {
     for (const key in activeMobiles) {
       const m = activeMobiles[key];
@@ -1360,7 +1334,9 @@ https://...
     isTracking = true;
     updateStatusText();
     document.getElementById('btn-toggle-track').classList.add('active');
-    document.getElementById('speed-meter').style.display = 'block';
+
+    // Close the track modal on start so officer sees the map
+    document.getElementById('modal-track').classList.remove('show');
 
     acquireWakeLock();
     startBackgroundAudio();
@@ -1400,7 +1376,6 @@ https://...
       options
     );
 
-    // Stationary heartbeat every 3.5s
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
       if (isTracking && lastLat !== null && lastLng !== null) {
@@ -1428,7 +1403,6 @@ https://...
     stopBackgroundAudio();
     updateStatusText();
     document.getElementById('btn-toggle-track').classList.remove('active');
-    document.getElementById('speed-meter').style.display = 'none';
 
     const ps = document.getElementById('select-ps').value;
     const route = document.getElementById('select-route').value;
@@ -1450,6 +1424,10 @@ https://...
     }
   });
 
+  document.getElementById('btn-quick-stop').addEventListener('click', () => {
+    stopTracking();
+  });
+
   // Fit view on all active mobiles
   document.getElementById('fab-fit-all').addEventListener('click', () => {
     const keys = Object.keys(activeMobiles);
@@ -1468,7 +1446,6 @@ https://...
     const psSelect = document.getElementById('select-ps');
     const dirFilterPS = document.getElementById('dir-filter-ps');
 
-    // Extract unique Police Stations
     const psSet = new Set();
     routeMobilesData.forEach(item => {
       if (item.ps) psSet.add(item.ps.trim());
@@ -1476,7 +1453,6 @@ https://...
 
     const sortedPS = Array.from(psSet).sort();
 
-    // Populate dropdowns
     psSelect.innerHTML = '<option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>';
     dirFilterPS.innerHTML = '<option value="ALL">అన్ని పోలీస్ స్టేషన్లు (All PS)</option>';
 
@@ -1492,14 +1468,12 @@ https://...
       dirFilterPS.appendChild(opt2);
     });
 
-    // Handle PS selection change
     psSelect.addEventListener('change', () => {
       populateRouteNumbers(psSelect.value);
     });
 
-    // Check if initial URL params had ps and route
+    // If initial URL had ps / route or track parameter, pre-fill and optionally open modal
     if (initialParamPS) {
-      // Find matching PS (case-insensitive)
       const foundPS = sortedPS.find(p => p.toLowerCase() === initialParamPS.toLowerCase());
       if (foundPS) {
         psSelect.value = foundPS;
@@ -1515,6 +1489,10 @@ https://...
           }
         }
       }
+      // If opened with specific parameters, show the modal for the officer
+      document.getElementById('modal-track').classList.add('show');
+    } else if (initialShouldTrack) {
+      document.getElementById('modal-track').classList.add('show');
     }
 
     updateKPIs();
@@ -1559,8 +1537,19 @@ https://...
   }
 
   // -------------------------------------------------------------
-  // All 271 Route Mobiles Directory Modal & WhatsApp Nudges
+  // Modals Event Listeners: Track Modal, Directory, Share
   // -------------------------------------------------------------
+  const modalTrack = document.getElementById('modal-track');
+  document.getElementById('btn-open-track-modal').addEventListener('click', () => {
+    modalTrack.classList.add('show');
+  });
+  document.getElementById('btn-close-track').addEventListener('click', () => {
+    modalTrack.classList.remove('show');
+  });
+  document.getElementById('btn-close-track-footer').addEventListener('click', () => {
+    modalTrack.classList.remove('show');
+  });
+
   const modalDirectory = document.getElementById('modal-directory');
   const dirSearch = document.getElementById('dir-search');
   const dirFilterPS = document.getElementById('dir-filter-ps');
@@ -1573,16 +1562,13 @@ https://...
     const filterStatus = dirFilterStatus.value;
 
     let filtered = routeMobilesData.filter(item => {
-      // PS filter
       if (filterPS !== 'ALL' && item.ps.trim() !== filterPS) return false;
 
-      // Status filter
       const key = makeRouteKey(item.ps, item.route);
       const isLive = !!activeMobiles[key];
       if (filterStatus === 'LIVE' && !isLive) return false;
       if (filterStatus === 'OFFLINE' && isLive) return false;
 
-      // Text query
       if (query) {
         const text = `${item.ps} ${item.route} ${item.officer} ${item.phone}`.toLowerCase();
         if (!text.includes(query)) return false;
@@ -1609,7 +1595,7 @@ https://...
       const isLive = !!liveData;
       const cleanPh = cleanPhoneNumber(item.phone);
 
-      const personalizedUrl = `${currentBaseUrl}?room=${encodeURIComponent(roomCode)}&ps=${encodeURIComponent(item.ps)}&route=${encodeURIComponent(item.route)}`;
+      const personalizedUrl = `${currentBaseUrl}?room=${encodeURIComponent(roomCode)}&ps=${encodeURIComponent(item.ps)}&route=${encodeURIComponent(item.route)}&track=1`;
 
       const nudgeMsg = `నమస్కారం సార్ (${item.officer}), శ్రీకాకుళం జిల్లా పోలీస్ కంట్రోల్ రూమ్ మ్యాప్‌లో మీ లొకేషన్ షేర్ చేయడానికి వెంటనే ఈ లింక్ ఓపెన్ చేసి 'లైవ్ లొకేషన్ ప్రారంభించండి' నొక్కండి:\n${personalizedUrl}`;
       const waLink = cleanPh ? `https://wa.me/91${cleanPh}?text=${encodeURIComponent(nudgeMsg)}` : '#';
@@ -1657,11 +1643,6 @@ https://...
   };
 
   document.getElementById('btn-open-directory').addEventListener('click', () => {
-    modalDirectory.classList.add('show');
-    renderDirectory();
-  });
-
-  document.getElementById('btn-open-dir-bottom').addEventListener('click', () => {
     modalDirectory.classList.add('show');
     renderDirectory();
   });
