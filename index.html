@@ -1069,7 +1069,57 @@ https://...
     return digits;
   }
 
-  function updateMemberOnMap(key, data) {
+  // LocalStorage Persistence across browser refresh
+  function saveOfficersToStorage() {
+    try {
+      const clean = {};
+      for (const k in activeMobiles) {
+        const m = activeMobiles[k];
+        clean[k] = {
+          userId: m.userId,
+          ps: m.ps,
+          route: m.route,
+          name: m.name,
+          phone: m.phone,
+          lat: m.lat,
+          lng: m.lng,
+          speed: m.speed,
+          accuracy: m.accuracy,
+          lastUpdated: m.lastUpdated,
+          status: m.status || 'live'
+        };
+      }
+      localStorage.setItem('skl_persisted_officers', JSON.stringify(clean));
+    } catch (e) {}
+  }
+
+  function restoreOfficersFromStorage() {
+    try {
+      const raw = localStorage.getItem('skl_persisted_officers');
+      if (raw) {
+        const data = JSON.parse(raw);
+        for (const k in data) {
+          // If reported within last 24 hours, restore to map immediately!
+          if (Date.now() - (data[k].lastUpdated || 0) < 24 * 3600 * 1000) {
+            updateMemberOnMap(k, data[k], false);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  function updateMemberOnMap(key, data, shouldToast = true) {
+    if (data.status === 'stopped') {
+      if (activeMobiles[key]) {
+        map.removeLayer(activeMobiles[key].marker);
+        map.removeLayer(activeMobiles[key].circle);
+        delete activeMobiles[key];
+        updateKPIs();
+        saveOfficersToStorage();
+      }
+      return;
+    }
+
     const isMe = (data.userId === userId);
     const status = getMemberStatus(data.lastUpdated || Date.now());
 
@@ -1113,7 +1163,7 @@ https://...
         circle: circle
       };
 
-      if (!isMe) {
+      if (!isMe && shouldToast) {
         showToast(`${data.ps} (${data.route}) లైవ్ లోకి వచ్చారు!`);
       }
     } else {
@@ -1135,6 +1185,7 @@ https://...
     }
 
     updateKPIs();
+    saveOfficersToStorage();
   }
 
   function updateKPIs() {
@@ -1174,9 +1225,13 @@ https://...
 
     mqttClient.on('connect', () => {
       console.log('Connected to Srikakulam Police Real-time Broker!');
-      mqttClient.subscribe(topic, (err) => {
+      // Subscribe to general topic
+      mqttClient.subscribe(topic);
+      // Subscribe to individual officer retained subtopics (immediately retrieves last known location of all officers on refresh!)
+      const officersRetainedTopic = `srikakulam_police_tracker/${roomCode}/officer/+`;
+      mqttClient.subscribe(officersRetainedTopic, { qos: 1 }, (err) => {
         if (!err) {
-          console.log(`Subscribed to room topic: ${topic}`);
+          console.log(`Subscribed to retained officers: ${officersRetainedTopic}`);
           requestRoomSync();
         }
       });
@@ -1207,11 +1262,14 @@ https://...
     });
   }
 
+  // Restore cached locations immediately so map is never empty on browser refresh!
+  restoreOfficersFromStorage();
   initMQTT();
 
   function requestRoomSync() {
     if (mqttClient && mqttClient.connected) {
-      mqttClient.publish(topic, JSON.stringify({ type: 'sync_request', from: userId }), { qos: 0 });
+      const syncTopic = `srikakulam_police_tracker/${roomCode}/sync_request`;
+      mqttClient.publish(syncTopic, JSON.stringify({ type: 'sync_request', from: userId }), { qos: 0 });
     }
   }
 
@@ -1586,7 +1644,7 @@ https://...
       return;
     }
 
-    const currentBaseUrl = window.location.origin + window.location.pathname;
+    const officerBaseUrl = (window.location.origin + window.location.pathname).replace(/\/[^\/]*$/, '/officer.html');
 
     let html = '';
     filtered.forEach(item => {
@@ -1595,7 +1653,7 @@ https://...
       const isLive = !!liveData;
       const cleanPh = cleanPhoneNumber(item.phone);
 
-      const personalizedUrl = `${currentBaseUrl}?room=${encodeURIComponent(roomCode)}&ps=${encodeURIComponent(item.ps)}&route=${encodeURIComponent(item.route)}&track=1`;
+      const personalizedUrl = `${officerBaseUrl}?room=${encodeURIComponent(roomCode)}&ps=${encodeURIComponent(item.ps)}&route=${encodeURIComponent(item.route)}`;
 
       const nudgeMsg = `నమస్కారం సార్ (${item.officer}), శ్రీకాకుళం జిల్లా పోలీస్ కంట్రోల్ రూమ్ మ్యాప్‌లో మీ లొకేషన్ షేర్ చేయడానికి వెంటనే ఈ లింక్ ఓపెన్ చేసి 'లైవ్ లొకేషన్ ప్రారంభించండి' నొక్కండి:\n${personalizedUrl}`;
       const waLink = cleanPh ? `https://wa.me/91${cleanPh}?text=${encodeURIComponent(nudgeMsg)}` : '#';
@@ -1663,10 +1721,10 @@ https://...
   // WhatsApp Group Broadcast Sharing
   // -------------------------------------------------------------
   const modalShare = document.getElementById('modal-share');
-  const fullShareUrl = window.location.origin + window.location.pathname + `?room=${encodeURIComponent(roomCode)}`;
+  const officerAppUrl = (window.location.origin + window.location.pathname).replace(/\/[^\/]*$/, '/officer.html') + `?room=${encodeURIComponent(roomCode)}`;
 
   function getBroadcastMessage() {
-    return `శ్రీకాకుళం జిల్లా పోలీస్ కంట్రోల్ రూమ్ - రూట్ మొబైల్స్ లైవ్ మ్యాప్\n\nరూట్ మొబైల్స్ (MPTC/ZPTC) సిబ్బంది అందరికీ ముఖ్య గమనిక:\nదయచేసి వెంటనే క్రింది లింక్ ఓపెన్ చేసి, మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకుని "లైవ్ లొకేషన్ ప్రారంభించండి" బటన్ నొక్కండి:\n\n${fullShareUrl}\n\n(గమనిక: బ్రౌజర్‌లో GPS Allow చేయండి. హోమ్ బటన్ నొక్కి మినిమైజ్ చేసినా బ్యాక్‌గ్రౌండ్‌లో లొకేషన్ నిరంతరం ట్రాక్ అవుతుంది.)`;
+    return `శ్రీకాకుళం జిల్లా పోలీస్ కంట్రోల్ రూమ్ - రూట్ మొబైల్స్ లైవ్ ట్రాకర్\n\nరూట్ మొబైల్స్ (MPTC/ZPTC) సిబ్బంది అందరికీ ముఖ్య గమనిక:\nదయచేసి వెంటనే క్రింది లింక్ ఓపెన్ చేసి, మీ పోలీస్ స్టేషన్ & రూట్ నెంబర్ ఎంచుకుని "లైవ్ లొకేషన్ ప్రారంభించండి" బటన్ నొక్కండి:\n\n${officerAppUrl}\n\n(గమనిక: బ్రౌజర్‌లో GPS Allow చేయండి. హోమ్ బటన్ నొక్కి మినిమైజ్ చేసినా బ్యాక్‌గ్రౌండ్‌లో మీ లొకేషన్ కంట్రోల్ రూమ్‌కు నిరంతరం వెళ్తుంది.)`;
   }
 
   document.getElementById('broadcast-message-preview').innerText = getBroadcastMessage();

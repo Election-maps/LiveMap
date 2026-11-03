@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a192f"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  <!-- Gold border -->
+  <rect x="16" y="16" width="480" height="480" rx="84" fill="none" stroke="url(#goldGrad)" stroke-width="8"/>
+  <!-- Shield outline -->
+  <path d="M256 60 L410 115 C410 275 256 425 256 425 C256 425 102 275 102 115 Z" fill="#0b1b36" stroke="url(#goldGrad)" stroke-width="12"/>
+  <!-- Inner Star / Badge -->
+  <circle cx="256" cy="225" r="70" fill="url(#goldGrad)"/>
+  <circle cx="256" cy="225" r="54" fill="#0b1b36"/>
+  <!-- Location Pin in center -->
+  <path d="M256 180 C242 180 230 192 230 206 C230 228 256 255 256 255 C256 255 282 228 282 206 C282 192 270 180 256 180 Z" fill="#10b981"/>
+  <circle cx="256" cy="204" r="8" fill="#ffffff"/>
+  <!-- Text -->
+  <text x="256" y="340" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#fbbf24" text-anchor="middle">SRIKAKULAM POLICE</text>
+  <text x="256" y="375" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#38bdf8" text-anchor="middle">LIVE ROUTE TRACKER</text>
+</svg>

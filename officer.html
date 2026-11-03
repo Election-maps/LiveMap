@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a1128">
+  <title>రూట్ మొబైల్ ట్రాకర్ | Srikakulam Police Route Tracker</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <!-- MQTT.js library -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- Pre-loaded Route Mobiles Data from Excel -->
+  <script src="route_mobiles_data.js?v=20261103"></script>
+
+  <style>
+    :root {
+      --police-navy: #0b1a2e;
+      --police-blue: #1e3a8a;
+      --police-gold: #f59e0b;
+      --wa-green: #25D366;
+      --bg-dark: #0a1128;
+      --card-bg: #14223d;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      background: var(--bg-dark);
+      color: var(--text-light);
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    /* Top Police Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--police-gold);
+      margin-bottom: 16px;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--police-gold) 0%, #d97706 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0b1a2e;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: #93c5fd;
+    }
+
+    /* Install App Banner (APK / PWA) */
+    .install-banner {
+      background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(16, 185, 129, 0.25) 100%);
+      border: 1px solid var(--wa-green);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn-install {
+      background: var(--wa-green);
+      color: #082f1b;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Officer Details Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--police-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .form-select, .form-input {
+      width: 100%;
+      background: #091322;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-select:focus, .form-input:focus {
+      border-color: var(--wa-green);
+    }
+
+    .officer-preview-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .preview-row:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Live Tracking Cockpit (When sharing) */
+    .cockpit-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.18) 100%);
+      border: 2px solid var(--success);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .pulse-indicator {
+      width: 14px;
+      height: 14px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 12px var(--success);
+      animation: pulse-dot 1.5s infinite;
+      margin-right: 6px;
+    }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    .cockpit-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #34d399;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cockpit-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+    }
+
+    .cockpit-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .stat-pill {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Big Action Buttons */
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Personal Mini Map (Only shows THIS officer's location) */
+    #officer-map {
+      width: 100%;
+      height: 220px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      margin-top: 14px;
+      background: #0f172a;
+    }
+
+    /* Keep-alive Advice Card */
+    .tip-card {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #93c5fd;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 14px;
+      line-height: 1.4;
+    }
+
+    /* Notification toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #0f172a;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Police Branding Header -->
+  <header class="app-header">
+    <div class="brand-badge">
+      <i class="fa-solid fa-shield-halved"></i>
+    </div>
+    <div>
+      <div class="brand-title">శ్రీకాకుళం జిల్లా పోలీస్</div>
+      <div class="brand-subtitle">రూట్ మొబైల్ లైవ్ ట్రాకర్ (ఫీల్డ్ ఆఫీసర్ యాప్)</div>
+    </div>
+  </header>
+
+  <!-- PWA Install Banner -->
+  <div class="install-banner" id="pwa-install-banner">
+    <div style="font-size: 12px;">
+      <strong>📲 పోలీస్ యాప్ ఇన్‌స్టాల్ చేసుకోండి</strong><br/>
+      <span style="color: var(--text-muted); font-size: 11px;">హోమ్ స్క్రీన్‌పై యాప్ లాగా పనిచేస్తుంది</span>
+    </div>
+    <button class="btn-install" id="btn-pwa-install">
+      <i class="fa-solid fa-download"></i> ఇన్‌స్టాల్
+    </button>
+  </div>
+
+  <!-- Live Transmission Cockpit (Active when tracking) -->
+  <div class="cockpit-card" id="cockpit-card">
+    <div class="cockpit-title">
+      <span class="pulse-indicator"></span>
+      కంట్రోల్ రూమ్‌కు లొకేషన్ వెళ్తోంది
+    </div>
+    <div class="cockpit-desc" id="cockpit-desc">
+      మీ రూట్ మొబైల్ లొకేషన్ నిరంతరం రియల్-టైమ్‌లో పంపబడుతోంది.
+    </div>
+
+    <div class="cockpit-stats">
+      <div class="stat-pill">
+        <div class="stat-val" id="disp-speed">0 km/h</div>
+        <div class="stat-lbl">⚡ ప్రస్తుత వేగం</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-val" id="disp-accuracy">±10 m</div>
+        <div class="stat-lbl">🎯 GPS ఖచ్చితత్వం</div>
+      </div>
+    </div>
+
+    <!-- Stop Button -->
+    <button class="btn-main btn-stop" id="btn-stop-track" style="margin-top: 8px;">
+      <i class="fa-solid fa-stop"></i> లొకేషన్ షేరింగ్ ఆపండి
+    </button>
+  </div>
+
+  <!-- Officer Registration Form Card -->
+  <div class="card" id="selection-card">
+    <div class="card-title">
+      <i class="fa-solid fa-user-shield"></i> మీ వివరాలు నమోదు చేయండి
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">1. మీ పోలీస్ స్టేషన్ ఎంచుకోండి:</label>
+      <select class="form-select" id="select-ps">
+        <option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">2. మీ రూట్ మొబైల్ నెంబర్:</label>
+      <select class="form-select" id="select-route">
+        <option value="">-- మొదట PS ఎంచుకోండి --</option>
+      </select>
+    </div>
+
+    <!-- Auto-populated Officer Info -->
+    <div class="officer-preview-box">
+      <div class="preview-row">
+        <span style="color: var(--text-muted);">ఆఫీసర్:</span>
+        <strong id="disp-officer-name" style="color: #67e8f9;">--</strong>
+      </div>
+      <div class="preview-row">
+        <span style="color: var(--text-muted);">ఫోన్ నెంబర్:</span>
+        <strong id="disp-officer-phone" style="color: #fde047;">--</strong>
+      </div>
+    </div>
+
+    <!-- Start Button -->
+    <button class="btn-main btn-start" id="btn-start-track">
+      <i class="fa-solid fa-play"></i> లైవ్ లొకేషన్ ప్రారంభించండి
+    </button>
+  </div>
+
+  <!-- Personal Mini Map (Only shows THIS officer's location, NO other officers) -->
+  <div class="card" style="padding: 12px; margin-bottom: 8px;">
+    <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
+      <span><i class="fa-solid fa-map-location-dot" style="color: #38bdf8;"></i> మీ ప్రస్తుత లొకేషన్ (మీది మాత్రమే):</span>
+      <span style="font-size: 10px; color: #10b981;">● సురక్షితమైన ప్రైవేట్ లింక్</span>
+    </div>
+    <div id="officer-map"></div>
+  </div>
+
+  <!-- Background Advice Tip -->
+  <div class="tip-card">
+    <i class="fa-solid fa-circle-info" style="font-size: 18px; color: #60a5fa; flex-shrink: 0; margin-top: 2px;"></i>
+    <div>
+      <strong>ముఖ్యమైన సూచన:</strong><br/>
+      లొకేషన్ ఆన్ చేసిన తర్వాత మొబైల్ బ్యాక్ బటన్ నొక్కకుండా, <strong>HOME బటన్</strong> నొక్కి మినిమైజ్ చేసుకోండి. ఫోన్ లాక్ అయినా లేదా వాట్సాప్ చూస్తున్నా బ్యాక్‌గ్రౌండ్‌లో మీ లొకేషన్ కంట్రోల్ రూమ్‌కు నిరంతరం వెళ్తూనే ఉంటుంది.
+    </div>
+  </div>
+</div>
+
+<!-- Notification Toast -->
+<div class="toast" id="toast">
+  <span id="toast-message">సందేశం</span>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+  // -------------------------------------------------------------
+  // PWA Service Worker Registration & Install Prompt
+  // -------------------------------------------------------------
+  let deferredPrompt = null;
+  const pwaBanner = document.getElementById('pwa-install-banner');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW reg error:', err));
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    pwaBanner.style.display = 'flex';
+  });
+
+  document.getElementById('btn-pwa-install').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        pwaBanner.style.display = 'none';
+      }
+      deferredPrompt = null;
+    }
+  });
+
+  // -------------------------------------------------------------
+  // Data Load: Route Mobiles (271 records)
+  // -------------------------------------------------------------
+  let routeMobilesData = window.ROUTE_MOBILES_DATA || [];
+
+  if (!routeMobilesData || routeMobilesData.length === 0) {
+    fetch('route_mobiles.json')
+      .then(res => res.json())
+      .then(data => {
+        routeMobilesData = data;
+        initOfficerSelection();
+      })
+      .catch(err => console.error("Error loading route_mobiles.json:", err));
+  }
+
+  // -------------------------------------------------------------
+  // Room and Officer Setup
+  // -------------------------------------------------------------
+  const urlParams = new URLSearchParams(window.location.search);
+  let roomCode = urlParams.get('room') || urlParams.get('group') || 'SrikakulamPolice';
+  roomCode = roomCode.replace(/[^a-zA-Z0-9_-]/g, '') || 'SrikakulamPolice';
+
+  const initialParamPS = urlParams.get('ps') || '';
+  const initialParamRoute = urlParams.get('route') || urlParams.get('rm') || '';
+
+  const userId = 'officer_' + Math.random().toString(36).substring(2, 9);
+
+  // -------------------------------------------------------------
+  // Officer Personal Map (ONLY displays THIS officer, never others!)
+  // -------------------------------------------------------------
+  const officerMap = L.map('officer-map', {
+    zoomControl: true,
+    attributionControl: false
+  }).setView([18.2969, 83.8968], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(officerMap);
+
+  let myMarker = null;
+  let myCircle = null;
+
+  function updateMyMarkerOnMap(lat, lng, accuracy, name) {
+    if (!myMarker) {
+      const icon = L.divIcon({
+        className: 'my-location-marker',
+        html: `
+          <div style="position:relative; text-align:center;">
+            <div style="background:#10b981; color:#0b141a; font-weight:bold; font-size:11px; padding:2px 8px; border-radius:10px; border:1px solid white; white-space:nowrap; position:absolute; bottom:36px; left:50%; transform:translateX(-50%); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+              ● మీ లొకేషన్ (You)
+            </div>
+            <div style="width:34px; height:34px; border-radius:50%; background:#10b981; border:3px solid white; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.5);">
+              <i class="fa-solid fa-car-side" style="font-size:14px;"></i>
+            </div>
+          </div>
+        `,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+
+      myMarker = L.marker([lat, lng], { icon: icon }).addTo(officerMap);
+      myCircle = L.circle([lat, lng], {
+        radius: accuracy || 15,
+        color: '#10b981',
+        fillColor: '#10b981',
+        fillOpacity: 0.15,
+        weight: 1
+      }).addTo(officerMap);
+
+      officerMap.flyTo([lat, lng], 16, { duration: 1.2 });
+    } else {
+      myMarker.setLatLng([lat, lng]);
+      myCircle.setLatLng([lat, lng]);
+      myCircle.setRadius(accuracy || 15);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // Real-time MQTT Connection (Publish ONLY, NO subscription to other officers!)
+  // -------------------------------------------------------------
+  let mqttClient = null;
+
+  function initMQTT() {
+    const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+    mqttClient = mqtt.connect(brokerUrl, {
+      clientId: `skl_field_${userId}_${Math.random().toString(16).substring(2, 8)}`,
+      clean: true,
+      connectTimeout: 5000,
+      reconnectPeriod: 2500,
+      keepalive: 20
+    });
+
+    mqttClient.on('connect', () => {
+      console.log('Officer connected to Real-time Broker!');
+      // Respond to Control Room sync requests
+      const syncTopic = `srikakulam_police_tracker/${roomCode}/sync_request`;
+      mqttClient.subscribe(syncTopic);
+    });
+
+    mqttClient.on('message', (t, msg) => {
+      try {
+        const payload = JSON.parse(msg.toString());
+        if (payload.type === 'sync_request' && isTracking && lastLat !== null && lastLng !== null) {
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+        }
+      } catch (e) {}
+    });
+  }
+
+  initMQTT();
+
+  function makeRouteKey(ps, route) {
+    if (!ps && !route) return null;
+    return (ps + '_' + route).trim().toLowerCase();
+  }
+
+  function publishMyLocation(lat, lng, speed, accuracy) {
+    if (!mqttClient || !mqttClient.connected) return;
+
+    const ps = document.getElementById('select-ps').value;
+    const route = document.getElementById('select-route').value;
+    const name = document.getElementById('disp-officer-name').innerText;
+    const phone = document.getElementById('disp-officer-phone').innerText;
+    const key = makeRouteKey(ps, route) || userId;
+
+    const payload = {
+      type: 'location',
+      userId: userId,
+      ps: ps,
+      route: route,
+      name: name,
+      phone: phone,
+      lat: lat,
+      lng: lng,
+      speed: speed || 0,
+      accuracy: accuracy || 10,
+      lastUpdated: Date.now(),
+      status: 'live'
+    };
+
+    // Publish with retain: true to the specific officer subtopic!
+    // Control room receives this immediately even upon browser refresh!
+    const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${key}`;
+    mqttClient.publish(officerTopic, JSON.stringify(payload), { qos: 1, retain: true });
+
+    // Also broadcast on general topic for backwards compatibility
+    const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
+    mqttClient.publish(generalTopic, JSON.stringify(payload), { qos: 0 });
+
+    updateMyMarkerOnMap(lat, lng, accuracy, name);
+  }
+
+  // -------------------------------------------------------------
+  // Mobile Keep-Alive: Screen Wake Lock, Silent Audio & Web Worker
+  // -------------------------------------------------------------
+  let wakeLockSentinel = null;
+  let silentAudio = null;
+
+  function startBackgroundAudio() {
+    try {
+      if (!silentAudio) {
+        silentAudio = new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==');
+        silentAudio.loop = true;
+      }
+      silentAudio.play().catch(e => console.log('Audio notice:', e));
+    } catch (e) {}
+  }
+
+  function stopBackgroundAudio() {
+    if (silentAudio) {
+      try { silentAudio.pause(); } catch(e){}
+    }
+  }
+
+  async function acquireWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+      }
+    } catch (err) {}
+  }
+
+  function releaseWakeLock() {
+    if (wakeLockSentinel !== null) {
+      wakeLockSentinel.release();
+      wakeLockSentinel = null;
+    }
+  }
+
+  let bgWorker = null;
+  function initBackgroundWorker() {
+    try {
+      const blobCode = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data === 'start') {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => { self.postMessage('ping'); }, 3500);
+          } else if (e.data === 'stop') {
+            if (timer) clearInterval(timer);
+            timer = null;
+          }
+        };
+      `;
+      const blob = new Blob([blobCode], { type: 'application/javascript' });
+      bgWorker = new Worker(URL.createObjectURL(blob));
+      bgWorker.onmessage = function(e) {
+        if (e.data === 'ping' && isTracking && lastLat !== null && lastLng !== null) {
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+        }
+      };
+    } catch (err) {}
+  }
+  initBackgroundWorker();
+
+  // -------------------------------------------------------------
+  // Continuous GPS Tracking
+  // -------------------------------------------------------------
+  let watchId = null;
+  let isTracking = false;
+  let lastLat = null;
+  let lastLng = null;
+  let lastSpeed = 0;
+  let lastAccuracy = 10;
+  let heartbeatInterval = null;
+
+  function startTracking() {
+    const ps = document.getElementById('select-ps').value;
+    const route = document.getElementById('select-route').value;
+
+    if (!ps || !route) {
+      alert("దయచేసి మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకోండి!");
+      return;
+    }
+
+    if (!('geolocation' in navigator)) {
+      alert("మీ మొబైల్ బ్రౌజర్ GPS లొకేషన్ సపోర్ట్ చేయట్లేదు.");
+      return;
+    }
+
+    // Save selection in localStorage for future convenience
+    localStorage.setItem('skl_last_ps', ps);
+    localStorage.setItem('skl_last_route', route);
+
+    isTracking = true;
+
+    // UI Updates
+    document.getElementById('selection-card').style.display = 'none';
+    document.getElementById('cockpit-card').style.display = 'block';
+    document.getElementById('cockpit-desc').innerText = `${ps} - ${route} లైవ్ లొకేషన్ కంట్రోల్ రూమ్‌కు పంపబడుతోంది.`;
+
+    acquireWakeLock();
+    startBackgroundAudio();
+    if (bgWorker) bgWorker.postMessage('start');
+
+    const options = {
+      enableHighAccuracy: true,
+      maximumAge: 2000,
+      timeout: 10000
+    };
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, speed, accuracy } = pos.coords;
+        lastLat = latitude;
+        lastLng = longitude;
+        lastSpeed = speed || 0;
+        lastAccuracy = accuracy || 10;
+
+        const kmh = speed ? Math.round(speed * 3.6) : 0;
+        document.getElementById('disp-speed').innerText = `${kmh} km/h`;
+        document.getElementById('disp-accuracy').innerText = `±${Math.round(accuracy || 0)} m`;
+
+        publishMyLocation(latitude, longitude, speed, accuracy);
+      },
+      (err) => {
+        console.error('GPS error:', err);
+        if (err.code === err.PERMISSION_DENIED) {
+          alert("లొకేషన్ అనుమతి నిరాకరించబడింది. మొబైల్ సెట్టింగ్స్‌లో GPS లొకేషన్ ఆన్ చేసి పర్మిషన్ ఇవ్వండి.");
+          stopTracking();
+        }
+      },
+      options
+    );
+
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      if (isTracking && lastLat !== null && lastLng !== null) {
+        publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+      }
+    }, 3500);
+
+    showToast("లైవ్ లొకేషన్ నిరంతరం షేర్ అవుతోంది!");
+  }
+
+  function stopTracking() {
+    isTracking = false;
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    if (heartbeatInterval !== null) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+    if (bgWorker) bgWorker.postMessage('stop');
+
+    releaseWakeLock();
+    stopBackgroundAudio();
+
+    // Inform Control Room that tracking is stopped
+    const ps = document.getElementById('select-ps').value;
+    const route = document.getElementById('select-route').value;
+    const key = makeRouteKey(ps, route);
+    if (mqttClient && mqttClient.connected && key) {
+      const stoppedPayload = {
+        type: 'location',
+        userId: userId,
+        ps: ps,
+        route: route,
+        name: document.getElementById('disp-officer-name').innerText,
+        phone: document.getElementById('disp-officer-phone').innerText,
+        status: 'stopped',
+        lastUpdated: Date.now()
+      };
+      const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${key}`;
+      mqttClient.publish(officerTopic, JSON.stringify(stoppedPayload), { qos: 1, retain: true });
+    }
+
+    // UI Reset
+    document.getElementById('cockpit-card').style.display = 'none';
+    document.getElementById('selection-card').style.display = 'block';
+
+    showToast("లొకేషన్ షేరింగ్ ఆపివేయబడింది");
+  }
+
+  document.getElementById('btn-start-track').addEventListener('click', startTracking);
+  document.getElementById('btn-stop-track').addEventListener('click', stopTracking);
+
+  // -------------------------------------------------------------
+  // Population of Police Stations & Routes
+  // -------------------------------------------------------------
+  function initOfficerSelection() {
+    const psSelect = document.getElementById('select-ps');
+    const psSet = new Set();
+    routeMobilesData.forEach(item => {
+      if (item.ps) psSet.add(item.ps.trim());
+    });
+
+    const sortedPS = Array.from(psSet).sort();
+
+    psSelect.innerHTML = '<option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>';
+    sortedPS.forEach(ps => {
+      const opt = document.createElement('option');
+      opt.value = ps;
+      opt.innerText = ps;
+      psSelect.appendChild(opt);
+    });
+
+    psSelect.addEventListener('change', () => {
+      populateRouteNumbers(psSelect.value);
+    });
+
+    const savedPS = initialParamPS || localStorage.getItem('skl_last_ps') || '';
+    const savedRoute = initialParamRoute || localStorage.getItem('skl_last_route') || '';
+
+    if (savedPS) {
+      const found = sortedPS.find(p => p.toLowerCase() === savedPS.toLowerCase());
+      if (found) {
+        psSelect.value = found;
+        populateRouteNumbers(found);
+
+        if (savedRoute) {
+          const routeSelect = document.getElementById('select-route');
+          for (let i = 0; i < routeSelect.options.length; i++) {
+            if (routeSelect.options[i].value.toLowerCase() === savedRoute.toLowerCase()) {
+              routeSelect.selectedIndex = i;
+              routeSelect.dispatchEvent(new Event('change'));
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function populateRouteNumbers(selectedPS) {
+    const routeSelect = document.getElementById('select-route');
+    routeSelect.innerHTML = '<option value="">-- రూట్ ఎంచుకోండి --</option>';
+
+    if (!selectedPS) {
+      document.getElementById('disp-officer-name').innerText = '--';
+      document.getElementById('disp-officer-phone').innerText = '--';
+      return;
+    }
+
+    const psRoutes = routeMobilesData.filter(item => item.ps.trim() === selectedPS);
+
+    psRoutes.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.route.trim();
+      opt.innerText = `${item.route.trim()} (${item.officer.substring(0, 30)})`;
+      opt.dataset.officer = item.officer;
+      opt.dataset.phone = item.phone;
+      routeSelect.appendChild(opt);
+    });
+
+    routeSelect.addEventListener('change', () => {
+      const opt = routeSelect.selectedOptions[0];
+      if (opt && opt.dataset.officer) {
+        document.getElementById('disp-officer-name').innerText = opt.dataset.officer;
+        document.getElementById('disp-officer-phone').innerText = opt.dataset.phone || 'N/A';
+      } else {
+        document.getElementById('disp-officer-name').innerText = '--';
+        document.getElementById('disp-officer-phone').innerText = '--';
+      }
+    });
+
+    if (psRoutes.length > 0) {
+      routeSelect.selectedIndex = 1;
+      routeSelect.dispatchEvent(new Event('change'));
+    }
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-message').innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2800);
+  }
+
+  // Prevent back button exit when tracking
+  window.history.pushState({ page: 'officer' }, '', window.location.href);
+  window.addEventListener('popstate', () => {
+    if (isTracking) {
+      window.history.pushState({ page: 'officer' }, '', window.location.href);
+      const confirmExit = confirm("⚠️ లొకేషన్ షేరింగ్ నడుస్తోంది!\n\nమీరు వాట్సాప్ లేదా ఇతర యాప్స్ చూడాలంటే 'Cancel' నొక్కి మీ మొబైల్ HOME బటన్ వాడండి.\n\nపూర్తిగా ఆపివేయాలనుకుంటున్నారా?");
+      if (confirmExit) stopTracking();
+    }
+  });
+
+  if (routeMobilesData && routeMobilesData.length > 0) {
+    initOfficerSelection();
+  }
+</script>
+
+</body>
+</html>
