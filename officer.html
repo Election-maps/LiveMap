@@ -355,6 +355,11 @@
       background: #0f172a;
     }
 
+    /* Smooth Marker Movement Animation ("ekkada vunna icon kuda move avvali") */
+    .my-location-marker, .leaflet-marker-icon {
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    }
+
     /* Keep-alive Advice Card */
     .tip-card {
       background: rgba(59, 130, 246, 0.1);
@@ -735,8 +740,20 @@
       myCircle.setLatLng([lat, lng]);
       myCircle.setRadius(accuracy || 15);
 
+      if (lastLat && lastLng) {
+        const rad = Math.PI / 180;
+        const y = Math.sin((lng - lastLng) * rad) * Math.cos(lat * rad);
+        const x = Math.cos(lastLat * rad) * Math.sin(lat * rad) - Math.sin(lastLat * rad) * Math.cos(lat * rad) * Math.cos((lng - lastLng) * rad);
+        const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        const el = myMarker.getElement();
+        if (el) {
+          const iconDiv = el.querySelector('.fa-car-side');
+          if (iconDiv) iconDiv.style.transform = `rotate(${Math.round(bearing)}deg)`;
+        }
+      }
+
       if (followUserMode) {
-        officerMap.panTo([lat, lng], { animate: true, duration: 0.5 });
+        officerMap.panTo([lat, lng], { animate: true, duration: 0.8 });
       }
     }
   }

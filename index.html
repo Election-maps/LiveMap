@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="te">
 <head>
   <meta charset="UTF-8">
@@ -217,25 +217,77 @@
       100% { transform: scale(0.9); opacity: 0.7; }
     }
 
+    /* Category Filter Pills Bar on Map */
+    .category-filter-bar {
+      position: absolute;
+      top: 96px;
+      left: 12px;
+      z-index: 999;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      max-width: calc(100vw - 24px);
+      padding: 2px 2px 6px 2px;
+      pointer-events: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .category-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-btn {
+      background: rgba(14, 23, 38, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 18px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .cat-btn:hover {
+      background: rgba(30, 58, 138, 0.85);
+      color: white;
+      border-color: #38bdf8;
+    }
+
+    .cat-btn.active {
+      background: #1e3a8a;
+      color: #38bdf8;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+    }
+
     /* Floating Map Filter Dropdowns on Map */
     .map-dropdown-container {
       position: absolute;
-      top: 98px;
+      top: 136px;
       left: 12px;
       z-index: 999;
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       pointer-events: auto;
-      max-width: 95vw;
+      max-width: calc(100vw - 24px);
     }
 
     .map-dropdown-box {
       display: flex;
       align-items: center;
-      background: rgba(11, 20, 26, 0.92);
+      background: rgba(11, 20, 26, 0.94);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 12px;
       padding: 2px 10px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
@@ -244,7 +296,7 @@
 
     .map-dropdown-box:focus-within {
       border-color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
     }
 
     .map-dropdown-box .dropdown-icon {
@@ -257,12 +309,17 @@
       background: transparent;
       border: none;
       color: #ffffff;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
-      padding: 8px 4px;
+      padding: 7px 4px;
       outline: none;
       cursor: pointer;
       max-width: 220px;
+    }
+
+    .map-select.select-team {
+      max-width: 290px;
+      color: #7dd3fc;
     }
 
     .map-select option {
@@ -273,18 +330,27 @@
     }
 
     @media (max-width: 600px) {
-      .map-dropdown-container {
+      .category-filter-bar {
         top: 92px;
         left: 8px;
+        max-width: calc(100vw - 16px);
+      }
+      .map-dropdown-container {
+        top: 132px;
+        left: 8px;
         gap: 6px;
+        max-width: calc(100vw - 16px);
       }
       .map-select {
-        font-size: 12px;
-        max-width: 155px;
-        padding: 6px 2px;
+        font-size: 11.5px;
+        max-width: 140px;
+        padding: 5px 2px;
+      }
+      .map-select.select-team {
+        max-width: 175px;
       }
       .map-dropdown-box {
-        padding: 1px 8px;
+        padding: 1px 7px;
       }
     }
 
@@ -357,10 +423,18 @@
       cursor: pointer;
     }
 
+    /* Smooth Marker Movement Animation ("ekkada vunna icon kuda move avvali") */
+    .leaflet-marker-icon.custom-police-marker,
+    .custom-police-marker,
+    .leaflet-marker-icon {
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    }
+
     /* Custom Leaflet Police Markers */
     .police-marker-container {
       position: relative;
       text-align: center;
+      transition: transform 0.4s ease;
     }
 
     .police-marker-label {
@@ -390,6 +464,7 @@
       color: white;
       font-size: 14px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+      transition: transform 0.4s ease;
     }
 
     .police-marker-pulse {
@@ -749,24 +824,29 @@
     </div>
   </div>
 
-  <!-- Floating Map Filter Dropdown Lists -->
-  <div class="map-dropdown-container">
-    <div class="map-dropdown-box">
-      <i class="fa-solid fa-layer-group dropdown-icon"></i>
-      <select id="select-map-category" class="map-select" onchange="handleMapCategoryChange(this.value)" title="విభాగం ఎంచుకోండి (Select Category)">
-        <option value="ALL">🛡️ అన్ని విభాగాలు (All 364 Teams)</option>
-        <option value="RM">🚗 Routes - రూట్ మొబైల్స్ (264)</option>
-        <option value="SF">🚔 SF - స్ట్రైకింగ్ ఫోర్స్ (59)</option>
-        <option value="SSF">🛡️ SSF - స్పెషల్ స్ట్రైకింగ్ (30)</option>
-        <option value="QRT">⚡ QRTs - క్విక్ రియాక్షన్ (6)</option>
-        <option value="RESERVE">🏛️ Reserve - రిజర్వ్ పార్టీలు (5)</option>
-      </select>
-    </div>
+  <!-- Category Filter Pills Bar on Map (Routes, SF, SSF, QRTs, Reserve Parties) -->
+  <div class="category-filter-bar">
+    <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
+    <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
+    <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
+    <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
+    <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
+    <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
+  </div>
 
+  <!-- Floating Map Filter Dropdowns: Mandal & Route/Party Selector -->
+  <div class="map-dropdown-container">
     <div class="map-dropdown-box">
       <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
       <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
         <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
+      </select>
+    </div>
+
+    <div class="map-dropdown-box">
+      <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
+      <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
+        <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
       </select>
     </div>
   </div>
@@ -1148,6 +1228,9 @@ https://...
       m.unitName = unitName;
       m.officer = data.officer || data.name || m.officer;
       m.phone = data.phone || m.phone;
+
+      const prevLat = m.lat;
+      const prevLng = m.lng;
       m.lat = data.lat;
       m.lng = data.lng;
       m.speed = data.speed;
@@ -1155,10 +1238,33 @@ https://...
       m.distanceTraveled = data.distanceTraveled || m.distanceTraveled || 0;
       m.lastUpdated = data.lastUpdated || Date.now();
 
+      // Smooth Leaflet Marker movement (CSS transition provides smooth glide!)
       m.marker.setLatLng([data.lat, data.lng]);
-      m.marker.setIcon(createPoliceMarkerIcon(catKey, mandal, unitName, status.isLive));
+      if (m.currentIsLive !== status.isLive) {
+        m.marker.setIcon(createPoliceMarkerIcon(catKey, mandal, unitName, status.isLive));
+        m.currentIsLive = status.isLive;
+      }
       m.circle.setLatLng([data.lat, data.lng]);
       m.circle.setRadius(data.accuracy || 20);
+
+      // Rotate marker pin in heading direction when moving
+      if (prevLat && prevLng) {
+        const moveDist = map.distance([prevLat, prevLng], [data.lat, data.lng]);
+        if (moveDist >= 3) {
+          const bearing = calculateBearing(prevLat, prevLng, data.lat, data.lng);
+          m.bearing = bearing;
+          const el = m.marker.getElement();
+          if (el) {
+            const pin = el.querySelector('.police-marker-pin');
+            if (pin) pin.style.transform = `rotate(${Math.round(bearing)}deg)`;
+          }
+        }
+      }
+
+      // Smooth auto-follow if selected by Control Room
+      if (currentlyFollowedOfficerKey === key) {
+        map.panTo([data.lat, data.lng], { animate: true, duration: 0.8 });
+      }
 
       // ANTI-JITTER FILTER: Only draw trail if officer has GENUINELY moved >= 15 meters!
       // This stops trails from appearing when the person is stationary or sitting still.
@@ -1211,7 +1317,20 @@ https://...
     }
 
     updateKPIs();
+    populateMapTeamDropdown();
     saveOfficersToStorage();
+  }
+
+  // Bearing Calculation for smooth vehicle rotation
+  function calculateBearing(lat1, lon1, lat2, lon2) {
+    const toRad = Math.PI / 180;
+    const toDeg = 180 / Math.PI;
+    const φ1 = lat1 * toRad;
+    const φ2 = lat2 * toRad;
+    const Δλ = (lon2 - lon1) * toRad;
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    return (Math.atan2(y, x) * toDeg + 360) % 360;
   }
 
   function updateKPIs() {
@@ -1225,6 +1344,7 @@ https://...
   }
 
   let currentMapMandalFilter = 'ALL';
+  let currentlyFollowedOfficerKey = null;
 
   function applyMapFilters() {
     let bounds = [];
@@ -1251,27 +1371,48 @@ https://...
     }
   }
 
-  window.handleMapCategoryChange = function(catKey) {
+  // Category Filter Pill Buttons & Dropdown Handlers
+  window.filterMapCategory = function(catKey) {
     currentMapCategoryFilter = catKey;
+
+    // Update active pill styling
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      if (btn.dataset.cat === catKey) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
     populateMapMandalDropdown();
+    populateMapTeamDropdown();
     applyMapFilters();
-    showToast(catKey === 'ALL' ? 'అన్ని విభాగాలు (All 364 Teams)' : `${catKey} విభాగం ఎంచుకోబడింది`);
+
+    const catLabels = {
+      'ALL': 'అన్ని విభాగాలు (All 364 Teams)',
+      'RM': '🚗 Routes - రూట్ మొబైల్స్ (264)',
+      'SF': '🚔 SF - స్ట్రైకింగ్ ఫోర్స్ (59)',
+      'SSF': '🛡️ SSF - స్పెషల్ స్ట్రైకింగ్ (30)',
+      'QRT': '⚡ QRTs - క్విక్ రియాక్షన్ (6)',
+      'RESERVE': '🏛️ Reserve - రిజర్వ్ పార్టీలు (5)'
+    };
+    showToast(catLabels[catKey] || `${catKey} విభాగం ఎంచుకోబడింది`);
+  };
+
+  window.handleMapCategoryChange = function(catKey) {
+    window.filterMapCategory(catKey);
   };
 
   window.handleMapMandalChange = function(mandalName) {
     currentMapMandalFilter = mandalName;
+    populateMapTeamDropdown();
     applyMapFilters();
     if (mandalName !== 'ALL') {
       showToast(`${mandalName} మండలం ఫిల్టర్ చేయబడింది`);
     }
   };
 
-  window.filterMapCategory = function(catKey) {
-    const sel = document.getElementById('select-map-category');
-    if (sel) sel.value = catKey;
-    handleMapCategoryChange(catKey);
-  };
-
+  // Populate Mandal Dropdown
   function populateMapMandalDropdown() {
     const sel = document.getElementById('select-map-mandal');
     if (!sel) return;
@@ -1301,6 +1442,89 @@ https://...
       currentMapMandalFilter = 'ALL';
     }
   }
+
+  // Populate Specific Route / Party Dropdown List
+  function populateMapTeamDropdown() {
+    const sel = document.getElementById('select-map-team');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Route / Party)</option>';
+
+    // Filter allUnitsData matching current category and mandal
+    const filteredUnits = allUnitsData.filter(u => {
+      const uCat = u.categoryKey || (u.category === 'Striking Forces' ? 'SF' : u.category === 'Special Striking Forces' ? 'SSF' : u.category === 'QRTs' ? 'QRT' : u.category === 'Reserve Parties' ? 'RESERVE' : 'RM');
+      const catMatch = (currentMapCategoryFilter === 'ALL' || uCat === currentMapCategoryFilter);
+      const mandalMatch = (currentMapMandalFilter === 'ALL' || (u.mandal && u.mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase()));
+      return catMatch && mandalMatch;
+    });
+
+    const liveUnits = [];
+    const offlineUnits = [];
+
+    filteredUnits.forEach(u => {
+      const key = u.id || u.unitId;
+      if (activeMobiles[key]) {
+        liveUnits.push(u);
+      } else {
+        offlineUnits.push(u);
+      }
+    });
+
+    // 1. Live Units Optgroup (At Top with Green Indicator)
+    if (liveUnits.length > 0) {
+      const grpLive = document.createElement('optgroup');
+      grpLive.label = `🟢 లైవ్ లో ఉన్నవి (${liveUnits.length} Live Teams)`;
+      liveUnits.forEach(u => {
+        const key = u.id || u.unitId;
+        const opt = document.createElement('option');
+        opt.value = key;
+        const kmh = activeMobiles[key].speed ? Math.round(activeMobiles[key].speed * 3.6) : 0;
+        opt.innerText = `🟢 ${u.unitName} (${u.mandal}) - ${u.officer || 'Officer'} [${kmh} km/h]`;
+        grpLive.appendChild(opt);
+      });
+      sel.appendChild(grpLive);
+    }
+
+    // 2. Offline / General Units Optgroup
+    const grpOther = document.createElement('optgroup');
+    grpOther.label = `⚪ ఇతర టీమ్స్ (${offlineUnits.length} Teams)`;
+    offlineUnits.forEach(u => {
+      const key = u.id || u.unitId;
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.innerText = `⚪ ${u.unitName} (${u.mandal}) - ${u.officer || 'Officer'}`;
+      grpOther.appendChild(opt);
+    });
+    sel.appendChild(grpOther);
+
+    if (currentVal && filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal))) {
+      sel.value = currentVal;
+    }
+  }
+
+  // Handle Team Selection: Zooms directly to officer on map
+  window.handleMapTeamChange = function(unitId) {
+    if (!unitId) return;
+    const m = activeMobiles[unitId];
+    if (m && m.marker) {
+      currentlyFollowedOfficerKey = unitId;
+      map.flyTo([m.lat, m.lng], 16, { animate: true, duration: 1.2 });
+      m.marker.openPopup();
+      showToast(`[${m.categoryKey}] ${m.unitName} (${m.mandal}) లైవ్ లొకేషన్‌కు జూమ్ చేయబడింది`);
+    } else {
+      currentlyFollowedOfficerKey = null;
+      const u = allUnitsData.find(item => (item.id === unitId || item.unitId === unitId));
+      if (u) {
+        const ph = cleanPhoneNumber(u.phone);
+        const contactAction = ph ? `\nఫోన్: ${ph}\nలొకేషన్ షేర్ చేయాలని వాట్సాప్ సందేశం పంపాలా?` : '';
+        if (confirm(`⚠️ ${u.unitName} (${u.mandal} - ${u.officer || 'Officer'}) ఇంకా లైవ్ లొకేషన్ ప్రారంభించలేదు.${contactAction}`)) {
+          if (ph) {
+            shareOfficerLinkToWhatsApp(u);
+          }
+        }
+      }
+    }
+  };
 
   // Clear Single Officer
   window.clearSingleOfficer = function(key) {
@@ -1463,6 +1687,7 @@ https://...
     });
 
     populateMapMandalDropdown();
+    populateMapTeamDropdown();
     updateKPIs();
   }
 
