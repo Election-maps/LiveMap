@@ -686,7 +686,7 @@
   if (btnRecenterMap) {
     btnRecenterMap.addEventListener('click', () => {
       if (lastLat !== null && lastLng !== null) {
-        officerMap.flyTo([lastLat, lastLng], 17, { duration: 0.8 });
+        officerMap.flyTo([lastLat, lastLng], 18, { duration: 0.8 });
       } else {
         showToast("ఇంకా GPS లొకేషన్ అందలేదు...");
       }
@@ -743,7 +743,7 @@
         weight: 1
       }).addTo(officerMap);
 
-      officerMap.flyTo([lat, lng], 17, { duration: 1.2 });
+      officerMap.flyTo([lat, lng], 18, { duration: 1.0 });
     } else {
       myCircle.setRadius(accuracy || 15);
 
@@ -1027,17 +1027,18 @@
   let totalDistanceTraveled = 0;
   let updatesCount = 0;
   let lastGpsTimestamp = 0;
-
   let lastBearing = 0;
+  let lastStepTime = 0;
 
   function handleNewGpsFix(pos, source) {
     if (!isTracking) return;
     const { latitude, longitude, speed, accuracy } = pos.coords;
     const now = Date.now();
+    const timeDelta = Math.max(0.5, (now - (lastStepTime || (now - 1800))) / 1000);
     lastGpsTimestamp = now;
 
-    // Filter weak / erratic GPS fixes (> 35m accuracy)
-    if (accuracy && accuracy > 35) {
+    // Filter weak / erratic GPS fixes (> 95m accuracy)
+    if (accuracy && accuracy > 95) {
       return;
     }
 
@@ -1049,19 +1050,20 @@
       anchorLng = longitude;
       lastLat = latitude;
       lastLng = longitude;
+      lastStepTime = now;
     } else {
       stepDist = calculateDistanceMeters(anchorLat, anchorLng, latitude, longitude);
       const measuredSpeed = speed || 0;
+      const computedSpeed = stepDist / timeDelta;
 
-      // RESPONSIVE MOVEMENT DETECTION:
-      // If moving at walking speed (>= 0.4 m/s ~1.5 km/h) and moved >= 2.0m: Moving!
-      // If moved >= 3.5m: definitely moving!
-      // Static micro-jitter (< 2.0m without speed): ignored as drift.
-      if ((measuredSpeed >= 0.4 && stepDist >= 2.0) || stepDist >= 3.5) {
+      // ULTRA-RESPONSIVE MOVEMENT DETECTION:
+      // Even walking 1.2 meters (about 2 steps) or moving at >= 0.25 m/s (~1 km/h) triggers movement!
+      if (stepDist >= 1.2 || (measuredSpeed >= 0.25 && stepDist >= 0.8) || computedSpeed >= 0.35) {
         isMoving = true;
         totalDistanceTraveled += stepDist;
         anchorLat = latitude;
         anchorLng = longitude;
+        lastStepTime = now;
         movementTrail.addLatLng([latitude, longitude]);
       }
     }
@@ -1069,7 +1071,7 @@
     // Calculate Direction / Bearing Angle
     if (lastLat !== null && lastLng !== null) {
       const d = calculateDistanceMeters(lastLat, lastLng, latitude, longitude);
-      if (d >= 1.5) {
+      if (d >= 1.0) {
         const rad = Math.PI / 180;
         const y = Math.sin((longitude - lastLng) * rad) * Math.cos(latitude * rad);
         const x = Math.cos(lastLat * rad) * Math.sin(latitude * rad) - Math.sin(lastLat * rad) * Math.cos(latitude * rad) * Math.cos((longitude - lastLng) * rad);
@@ -1079,11 +1081,12 @@
 
     lastLat = latitude;
     lastLng = longitude;
-    lastSpeed = isMoving ? (speed || (stepDist / 2.0)) : 0;
+    const effectiveSpeed = isMoving ? (speed || (stepDist / timeDelta) || 0.8) : 0;
+    lastSpeed = effectiveSpeed;
     lastAccuracy = accuracy || 10;
     updatesCount++;
 
-    const kmh = isMoving ? Math.round(lastSpeed * 3.6) : 0;
+    const kmh = isMoving ? Math.max(1, Math.round(lastSpeed * 3.6)) : 0;
 
     // Update Cockpit UI elements
     const elSpeed = document.getElementById('disp-speed');

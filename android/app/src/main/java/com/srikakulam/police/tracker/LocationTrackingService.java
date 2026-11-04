@@ -261,19 +261,21 @@ public class LocationTrackingService extends Service implements LocationListener
         float speed = location.getSpeed();
         float accuracy = location.getAccuracy();
 
-        if (accuracy > 35.0f) return; // filter noisy inaccurate GPS fixes
+        if (accuracy > 95.0f) return; // filter only extreme outlier GPS fixes
 
         float bearing = location.hasBearing() ? location.getBearing() : 0.0f;
         boolean isMoving = false;
+        float stepDist = 0.0f;
         if (lastLat != 0 && lastLng != 0) {
             float[] results = new float[2];
             Location.distanceBetween(lastLat, lastLng, lat, lng, results);
+            stepDist = results[0];
             if (!location.hasBearing() && results.length > 1) {
                 bearing = (results[1] + 360.0f) % 360.0f;
             }
-            // Responsive movement detection: >= 2.0m when moving or >= 3.5m
-            if ((speed >= 0.4f && results[0] >= 2.0f) || results[0] >= 3.5f) {
-                totalDistanceMeters += results[0];
+            // Ultra-responsive movement detection: >= 1.2m or (speed >= 0.25 m/s & >= 0.8m)
+            if (stepDist >= 1.2f || (speed >= 0.25f && stepDist >= 0.8f)) {
+                totalDistanceMeters += stepDist;
                 lastLat = lat;
                 lastLng = lng;
                 isMoving = true;
@@ -284,7 +286,8 @@ public class LocationTrackingService extends Service implements LocationListener
         }
         updatesSent++;
 
-        int kmh = isMoving ? Math.round(speed * 3.6f) : 0;
+        float effectiveSpeed = isMoving ? (speed > 0 ? speed : (stepDist / 1.5f)) : 0;
+        int kmh = isMoving ? Math.max(1, Math.round(effectiveSpeed * 3.6f)) : 0;
         String distStr = totalDistanceMeters >= 1000
                 ? String.format("%.2f km", totalDistanceMeters / 1000f)
                 : Math.round(totalDistanceMeters) + " m";
@@ -295,7 +298,7 @@ public class LocationTrackingService extends Service implements LocationListener
             nm.notify(NOTIFICATION_ID, buildNotification(updateInfo));
         }
 
-        publishLocation(lat, lng, isMoving ? speed : 0, accuracy, bearing, isMoving);
+        publishLocation(lat, lng, effectiveSpeed, accuracy, bearing, isMoving);
     }
 
     private void publishLocation(double lat, double lng, float speed, float accuracy, float bearing, boolean isMoving) {
