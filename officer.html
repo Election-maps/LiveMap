@@ -456,10 +456,10 @@
       <span id="disp-last-time" style="color: #34d399; font-weight: 600;">సిద్ధంగా ఉంది</span>
     </div>
 
-    <!-- Critical Screen-On Warning for Android/iOS browsers -->
-    <div class="keep-screen-notice">
-      <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; margin-right: 4px;"></i>
-      <strong>ముఖ్యమైన సూచన:</strong> స్క్రీన్ లాక్ (ఆఫ్) చేయవద్దు. మీరు కదులుతున్నప్పుడు లొకేషన్ నిరంతరం అప్‌డేట్ అవ్వడానికి స్క్రీన్ ఆన్‌లో ఉండాలి. (బ్యాటరీ ఆదా చేయడానికి స్క్రీన్ బ్రైట్‌నెస్ తగ్గించుకోవచ్చు).
+    <!-- Background Mode Active Notice -->
+    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; color: #a7f3d0; text-align: left; line-height: 1.4;">
+      <i class="fa-solid fa-house-circle-check" style="color: #34d399; margin-right: 4px; font-size: 13px;"></i>
+      <strong>బ్యాక్‌గ్రౌండ్ మోడ్ ఆన్‌లో ఉంది:</strong> మీరు <strong>HOME బటన్</strong> ప్రెస్ చేసి వాట్సాప్ చూస్తున్నా బ్యాక్‌గ్రౌండ్‌లో లొకేషన్ నిరంతరం కంట్రోల్ రూమ్‌కు వెళ్తూనే ఉంటుంది.
     </div>
 
     <!-- Stop Button -->
@@ -546,11 +546,11 @@
   </div>
 
   <!-- Background Advice Tip -->
-  <div class="tip-card">
-    <i class="fa-solid fa-circle-info" style="font-size: 18px; color: #60a5fa; flex-shrink: 0; margin-top: 2px;"></i>
+  <div class="tip-card" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: #a7f3d0;">
+    <i class="fa-solid fa-house-circle-check" style="font-size: 20px; color: #34d399; flex-shrink: 0; margin-top: 2px;"></i>
     <div>
-      <strong>ఎన్నికల బందోబస్తు సూచన:</strong><br/>
-      లొకేషన్ ఆన్ చేసిన తర్వాత మొబైల్ స్క్రీన్‌ను <strong>ఆఫ్‌లో పెట్టవద్దు (లాక్ చేయవద్దు)</strong>. స్క్రీన్ ఆన్‌లో ఉంటేనే ఫోన్ GPS మీరు వెళ్లే ప్రతి అడుగును లేదా వాహనం వేగాన్ని కంట్రోల్ రూమ్‌కు పంపుతుంది.
+      <strong style="color: #6ee7b7; font-size: 13px;">📲 HOME బటన్ నొక్కి వాడుకోవచ్చు:</strong><br/>
+      లొకేషన్ ప్రారంభించిన తర్వాత మొబైల్ <strong>HOME బటన్</strong> నొక్కి వాట్సాప్ లేదా ఇతర పనుల కోసం ఫోన్ వాడుకోవచ్చు. బ్రౌజర్‌ను క్లోజ్ చేయకుండా బ్యాక్‌గ్రౌండ్‌లో ఉంచితే మీ కదలికలు కంట్రోల్ రూమ్‌కు నిరంతరం వెళ్తాయి.
     </div>
   </div>
 </div>
@@ -804,20 +804,55 @@
   // -------------------------------------------------------------
   let wakeLockSentinel = null;
   let silentAudio = null;
+  let audioContext = null;
 
   function startBackgroundAudio() {
     try {
+      // 1. Silent HTML5 Audio in infinite loop
       if (!silentAudio) {
-        silentAudio = new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==');
+        silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
         silentAudio.loop = true;
       }
-      silentAudio.play().catch(e => console.log('Audio notice:', e));
+      silentAudio.play().catch(e => console.log('Audio note:', e));
+
+      // 2. Web Audio API continuous buffer
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!audioContext && AudioCtx) {
+          audioContext = new AudioCtx();
+          const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 2, audioContext.sampleRate);
+          const source = audioContext.createBufferSource();
+          source.buffer = buffer;
+          source.loop = true;
+          source.connect(audioContext.destination);
+          source.start(0);
+        }
+        if (audioContext && audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      } catch (e) {}
+
+      // 3. Android Foreground Media Session (Prevents OS from killing tab on HOME press)
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: 'శ్రీకాకుళం పోలీస్ లైవ్ ట్రాకింగ్',
+          artist: currentSelectedUnit ? `${currentSelectedUnit.mandal} - ${currentSelectedUnit.unitName}` : 'ఎన్నికల బందోబస్తు లైవ్',
+          album: 'Srikakulam Police Control Room'
+        });
+        navigator.mediaSession.playbackState = 'playing';
+      }
     } catch (e) {}
   }
 
   function stopBackgroundAudio() {
     if (silentAudio) {
       try { silentAudio.pause(); } catch(e){}
+    }
+    if (audioContext) {
+      try { audioContext.close(); audioContext = null; } catch(e){}
+    }
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'paused';
     }
   }
 
@@ -836,16 +871,22 @@
     }
   }
 
-  // Re-acquire on app return
+  // Active Background Maintenance when HOME or tab switched
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && isTracking) {
-      acquireWakeLock();
-      startBackgroundAudio();
-      navigator.geolocation.getCurrentPosition(
-        (pos) => handleNewGpsFix(pos, 'visibility_resume'),
-        (err) => {},
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-      );
+    if (isTracking) {
+      if (document.visibilityState === 'visible') {
+        acquireWakeLock();
+        startBackgroundAudio();
+        // Immediate GPS query upon returning
+        navigator.geolocation.getCurrentPosition(
+          (pos) => handleNewGpsFix(pos, 'visibility_resume'),
+          (err) => {},
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        );
+      } else {
+        // Tab hidden (HOME pressed): ensure audio & mediaSession keep playing
+        startBackgroundAudio();
+      }
     }
   });
 
@@ -857,7 +898,7 @@
         self.onmessage = function(e) {
           if (e.data === 'start') {
             if (timer) clearInterval(timer);
-            timer = setInterval(() => { self.postMessage('ping'); }, 3500);
+            timer = setInterval(() => { self.postMessage('ping'); }, 3000);
           } else if (e.data === 'stop') {
             if (timer) clearInterval(timer);
             timer = null;
@@ -867,8 +908,20 @@
       const blob = new Blob([blobCode], { type: 'application/javascript' });
       bgWorker = new Worker(URL.createObjectURL(blob));
       bgWorker.onmessage = function(e) {
-        if (e.data === 'ping' && isTracking && lastLat !== null && lastLng !== null) {
-          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy, totalDistanceTraveled);
+        if (e.data === 'ping' && isTracking) {
+          // When HOME button is pressed, actively query GPS and broadcast!
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => handleNewGpsFix(pos, 'bg_worker'),
+              (err) => {
+                // If temporary GPS wait, still send heartbeat to keep online status
+                if (lastLat !== null && lastLng !== null) {
+                  publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy, totalDistanceTraveled);
+                }
+              },
+              { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+          }
         }
       };
     } catch (err) {}
