@@ -241,19 +241,19 @@
     .cockpit-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 8px;
     }
 
     .stat-pill {
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.45);
       padding: 8px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
     }
 
     .stat-val {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: #38bdf8;
     }
@@ -261,6 +261,60 @@
     .stat-lbl {
       font-size: 10px;
       color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .coords-bar {
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px dashed rgba(255,255,255,0.1);
+    }
+
+    .keep-screen-notice {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: #fde68a;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .map-controls-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .btn-map-control {
+      flex: 1;
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn-map-control.active {
+      background: #059669;
+      border-color: #34d399;
+      color: white;
     }
 
     /* Big Action Buttons */
@@ -376,6 +430,7 @@
       మీ లైవ్ లొకేషన్ నిరంతరం రియల్-టైమ్‌లో కంట్రోల్ రూమ్ మ్యాప్‌కు పంపబడుతోంది.
     </div>
 
+    <!-- 4-Stat Grid for instant feedback -->
     <div class="cockpit-stats">
       <div class="stat-pill">
         <div class="stat-val" id="disp-speed">0 km/h</div>
@@ -385,10 +440,30 @@
         <div class="stat-val" id="disp-accuracy">±10 m</div>
         <div class="stat-lbl">🎯 GPS ఖచ్చితత్వం</div>
       </div>
+      <div class="stat-pill">
+        <div class="stat-val" id="disp-distance" style="color: #4ade80;">0 m</div>
+        <div class="stat-lbl">🚶 కదిలిన దూరం</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-val" id="disp-updates" style="color: #fde047;">0</div>
+        <div class="stat-lbl">📡 అప్‌డేట్లు (Live)</div>
+      </div>
+    </div>
+
+    <!-- Live Coordinates & Last Time -->
+    <div class="coords-bar">
+      <span>📍 <span id="disp-coords">GPS సిగ్నల్ కోసం వెతుకుతోంది...</span></span>
+      <span id="disp-last-time" style="color: #34d399; font-weight: 600;">సిద్ధంగా ఉంది</span>
+    </div>
+
+    <!-- Critical Screen-On Warning for Android/iOS browsers -->
+    <div class="keep-screen-notice">
+      <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; margin-right: 4px;"></i>
+      <strong>ముఖ్యమైన సూచన:</strong> స్క్రీన్ లాక్ (ఆఫ్) చేయవద్దు. మీరు కదులుతున్నప్పుడు లొకేషన్ నిరంతరం అప్‌డేట్ అవ్వడానికి స్క్రీన్ ఆన్‌లో ఉండాలి. (బ్యాటరీ ఆదా చేయడానికి స్క్రీన్ బ్రైట్‌నెస్ తగ్గించుకోవచ్చు).
     </div>
 
     <!-- Stop Button -->
-    <button class="btn-main btn-stop" id="btn-stop-track" style="margin-top: 8px;">
+    <button class="btn-main btn-stop" id="btn-stop-track">
       <i class="fa-solid fa-stop"></i> లొకేషన్ షేరింగ్ ఆపండి
     </button>
   </div>
@@ -456,18 +531,26 @@
   <!-- Personal Mini Map (Only shows THIS officer's location, NO other officers) -->
   <div class="card" style="padding: 12px; margin-bottom: 8px;">
     <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
-      <span><i class="fa-solid fa-map-location-dot" style="color: #38bdf8;"></i> మీ ప్రస్తుత లొకేషన్ (మీది మాత్రమే):</span>
-      <span style="font-size: 10px; color: #10b981;">● ప్రైవేట్ లింక్</span>
+      <span><i class="fa-solid fa-map-location-dot" style="color: #38bdf8;"></i> మీ కదలికల లైవ్ మ్యాప్:</span>
+      <span style="font-size: 10px; color: #10b981;">● ప్రైవేట్ ట్రాక్</span>
     </div>
     <div id="officer-map"></div>
+    <div class="map-controls-row">
+      <button class="btn-map-control active" id="btn-toggle-follow">
+        <i class="fa-solid fa-crosshairs"></i> <span id="txt-follow-mode">నన్ను ఫాలో అవ్వు (Active)</span>
+      </button>
+      <button class="btn-map-control" id="btn-recenter-map">
+        <i class="fa-solid fa-location-arrow"></i> కేంద్రీకరించు
+      </button>
+    </div>
   </div>
 
   <!-- Background Advice Tip -->
   <div class="tip-card">
     <i class="fa-solid fa-circle-info" style="font-size: 18px; color: #60a5fa; flex-shrink: 0; margin-top: 2px;"></i>
     <div>
-      <strong>ముఖ్యమైన సూచన:</strong><br/>
-      లొకేషన్ ఆన్ చేసిన తర్వాత మొబైల్ బ్యాక్ బటన్ నొక్కకుండా, <strong>HOME బటన్</strong> నొక్కి మినిమైజ్ చేసుకోండి. ఫోన్ లాక్ అయినా లేదా వాట్సాప్ చూస్తున్నా బ్యాక్‌గ్రౌండ్‌లో మీ లొకేషన్ కంట్రోల్ రూమ్‌కు నిరంతరం వెళ్తూనే ఉంటుంది.
+      <strong>ఎన్నికల బందోబస్తు సూచన:</strong><br/>
+      లొకేషన్ ఆన్ చేసిన తర్వాత మొబైల్ స్క్రీన్‌ను <strong>ఆఫ్‌లో పెట్టవద్దు (లాక్ చేయవద్దు)</strong>. స్క్రీన్ ఆన్‌లో ఉంటేనే ఫోన్ GPS మీరు వెళ్లే ప్రతి అడుగును లేదా వాహనం వేగాన్ని కంట్రోల్ రూమ్‌కు పంపుతుంది.
     </div>
   </div>
 </div>
@@ -544,7 +627,7 @@
   const officerMap = L.map('officer-map', {
     zoomControl: true,
     attributionControl: false
-  }).setView([18.2969, 83.8968], 12);
+  }).setView([18.2969, 83.8968], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -552,6 +635,58 @@
 
   let myMarker = null;
   let myCircle = null;
+  let followUserMode = true;
+  let movementTrail = L.polyline([], {
+    color: '#10b981',
+    weight: 4,
+    opacity: 0.85,
+    dashArray: '5, 8'
+  }).addTo(officerMap);
+
+  // Toggle follow mode & recenter
+  const btnToggleFollow = document.getElementById('btn-toggle-follow');
+  const txtFollowMode = document.getElementById('txt-follow-mode');
+  const btnRecenterMap = document.getElementById('btn-recenter-map');
+
+  if (btnToggleFollow) {
+    btnToggleFollow.addEventListener('click', () => {
+      followUserMode = !followUserMode;
+      if (followUserMode) {
+        btnToggleFollow.classList.add('active');
+        if (txtFollowMode) txtFollowMode.innerText = 'నన్ను ఫాలో అవ్వు (Active)';
+        if (lastLat !== null && lastLng !== null) {
+          officerMap.panTo([lastLat, lastLng]);
+        }
+      } else {
+        btnToggleFollow.classList.remove('active');
+        if (txtFollowMode) txtFollowMode.innerText = 'ఫాలో మోడ్ ఆఫ్';
+      }
+    });
+  }
+
+  if (btnRecenterMap) {
+    btnRecenterMap.addEventListener('click', () => {
+      if (lastLat !== null && lastLng !== null) {
+        officerMap.flyTo([lastLat, lastLng], 17, { duration: 0.8 });
+      } else {
+        showToast("ఇంకా GPS లొకేషన్ అందలేదు...");
+      }
+    });
+  }
+
+  function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Earth radius in meters
+    const rad = Math.PI / 180;
+    const φ1 = lat1 * rad;
+    const φ2 = lat2 * rad;
+    const Δφ = (lat2 - lat1) * rad;
+    const Δλ = (lon2 - lon1) * rad;
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
 
   function updateMyMarkerOnMap(lat, lng, accuracy, labelText) {
     if (!myMarker) {
@@ -560,7 +695,7 @@
         html: `
           <div style="position:relative; text-align:center;">
             <div style="background:#10b981; color:#0b141a; font-weight:bold; font-size:11px; padding:2px 8px; border-radius:10px; border:1px solid white; white-space:nowrap; position:absolute; bottom:36px; left:50%; transform:translateX(-50%); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
-              ● ${labelText || 'మీ లొకేషన్'}
+              ● ${labelText || 'మీరు ఇక్కడ ఉన్నారు'}
             </div>
             <div style="width:34px; height:34px; border-radius:50%; background:#10b981; border:3px solid white; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.5);">
               <i class="fa-solid fa-car-side" style="font-size:14px;"></i>
@@ -580,11 +715,15 @@
         weight: 1
       }).addTo(officerMap);
 
-      officerMap.flyTo([lat, lng], 16, { duration: 1.2 });
+      officerMap.flyTo([lat, lng], 17, { duration: 1.2 });
     } else {
       myMarker.setLatLng([lat, lng]);
       myCircle.setLatLng([lat, lng]);
       myCircle.setRadius(accuracy || 15);
+
+      if (followUserMode) {
+        officerMap.panTo([lat, lng], { animate: true, duration: 0.5 });
+      }
     }
   }
 
@@ -605,7 +744,6 @@
 
     mqttClient.on('connect', () => {
       console.log('Officer connected to Real-time Broker!');
-      // Respond to Control Room sync requests
       const syncTopic = `srikakulam_police_tracker/${roomCode}/sync_request`;
       mqttClient.subscribe(syncTopic);
     });
@@ -614,7 +752,7 @@
       try {
         const payload = JSON.parse(msg.toString());
         if (payload.type === 'sync_request' && isTracking && lastLat !== null && lastLng !== null) {
-          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy, totalDistanceTraveled);
         }
       } catch (e) {}
     });
@@ -622,7 +760,7 @@
 
   initMQTT();
 
-  function publishMyLocation(lat, lng, speed, accuracy) {
+  function publishMyLocation(lat, lng, speed, accuracy, distTraveled) {
     if (!mqttClient || !mqttClient.connected || !currentSelectedUnit) return;
 
     const unitKey = currentSelectedUnit.id;
@@ -644,6 +782,8 @@
       lng: lng,
       speed: speed || 0,
       accuracy: accuracy || 10,
+      distanceTraveled: Math.round(distTraveled || totalDistanceTraveled || 0),
+      updatesCount: updatesCount,
       lastUpdated: Date.now(),
       status: 'live'
     };
@@ -696,6 +836,19 @@
     }
   }
 
+  // Re-acquire on app return
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isTracking) {
+      acquireWakeLock();
+      startBackgroundAudio();
+      navigator.geolocation.getCurrentPosition(
+        (pos) => handleNewGpsFix(pos, 'visibility_resume'),
+        (err) => {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+    }
+  });
+
   let bgWorker = null;
   function initBackgroundWorker() {
     try {
@@ -715,7 +868,7 @@
       bgWorker = new Worker(URL.createObjectURL(blob));
       bgWorker.onmessage = function(e) {
         if (e.data === 'ping' && isTracking && lastLat !== null && lastLng !== null) {
-          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
+          publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy, totalDistanceTraveled);
         }
       };
     } catch (err) {}
@@ -723,15 +876,70 @@
   initBackgroundWorker();
 
   // -------------------------------------------------------------
-  // Continuous GPS Tracking
+  // Dual-Engine GPS Tracking & Movement Detection
   // -------------------------------------------------------------
   let watchId = null;
+  let pollInterval = null;
+  let wakeLockRenewTimer = null;
   let isTracking = false;
   let lastLat = null;
   let lastLng = null;
   let lastSpeed = 0;
   let lastAccuracy = 10;
-  let heartbeatInterval = null;
+  let totalDistanceTraveled = 0;
+  let updatesCount = 0;
+  let lastGpsTimestamp = 0;
+
+  function handleNewGpsFix(pos, source) {
+    if (!isTracking) return;
+    const { latitude, longitude, speed, accuracy } = pos.coords;
+    const now = Date.now();
+    lastGpsTimestamp = now;
+
+    let stepDist = 0;
+    if (lastLat !== null && lastLng !== null) {
+      stepDist = calculateDistanceMeters(lastLat, lastLng, latitude, longitude);
+      // Accumulate real movement (filter noise below 1.5m)
+      if (stepDist >= 2.0) {
+        totalDistanceTraveled += stepDist;
+        movementTrail.addLatLng([latitude, longitude]);
+      }
+    } else {
+      movementTrail.addLatLng([latitude, longitude]);
+    }
+
+    lastLat = latitude;
+    lastLng = longitude;
+    lastSpeed = speed || 0;
+    lastAccuracy = accuracy || 10;
+    updatesCount++;
+
+    const kmh = speed ? Math.round(speed * 3.6) : (stepDist > 5 ? Math.round(stepDist * 1.8) : 0);
+
+    // Update Cockpit UI elements
+    const elSpeed = document.getElementById('disp-speed');
+    const elAccuracy = document.getElementById('disp-accuracy');
+    const elDistance = document.getElementById('disp-distance');
+    const elUpdates = document.getElementById('disp-updates');
+    const elCoords = document.getElementById('disp-coords');
+    const elLastTime = document.getElementById('disp-last-time');
+
+    if (elSpeed) elSpeed.innerText = `${kmh} km/h`;
+    if (elAccuracy) elAccuracy.innerText = `±${Math.round(accuracy || 0)} m`;
+    if (elDistance) {
+      if (totalDistanceTraveled >= 1000) {
+        elDistance.innerText = `${(totalDistanceTraveled / 1000).toFixed(2)} km`;
+      } else {
+        elDistance.innerText = `${Math.round(totalDistanceTraveled)} m`;
+      }
+    }
+    if (elUpdates) elUpdates.innerText = `${updatesCount} సార్లు`;
+    if (elCoords) elCoords.innerText = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    if (elLastTime) elLastTime.innerText = 'ఇప్పుడే అప్‌డేట్';
+
+    // Broadcast update to Control Room
+    publishMyLocation(latitude, longitude, speed, accuracy, totalDistanceTraveled);
+  }
 
   function startTracking() {
     if (!currentSelectedUnit) {
@@ -750,6 +958,9 @@
     localStorage.setItem('skl_last_mandal', currentSelectedUnit.mandal);
 
     isTracking = true;
+    totalDistanceTraveled = 0;
+    updatesCount = 0;
+    movementTrail.setLatLngs([]);
 
     // UI Updates
     document.getElementById('selection-card').style.display = 'none';
@@ -760,44 +971,64 @@
     startBackgroundAudio();
     if (bgWorker) bgWorker.postMessage('start');
 
-    const options = {
+    // 1. Immediate initial GPS fix
+    navigator.geolocation.getCurrentPosition(
+      (pos) => handleNewGpsFix(pos, 'init'),
+      (err) => console.warn('Initial GPS query warning:', err),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 7000 }
+    );
+
+    // 2. Continuous watchPosition
+    const watchOpts = {
       enableHighAccuracy: true,
-      maximumAge: 2000,
-      timeout: 10000
+      maximumAge: 0, // NEVER cache
+      timeout: 8000
     };
 
     watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, speed, accuracy } = pos.coords;
-        lastLat = latitude;
-        lastLng = longitude;
-        lastSpeed = speed || 0;
-        lastAccuracy = accuracy || 10;
-
-        const kmh = speed ? Math.round(speed * 3.6) : 0;
-        document.getElementById('disp-speed').innerText = `${kmh} km/h`;
-        document.getElementById('disp-accuracy').innerText = `±${Math.round(accuracy || 0)} m`;
-
-        publishMyLocation(latitude, longitude, speed, accuracy);
-      },
+      (pos) => handleNewGpsFix(pos, 'watch'),
       (err) => {
-        console.error('GPS error:', err);
+        console.warn('GPS Watch warning:', err);
         if (err.code === err.PERMISSION_DENIED) {
           alert("లొకేషన్ అనుమతి నిరాకరించబడింది. మొబైల్ సెట్టింగ్స్‌లో GPS లొకేషన్ ఆన్ చేసి పర్మిషన్ ఇవ్వండి.");
           stopTracking();
         }
       },
-      options
+      watchOpts
     );
 
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    heartbeatInterval = setInterval(() => {
-      if (isTracking && lastLat !== null && lastLng !== null) {
-        publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy);
-      }
+    // 3. Active Polling Pulse every 3.5 seconds
+    // Forces hardware GPS chip to calculate a fresh satellite fix even if watchPosition pauses
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => {
+      if (!isTracking) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => handleNewGpsFix(pos, 'poll_pulse'),
+        (err) => {
+          // If watch hasn't fired in > 9 seconds, restart watchPosition
+          if (Date.now() - lastGpsTimestamp > 9000 && isTracking) {
+            console.log('GPS Watchdog restarting watchPosition...');
+            try {
+              if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+              watchId = navigator.geolocation.watchPosition(
+                (pos) => handleNewGpsFix(pos, 'watch_restart'),
+                (e) => {},
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
+              );
+            } catch(e) {}
+          }
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
     }, 3500);
 
-    showToast("లైవ్ లొకేషన్ నిరంతరం షేర్ అవుతోంది!");
+    // 4. Periodically renew Wake Lock every 25 seconds
+    if (wakeLockRenewTimer) clearInterval(wakeLockRenewTimer);
+    wakeLockRenewTimer = setInterval(() => {
+      if (isTracking) acquireWakeLock();
+    }, 25000);
+
+    showToast("లైవ్ GPS ప్రారంభమైంది! మీరు కదులుతుంటే మ్యాప్ అప్‌డేట్ అవుతుంది.");
   }
 
   function stopTracking() {
@@ -806,9 +1037,13 @@
       navigator.geolocation.clearWatch(watchId);
       watchId = null;
     }
-    if (heartbeatInterval !== null) {
-      clearInterval(heartbeatInterval);
-      heartbeatInterval = null;
+    if (pollInterval !== null) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    if (wakeLockRenewTimer !== null) {
+      clearInterval(wakeLockRenewTimer);
+      wakeLockRenewTimer = null;
     }
     if (bgWorker) bgWorker.postMessage('stop');
 

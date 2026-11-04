@@ -1002,11 +1002,42 @@ https://...
     } catch (e) {}
   }
 
+  function buildPopupHtml(key, data, catKey, mandal, unitName, theme) {
+    const cleanPh = cleanPhoneNumber(data.phone);
+    const callBtn = cleanPh ? `<a href="tel:${cleanPh}" style="display:inline-block; padding:4px 8px; background:#2563eb; color:white; border-radius:4px; text-decoration:none; font-size:11px; margin-top:6px; margin-right:4px;">📞 కాల్</a>` : '';
+    const waBtn = cleanPh ? `<a href="https://wa.me/91${cleanPh}" target="_blank" style="display:inline-block; padding:4px 8px; background:#16a34a; color:white; border-radius:4px; text-decoration:none; font-size:11px; margin-top:6px;">💬 WhatsApp</a>` : '';
+    const removeBtn = `<button onclick="clearSingleOfficer('${key}')" style="display:inline-block; padding:4px 8px; background:#e11d48; color:white; border-radius:4px; font-size:11px; margin-top:6px; border:none; cursor:pointer;" title="ఈ లొకేషన్ తొలగించు"><i class="fa-solid fa-trash-can"></i> తీసివేయి</button>`;
+    const kmh = data.speed ? Math.round(data.speed * 3.6) : 0;
+    const distText = data.distanceTraveled ? (data.distanceTraveled >= 1000 ? `${(data.distanceTraveled/1000).toFixed(2)} km` : `${data.distanceTraveled} m`) : '';
+
+    return `
+      <div style="font-family: sans-serif; min-width: 180px; color: #1e293b;">
+        <div style="background: ${theme.color}; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-bottom: 6px;">
+          [${catKey}] ${mandal} - ${unitName}
+        </div>
+        <strong style="color: #0f172a; font-size: 13px;">${data.officer || data.name || 'Officer'}</strong><br/>
+        <span style="font-size: 11px; color: #475569;">📞 ఫోన్: <strong>${data.phone || 'N/A'}</strong></span><br/>
+        ${data.hq ? `<span style="font-size: 11px; color: #475569;">📍 HQ: ${data.hq}</span><br/>` : ''}
+        <span style="font-size: 11px; color: #475569;">⚡ వేగం: <strong>${kmh} km/h</strong></span><br/>
+        <span style="font-size: 11px; color: #475569;">🎯 GPS ఖచ్చితత్వం: ±${Math.round(data.accuracy || 0)} మీటర్లు</span><br/>
+        ${distText ? `<span style="font-size: 11px; color: #16a34a;">🚶 కదిలిన దూరం: <strong>${distText}</strong></span><br/>` : ''}
+        <span style="font-size: 10px; color: #94a3b8;">🕒 సమయం: ${timeAgo(data.lastUpdated || Date.now())}</span>
+        ${data.supporting ? `<div style="font-size: 10px; color: #64748b; margin-top: 4px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">👥 ఫోర్స్: ${data.supporting.substring(0, 60)}</div>` : ''}
+        <div style="margin-top: 6px;">
+          ${callBtn}
+          ${waBtn}
+          ${removeBtn}
+        </div>
+      </div>
+    `;
+  }
+
   function updateMemberOnMap(key, data, shouldToast = true) {
     if (data.status === 'stopped') {
       if (activeMobiles[key]) {
         map.removeLayer(activeMobiles[key].marker);
         map.removeLayer(activeMobiles[key].circle);
+        if (activeMobiles[key].trail) map.removeLayer(activeMobiles[key].trail);
         delete activeMobiles[key];
         updateKPIs();
         saveOfficersToStorage();
@@ -1042,36 +1073,25 @@ https://...
         circle.addTo(map);
       }
 
-      const cleanPh = cleanPhoneNumber(data.phone);
-      const callBtn = cleanPh ? `<a href="tel:${cleanPh}" style="display:inline-block; padding:4px 8px; background:#2563eb; color:white; border-radius:4px; text-decoration:none; font-size:11px; margin-top:6px; margin-right:4px;">📞 కాల్</a>` : '';
-      const waBtn = cleanPh ? `<a href="https://wa.me/91${cleanPh}" target="_blank" style="display:inline-block; padding:4px 8px; background:#16a34a; color:white; border-radius:4px; text-decoration:none; font-size:11px; margin-top:6px;">💬 WhatsApp</a>` : '';
-      const removeBtn = `<button onclick="clearSingleOfficer('${key}')" style="display:inline-block; padding:4px 8px; background:#e11d48; color:white; border-radius:4px; font-size:11px; margin-top:6px; border:none; cursor:pointer;" title="ఈ లొకేషన్ తొలగించు"><i class="fa-solid fa-trash-can"></i> తీసివేయి</button>`;
+      // Movement trail polyline
+      const trail = L.polyline([[data.lat, data.lng]], {
+        color: theme.color,
+        weight: 3,
+        opacity: 0.75,
+        dashArray: '5, 6'
+      });
+      if (currentMapCategoryFilter === 'ALL' || currentMapCategoryFilter === catKey) {
+        trail.addTo(map);
+      }
 
-      marker.bindPopup(`
-        <div style="font-family: sans-serif; min-width: 180px; color: #1e293b;">
-          <div style="background: ${theme.color}; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-bottom: 6px;">
-            [${catKey}] ${mandal} - ${unitName}
-          </div>
-          <strong style="color: #0f172a; font-size: 13px;">${data.officer || data.name || 'Officer'}</strong><br/>
-          <span style="font-size: 11px; color: #475569;">📞 ఫోన్: <strong>${data.phone || 'N/A'}</strong></span><br/>
-          ${data.hq ? `<span style="font-size: 11px; color: #475569;">📍 HQ: ${data.hq}</span><br/>` : ''}
-          <span style="font-size: 11px; color: #475569;">⚡ వేగం: ${data.speed ? Math.round(data.speed * 3.6) : 0} km/h</span><br/>
-          <span style="font-size: 11px; color: #475569;">🎯 GPS ఖచ్చితత్వం: ±${Math.round(data.accuracy || 0)} మీటర్లు</span><br/>
-          <span style="font-size: 10px; color: #94a3b8;">🕒 సమయం: ${timeAgo(data.lastUpdated || Date.now())}</span>
-          ${data.supporting ? `<div style="font-size: 10px; color: #64748b; margin-top: 4px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">👥 ఫోర్స్: ${data.supporting.substring(0, 60)}</div>` : ''}
-          <div style="margin-top: 6px;">
-            ${callBtn}
-            ${waBtn}
-            ${removeBtn}
-          </div>
-        </div>
-      `);
+      marker.bindPopup(buildPopupHtml(key, data, catKey, mandal, unitName, theme));
 
       activeMobiles[key] = {
         ...data,
         categoryKey: catKey,
         marker: marker,
-        circle: circle
+        circle: circle,
+        trail: trail
       };
 
       if (shouldToast) {
@@ -1088,12 +1108,33 @@ https://...
       m.lng = data.lng;
       m.speed = data.speed;
       m.accuracy = data.accuracy;
+      m.distanceTraveled = data.distanceTraveled || m.distanceTraveled || 0;
       m.lastUpdated = data.lastUpdated || Date.now();
 
       m.marker.setLatLng([data.lat, data.lng]);
       m.marker.setIcon(createPoliceMarkerIcon(catKey, mandal, unitName, status.isLive));
       m.circle.setLatLng([data.lat, data.lng]);
       m.circle.setRadius(data.accuracy || 20);
+
+      // Append to movement trail if distance changed
+      if (m.trail) {
+        m.trail.addLatLng([data.lat, data.lng]);
+      } else {
+        m.trail = L.polyline([[data.lat, data.lng]], {
+          color: theme.color,
+          weight: 3,
+          opacity: 0.75,
+          dashArray: '5, 6'
+        });
+        if (currentMapCategoryFilter === 'ALL' || currentMapCategoryFilter === catKey) {
+          m.trail.addTo(map);
+        }
+      }
+
+      // Update popup content live if open
+      if (m.marker.getPopup() && m.marker.isPopupOpen()) {
+        m.marker.setPopupContent(buildPopupHtml(key, m, catKey, mandal, unitName, theme));
+      }
     }
 
     updateKPIs();
@@ -1123,16 +1164,18 @@ https://...
       }
     });
 
-    // Update visibility of markers on map
+    // Update visibility of markers & trails on map
     for (const k in activeMobiles) {
       const m = activeMobiles[k];
       const match = (catKey === 'ALL' || m.categoryKey === catKey);
       if (match) {
         if (!map.hasLayer(m.marker)) map.addLayer(m.marker);
         if (!map.hasLayer(m.circle)) map.addLayer(m.circle);
+        if (m.trail && !map.hasLayer(m.trail)) map.addLayer(m.trail);
       } else {
         if (map.hasLayer(m.marker)) map.removeLayer(m.marker);
         if (map.hasLayer(m.circle)) map.removeLayer(m.circle);
+        if (m.trail && map.hasLayer(m.trail)) map.removeLayer(m.trail);
       }
     }
 
@@ -1145,6 +1188,7 @@ https://...
     if (activeMobiles[key]) {
       if (activeMobiles[key].marker) map.removeLayer(activeMobiles[key].marker);
       if (activeMobiles[key].circle) map.removeLayer(activeMobiles[key].circle);
+      if (activeMobiles[key].trail) map.removeLayer(activeMobiles[key].trail);
       delete activeMobiles[key];
     }
     saveOfficersToStorage();
@@ -1176,6 +1220,7 @@ https://...
       if (activeMobiles[k]) {
         if (activeMobiles[k].marker) map.removeLayer(activeMobiles[k].marker);
         if (activeMobiles[k].circle) map.removeLayer(activeMobiles[k].circle);
+        if (activeMobiles[k].trail) map.removeLayer(activeMobiles[k].trail);
         delete activeMobiles[k];
       }
       if (mqttClient && mqttClient.connected) {
