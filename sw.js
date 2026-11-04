@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skl-police-v1';
+const CACHE_NAME = 'skl-police-v2';
 const ASSETS = [
   './',
   './officer.html',

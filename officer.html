@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a1128">
-  <title>రూట్ మొబైల్ ట్రాకర్ | Srikakulam Police Route Tracker</title>
+  <title>ఎన్నికల బందోబస్తు ట్రాకర్ | Srikakulam Police Election Duty Tracker</title>
 
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
@@ -17,8 +17,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <!-- MQTT.js library -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  <!-- Pre-loaded Route Mobiles Data from Excel -->
-  <script src="route_mobiles_data.js?v=20261103"></script>
+  <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
+  <script src="route_mobiles_data.js?v=20261104"></script>
 
   <style>
     :root {
@@ -50,7 +50,7 @@
     }
 
     .container {
-      max-width: 500px;
+      max-width: 520px;
       margin: 0 auto;
       padding: 16px;
       display: flex;
@@ -65,7 +65,7 @@
       gap: 12px;
       padding-bottom: 14px;
       border-bottom: 2px solid var(--police-gold);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .brand-badge {
@@ -90,8 +90,10 @@
     }
 
     .brand-subtitle {
-      font-size: 12px;
+      font-size: 11px;
       color: #93c5fd;
+      line-height: 1.3;
+      margin-top: 2px;
     }
 
     /* Install App Banner (APK / PWA) */
@@ -133,7 +135,7 @@
     }
 
     .card-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--police-gold);
       display: flex;
@@ -172,10 +174,10 @@
     }
 
     .officer-preview-box {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px dashed rgba(255,255,255,0.15);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px dashed rgba(255,255,255,0.18);
       border-radius: 10px;
-      padding: 10px 14px;
+      padding: 12px 14px;
       font-size: 13px;
       margin-bottom: 14px;
     }
@@ -183,7 +185,8 @@
     .preview-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      gap: 10px;
     }
 
     .preview-row:last-child {
@@ -192,7 +195,7 @@
 
     /* Live Tracking Cockpit (When sharing) */
     .cockpit-card {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.18) 100%);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.2) 100%);
       border: 2px solid var(--success);
       border-radius: 14px;
       padding: 16px;
@@ -232,6 +235,7 @@
       font-size: 12px;
       color: #cbd5e1;
       margin-bottom: 12px;
+      line-height: 1.4;
     }
 
     .cockpit-stats {
@@ -265,7 +269,7 @@
       padding: 14px;
       border-radius: 12px;
       border: none;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -347,7 +351,7 @@
     </div>
     <div>
       <div class="brand-title">శ్రీకాకుళం జిల్లా పోలీస్</div>
-      <div class="brand-subtitle">రూట్ మొబైల్ లైవ్ ట్రాకర్ (ఫీల్డ్ ఆఫీసర్ యాప్)</div>
+      <div class="brand-subtitle">Routes • SF • SSF • QRTs • Reserve Parties లైవ్ ట్రాకర్</div>
     </div>
   </header>
 
@@ -369,7 +373,7 @@
       కంట్రోల్ రూమ్‌కు లొకేషన్ వెళ్తోంది
     </div>
     <div class="cockpit-desc" id="cockpit-desc">
-      మీ రూట్ మొబైల్ లొకేషన్ నిరంతరం రియల్-టైమ్‌లో పంపబడుతోంది.
+      మీ లైవ్ లొకేషన్ నిరంతరం రియల్-టైమ్‌లో కంట్రోల్ రూమ్ మ్యాప్‌కు పంపబడుతోంది.
     </div>
 
     <div class="cockpit-stats">
@@ -389,35 +393,57 @@
     </button>
   </div>
 
-  <!-- Officer Registration Form Card -->
+  <!-- Unit Registration Form Card -->
   <div class="card" id="selection-card">
     <div class="card-title">
-      <i class="fa-solid fa-user-shield"></i> మీ వివరాలు నమోదు చేయండి
+      <i class="fa-solid fa-user-shield"></i> మీ డ్యూటీ వివరాలు నమోదు చేయండి
     </div>
 
+    <!-- Category Select -->
     <div class="form-group">
-      <label class="form-label">1. మీ పోలీస్ స్టేషన్ ఎంచుకోండి:</label>
-      <select class="form-select" id="select-ps">
-        <option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>
+      <label class="form-label">1. విభాగం ఎంచుకోండి (Select Category):</label>
+      <select class="form-select" id="select-category">
+        <option value="Route Mobiles">🚗 రూట్ మొబైల్స్ (Route Mobiles)</option>
+        <option value="Striking Forces">🚔 స్ట్రైకింగ్ ఫోర్స్ (Striking Forces - SF)</option>
+        <option value="Special Striking Forces">🛡️ స్పెషల్ స్ట్రైకింగ్ ఫోర్స్ (SSF)</option>
+        <option value="QRTs">⚡ క్విక్ రియాక్షన్ టీమ్స్ (QRTs)</option>
+        <option value="Reserve Parties">🏛️ రిజర్వ్ పార్టీలు (SP / Addl. SP / HQ Reserve)</option>
       </select>
     </div>
 
+    <!-- Mandal / Unit Select -->
     <div class="form-group">
-      <label class="form-label">2. మీ రూట్ మొబైల్ నెంబర్:</label>
-      <select class="form-select" id="select-route">
-        <option value="">-- మొదట PS ఎంచుకోండి --</option>
+      <label class="form-label" id="lbl-mandal">2. మండలం / యూనిట్ ఎంచుకోండి (Select Mandal):</label>
+      <select class="form-select" id="select-mandal">
+        <option value="">-- మండలం ఎంచుకోండి --</option>
+      </select>
+    </div>
+
+    <!-- Team / Route Select -->
+    <div class="form-group">
+      <label class="form-label" id="lbl-unit">3. టీమ్ / రూట్ నెంబర్ ఎంచుకోండి (Select Team / Route):</label>
+      <select class="form-select" id="select-unit">
+        <option value="">-- టీమ్ ఎంచుకోండి --</option>
       </select>
     </div>
 
     <!-- Auto-populated Officer Info -->
     <div class="officer-preview-box">
       <div class="preview-row">
-        <span style="color: var(--text-muted);">ఆఫీసర్:</span>
-        <strong id="disp-officer-name" style="color: #67e8f9;">--</strong>
+        <span style="color: var(--text-muted);">ఇన్-ఛార్జ్ ఆఫీసర్:</span>
+        <strong id="disp-officer-name" style="color: #67e8f9; text-align: right;">--</strong>
       </div>
       <div class="preview-row">
         <span style="color: var(--text-muted);">ఫోన్ నెంబర్:</span>
         <strong id="disp-officer-phone" style="color: #fde047;">--</strong>
+      </div>
+      <div class="preview-row" id="row-hq">
+        <span style="color: var(--text-muted);">హెడ్ క్వార్టర్ / స్టేయింగ్ పాయింట్:</span>
+        <strong id="disp-officer-hq" style="color: #cbd5e1; text-align: right;">--</strong>
+      </div>
+      <div class="preview-row" id="row-supporting" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1);">
+        <span style="color: var(--text-muted); font-size: 11px;">సహాయక సిబ్బంది:</span>
+        <span id="disp-officer-supporting" style="color: #94a3b8; font-size: 11px; text-align: right;">--</span>
       </div>
     </div>
 
@@ -431,7 +457,7 @@
   <div class="card" style="padding: 12px; margin-bottom: 8px;">
     <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
       <span><i class="fa-solid fa-map-location-dot" style="color: #38bdf8;"></i> మీ ప్రస్తుత లొకేషన్ (మీది మాత్రమే):</span>
-      <span style="font-size: 10px; color: #10b981;">● సురక్షితమైన ప్రైవేట్ లింక్</span>
+      <span style="font-size: 10px; color: #10b981;">● ప్రైవేట్ లింక్</span>
     </div>
     <div id="officer-map"></div>
   </div>
@@ -483,16 +509,16 @@
   });
 
   // -------------------------------------------------------------
-  // Data Load: Route Mobiles (271 records)
+  // Data Load: 364 Units (Routes, SF, SSF, QRTs, Reserve Parties)
   // -------------------------------------------------------------
-  let routeMobilesData = window.ROUTE_MOBILES_DATA || [];
+  let allUnitsData = window.ROUTE_MOBILES_DATA || [];
 
-  if (!routeMobilesData || routeMobilesData.length === 0) {
+  if (!allUnitsData || allUnitsData.length === 0) {
     fetch('route_mobiles.json')
       .then(res => res.json())
       .then(data => {
-        routeMobilesData = data;
-        initOfficerSelection();
+        allUnitsData = data;
+        initSelectionHierarchy();
       })
       .catch(err => console.error("Error loading route_mobiles.json:", err));
   }
@@ -504,10 +530,13 @@
   let roomCode = urlParams.get('room') || urlParams.get('group') || 'SrikakulamPolice';
   roomCode = roomCode.replace(/[^a-zA-Z0-9_-]/g, '') || 'SrikakulamPolice';
 
-  const initialParamPS = urlParams.get('ps') || '';
+  const initialParamId = urlParams.get('id') || '';
+  const initialParamCategory = urlParams.get('cat') || '';
+  const initialParamMandal = urlParams.get('mandal') || '';
   const initialParamRoute = urlParams.get('route') || urlParams.get('rm') || '';
 
   const userId = 'officer_' + Math.random().toString(36).substring(2, 9);
+  let currentSelectedUnit = null;
 
   // -------------------------------------------------------------
   // Officer Personal Map (ONLY displays THIS officer, never others!)
@@ -515,7 +544,7 @@
   const officerMap = L.map('officer-map', {
     zoomControl: true,
     attributionControl: false
-  }).setView([18.2969, 83.8968], 13);
+  }).setView([18.2969, 83.8968], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -524,14 +553,14 @@
   let myMarker = null;
   let myCircle = null;
 
-  function updateMyMarkerOnMap(lat, lng, accuracy, name) {
+  function updateMyMarkerOnMap(lat, lng, accuracy, labelText) {
     if (!myMarker) {
       const icon = L.divIcon({
         className: 'my-location-marker',
         html: `
           <div style="position:relative; text-align:center;">
             <div style="background:#10b981; color:#0b141a; font-weight:bold; font-size:11px; padding:2px 8px; border-radius:10px; border:1px solid white; white-space:nowrap; position:absolute; bottom:36px; left:50%; transform:translateX(-50%); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
-              ● మీ లొకేషన్ (You)
+              ● ${labelText || 'మీ లొకేషన్'}
             </div>
             <div style="width:34px; height:34px; border-radius:50%; background:#10b981; border:3px solid white; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.5);">
               <i class="fa-solid fa-car-side" style="font-size:14px;"></i>
@@ -560,7 +589,7 @@
   }
 
   // -------------------------------------------------------------
-  // Real-time MQTT Connection (Publish ONLY, NO subscription to other officers!)
+  // Real-time MQTT Connection (Publish with retain: true)
   // -------------------------------------------------------------
   let mqttClient = null;
 
@@ -593,27 +622,24 @@
 
   initMQTT();
 
-  function makeRouteKey(ps, route) {
-    if (!ps && !route) return null;
-    return (ps + '_' + route).trim().toLowerCase();
-  }
-
   function publishMyLocation(lat, lng, speed, accuracy) {
-    if (!mqttClient || !mqttClient.connected) return;
+    if (!mqttClient || !mqttClient.connected || !currentSelectedUnit) return;
 
-    const ps = document.getElementById('select-ps').value;
-    const route = document.getElementById('select-route').value;
-    const name = document.getElementById('disp-officer-name').innerText;
-    const phone = document.getElementById('disp-officer-phone').innerText;
-    const key = makeRouteKey(ps, route) || userId;
+    const unitKey = currentSelectedUnit.id;
 
     const payload = {
       type: 'location',
       userId: userId,
-      ps: ps,
-      route: route,
-      name: name,
-      phone: phone,
+      unitId: unitKey,
+      category: currentSelectedUnit.category,
+      categoryKey: currentSelectedUnit.categoryKey,
+      mandal: currentSelectedUnit.mandal,
+      route: currentSelectedUnit.route,
+      unitName: currentSelectedUnit.unitName,
+      hq: currentSelectedUnit.hq,
+      officer: currentSelectedUnit.officer,
+      phone: currentSelectedUnit.phone,
+      supporting: currentSelectedUnit.supporting,
       lat: lat,
       lng: lng,
       speed: speed || 0,
@@ -622,20 +648,19 @@
       status: 'live'
     };
 
-    // Publish with retain: true to the specific officer subtopic!
-    // Control room receives this immediately even upon browser refresh!
-    const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${key}`;
-    mqttClient.publish(officerTopic, JSON.stringify(payload), { qos: 1, retain: true });
+    // Retained subtopic for instant refresh in Control Room
+    const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${unitKey}`;
+    mqttClient.publish(unitTopic, JSON.stringify(payload), { qos: 1, retain: true });
 
-    // Also broadcast on general topic for backwards compatibility
+    // General broadcast
     const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
     mqttClient.publish(generalTopic, JSON.stringify(payload), { qos: 0 });
 
-    updateMyMarkerOnMap(lat, lng, accuracy, name);
+    updateMyMarkerOnMap(lat, lng, accuracy, `${currentSelectedUnit.mandal} ${currentSelectedUnit.unitName}`);
   }
 
   // -------------------------------------------------------------
-  // Mobile Keep-Alive: Screen Wake Lock, Silent Audio & Web Worker
+  // Mobile Keep-Alive
   // -------------------------------------------------------------
   let wakeLockSentinel = null;
   let silentAudio = null;
@@ -709,11 +734,8 @@
   let heartbeatInterval = null;
 
   function startTracking() {
-    const ps = document.getElementById('select-ps').value;
-    const route = document.getElementById('select-route').value;
-
-    if (!ps || !route) {
-      alert("దయచేసి మీ పోలీస్ స్టేషన్ మరియు రూట్ నెంబర్ ఎంచుకోండి!");
+    if (!currentSelectedUnit) {
+      alert("దయచేసి మీ విభాగం, మండలం మరియు టీమ్ ఎంచుకోండి!");
       return;
     }
 
@@ -722,16 +744,17 @@
       return;
     }
 
-    // Save selection in localStorage for future convenience
-    localStorage.setItem('skl_last_ps', ps);
-    localStorage.setItem('skl_last_route', route);
+    // Save selection in localStorage
+    localStorage.setItem('skl_last_unit_id', currentSelectedUnit.id);
+    localStorage.setItem('skl_last_category', currentSelectedUnit.category);
+    localStorage.setItem('skl_last_mandal', currentSelectedUnit.mandal);
 
     isTracking = true;
 
     // UI Updates
     document.getElementById('selection-card').style.display = 'none';
     document.getElementById('cockpit-card').style.display = 'block';
-    document.getElementById('cockpit-desc').innerText = `${ps} - ${route} లైవ్ లొకేషన్ కంట్రోల్ రూమ్‌కు పంపబడుతోంది.`;
+    document.getElementById('cockpit-desc').innerText = `[${currentSelectedUnit.category}] ${currentSelectedUnit.mandal} - ${currentSelectedUnit.unitName} లైవ్ లొకేషన్ కంట్రోల్ రూమ్‌కు పంపబడుతోంది.`;
 
     acquireWakeLock();
     startBackgroundAudio();
@@ -792,23 +815,19 @@
     releaseWakeLock();
     stopBackgroundAudio();
 
-    // Inform Control Room that tracking is stopped
-    const ps = document.getElementById('select-ps').value;
-    const route = document.getElementById('select-route').value;
-    const key = makeRouteKey(ps, route);
-    if (mqttClient && mqttClient.connected && key) {
+    if (mqttClient && mqttClient.connected && currentSelectedUnit) {
       const stoppedPayload = {
         type: 'location',
         userId: userId,
-        ps: ps,
-        route: route,
-        name: document.getElementById('disp-officer-name').innerText,
-        phone: document.getElementById('disp-officer-phone').innerText,
+        unitId: currentSelectedUnit.id,
+        category: currentSelectedUnit.category,
+        mandal: currentSelectedUnit.mandal,
+        unitName: currentSelectedUnit.unitName,
         status: 'stopped',
         lastUpdated: Date.now()
       };
-      const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${key}`;
-      mqttClient.publish(officerTopic, JSON.stringify(stoppedPayload), { qos: 1, retain: true });
+      const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${currentSelectedUnit.id}`;
+      mqttClient.publish(unitTopic, JSON.stringify(stoppedPayload), { qos: 1, retain: true });
     }
 
     // UI Reset
@@ -822,88 +841,114 @@
   document.getElementById('btn-stop-track').addEventListener('click', stopTracking);
 
   // -------------------------------------------------------------
-  // Population of Police Stations & Routes
+  // Dynamic 3-Level Selection: Category -> Mandal -> Team
   // -------------------------------------------------------------
-  function initOfficerSelection() {
-    const psSelect = document.getElementById('select-ps');
-    const psSet = new Set();
-    routeMobilesData.forEach(item => {
-      if (item.ps) psSet.add(item.ps.trim());
+  const selCategory = document.getElementById('select-category');
+  const selMandal = document.getElementById('select-mandal');
+  const selUnit = document.getElementById('select-unit');
+
+  function initSelectionHierarchy() {
+    selCategory.addEventListener('change', () => {
+      populateMandals(selCategory.value);
     });
 
-    const sortedPS = Array.from(psSet).sort();
-
-    psSelect.innerHTML = '<option value="">-- పోలీస్ స్టేషన్ సెలెక్ట్ చేయండి --</option>';
-    sortedPS.forEach(ps => {
-      const opt = document.createElement('option');
-      opt.value = ps;
-      opt.innerText = ps;
-      psSelect.appendChild(opt);
+    selMandal.addEventListener('change', () => {
+      populateUnits(selCategory.value, selMandal.value);
     });
 
-    psSelect.addEventListener('change', () => {
-      populateRouteNumbers(psSelect.value);
+    selUnit.addEventListener('change', () => {
+      const selectedId = selUnit.value;
+      const unit = allUnitsData.find(u => u.id === selectedId);
+      renderUnitPreview(unit);
     });
 
-    const savedPS = initialParamPS || localStorage.getItem('skl_last_ps') || '';
-    const savedRoute = initialParamRoute || localStorage.getItem('skl_last_route') || '';
-
-    if (savedPS) {
-      const found = sortedPS.find(p => p.toLowerCase() === savedPS.toLowerCase());
-      if (found) {
-        psSelect.value = found;
-        populateRouteNumbers(found);
-
-        if (savedRoute) {
-          const routeSelect = document.getElementById('select-route');
-          for (let i = 0; i < routeSelect.options.length; i++) {
-            if (routeSelect.options[i].value.toLowerCase() === savedRoute.toLowerCase()) {
-              routeSelect.selectedIndex = i;
-              routeSelect.dispatchEvent(new Event('change'));
-              break;
-            }
-          }
-        }
+    // Check for direct deep-link id parameter
+    if (initialParamId) {
+      const target = allUnitsData.find(u => u.id.toLowerCase() === initialParamId.toLowerCase());
+      if (target) {
+        selCategory.value = target.category;
+        populateMandals(target.category, target.mandal);
+        populateUnits(target.category, target.mandal, target.id);
+        return;
       }
+    }
+
+    // Restore last used selection or default
+    const lastCat = initialParamCategory || localStorage.getItem('skl_last_category') || 'Route Mobiles';
+    const lastMandal = initialParamMandal || localStorage.getItem('skl_last_mandal') || '';
+    const lastUnitId = localStorage.getItem('skl_last_unit_id') || '';
+
+    selCategory.value = lastCat;
+    populateMandals(lastCat, lastMandal);
+    if (lastMandal) {
+      populateUnits(lastCat, lastMandal, lastUnitId);
     }
   }
 
-  function populateRouteNumbers(selectedPS) {
-    const routeSelect = document.getElementById('select-route');
-    routeSelect.innerHTML = '<option value="">-- రూట్ ఎంచుకోండి --</option>';
+  function populateMandals(category, preselectMandal = '') {
+    selMandal.innerHTML = '<option value="">-- మండలం / యూనిట్ ఎంచుకోండి --</option>';
+    selUnit.innerHTML = '<option value="">-- టీమ్ ఎంచుకోండి --</option>';
+    renderUnitPreview(null);
 
-    if (!selectedPS) {
+    const mandalsSet = new Set();
+    allUnitsData.filter(u => u.category === category).forEach(u => {
+      if (u.mandal) mandalsSet.add(u.mandal.trim());
+    });
+
+    const sortedMandals = Array.from(mandalsSet).sort();
+    sortedMandals.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.innerText = m;
+      selMandal.appendChild(opt);
+    });
+
+    if (preselectMandal && sortedMandals.includes(preselectMandal)) {
+      selMandal.value = preselectMandal;
+    } else if (sortedMandals.length > 0) {
+      selMandal.selectedIndex = 1;
+      populateUnits(category, selMandal.value);
+    }
+  }
+
+  function populateUnits(category, mandal, preselectUnitId = '') {
+    selUnit.innerHTML = '<option value="">-- టీమ్ / రూట్ నెంబర్ ఎంచుకోండి --</option>';
+    renderUnitPreview(null);
+
+    if (!category || !mandal) return;
+
+    const units = allUnitsData.filter(u => u.category === category && u.mandal.trim() === mandal);
+
+    units.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.innerText = `${u.unitName} (${u.officer.substring(0, 28)})`;
+      selUnit.appendChild(opt);
+    });
+
+    if (preselectUnitId && units.some(u => u.id === preselectUnitId)) {
+      selUnit.value = preselectUnitId;
+      selUnit.dispatchEvent(new Event('change'));
+    } else if (units.length > 0) {
+      selUnit.selectedIndex = 1;
+      selUnit.dispatchEvent(new Event('change'));
+    }
+  }
+
+  function renderUnitPreview(unit) {
+    currentSelectedUnit = unit;
+    if (!unit) {
       document.getElementById('disp-officer-name').innerText = '--';
       document.getElementById('disp-officer-phone').innerText = '--';
+      document.getElementById('disp-officer-hq').innerText = '--';
+      document.getElementById('disp-officer-supporting').innerText = '--';
       return;
     }
 
-    const psRoutes = routeMobilesData.filter(item => item.ps.trim() === selectedPS);
-
-    psRoutes.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item.route.trim();
-      opt.innerText = `${item.route.trim()} (${item.officer.substring(0, 30)})`;
-      opt.dataset.officer = item.officer;
-      opt.dataset.phone = item.phone;
-      routeSelect.appendChild(opt);
-    });
-
-    routeSelect.addEventListener('change', () => {
-      const opt = routeSelect.selectedOptions[0];
-      if (opt && opt.dataset.officer) {
-        document.getElementById('disp-officer-name').innerText = opt.dataset.officer;
-        document.getElementById('disp-officer-phone').innerText = opt.dataset.phone || 'N/A';
-      } else {
-        document.getElementById('disp-officer-name').innerText = '--';
-        document.getElementById('disp-officer-phone').innerText = '--';
-      }
-    });
-
-    if (psRoutes.length > 0) {
-      routeSelect.selectedIndex = 1;
-      routeSelect.dispatchEvent(new Event('change'));
-    }
+    document.getElementById('disp-officer-name').innerText = unit.officer || '--';
+    document.getElementById('disp-officer-phone').innerText = unit.phone || 'N/A';
+    document.getElementById('disp-officer-hq').innerText = unit.hq || unit.mandal || '--';
+    document.getElementById('disp-officer-supporting').innerText = unit.supporting || 'N/A';
   }
 
   function showToast(msg) {
@@ -925,8 +970,8 @@
     }
   });
 
-  if (routeMobilesData && routeMobilesData.length > 0) {
-    initOfficerSelection();
+  if (allUnitsData && allUnitsData.length > 0) {
+    initSelectionHierarchy();
   }
 </script>
 
