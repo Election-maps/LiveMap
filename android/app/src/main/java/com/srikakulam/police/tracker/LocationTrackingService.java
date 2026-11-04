@@ -292,7 +292,7 @@ public class LocationTrackingService extends Service implements LocationListener
                 ? String.format("%.2f km", totalDistanceMeters / 1000f)
                 : Math.round(totalDistanceMeters) + " m";
 
-        String updateInfo = (isMoving ? kmh + " km/h" : "ఆగి ఉన్నారు") + " • " + distStr + " • అప్‌డేట్స్: " + updatesSent;
+        String updateInfo = (isMoving ? kmh + " km/h (Moving)" : "Stopped") + " • " + distStr + " • Updates: " + updatesSent;
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID, buildNotification(updateInfo));

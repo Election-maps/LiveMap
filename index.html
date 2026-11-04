@@ -1302,10 +1302,10 @@ https://...
         <strong style="color: #0f172a; font-size: 13px;">${data.officer || data.name || 'Officer'}</strong><br/>
         <span style="font-size: 11px; color: #475569;">📞 ఫోన్: <strong>${data.phone || 'N/A'}</strong></span><br/>
         ${data.hq ? `<span style="font-size: 11px; color: #475569;">📍 HQ: ${data.hq}</span><br/>` : ''}
-        <span style="font-size: 11px; color: #475569;">⚡ వేగం: <strong>${kmh} km/h</strong></span><br/>
-        <span style="font-size: 11px; color: #475569;">🎯 GPS ఖచ్చితత్వం: ±${Math.round(data.accuracy || 0)} మీటర్లు</span><br/>
-        ${distText ? `<span style="font-size: 11px; color: #16a34a;">🚶 కదిలిన దూరం: <strong>${distText}</strong></span><br/>` : ''}
-        <span style="font-size: 10px; color: #94a3b8;">🕒 సమయం: ${timeAgo(data.lastUpdated || Date.now())}</span>
+        <span style="font-size: 11px; color: #475569;">⚡ Speed: <strong>${kmh} km/h ${kmh > 0 || data.isMoving ? '<span style="color:#16a34a; font-weight:bold;">(Moving)</span>' : '<span style="color:#d97706; font-weight:bold;">(Stopped)</span>'}</strong></span><br/>
+        <span style="font-size: 11px; color: #475569;">🎯 GPS Accuracy: ±${Math.round(data.accuracy || 0)} m</span><br/>
+        ${distText ? `<span style="font-size: 11px; color: #16a34a;">🚶 Distance: <strong>${distText}</strong></span><br/>` : ''}
+        <span style="font-size: 10px; color: #94a3b8;">🕒 Last Update: ${timeAgo(data.lastUpdated || Date.now())}</span>
         ${data.supporting ? `<div style="font-size: 10px; color: #64748b; margin-top: 4px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">👥 ఫోర్స్: ${data.supporting.substring(0, 60)}</div>` : ''}
         <div style="margin-top: 6px;">
           ${callBtn}

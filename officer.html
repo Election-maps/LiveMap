@@ -472,7 +472,7 @@
     <!-- Live Coordinates & Last Time -->
     <div class="coords-bar">
       <span>📍 <span id="disp-coords">GPS సిగ్నల్ కోసం వెతుకుతోంది...</span></span>
-      <span id="disp-last-time" style="color: #34d399; font-weight: 600;">సిద్ధంగా ఉంది</span>
+      <span id="disp-last-time" style="color: #f59e0b; font-weight: 700;">Stopped</span>
     </div>
 
     <!-- Background Mode Active Notice -->
@@ -1102,7 +1102,7 @@
     const elCoords = document.getElementById('disp-coords');
     const elLastTime = document.getElementById('disp-last-time');
 
-    if (elSpeed) elSpeed.innerText = isMoving ? `${kmh} km/h` : '0 km/h (ఆగి ఉన్నారు)';
+    if (elSpeed) elSpeed.innerText = isMoving ? `${kmh} km/h (Moving)` : '0 km/h (Stopped)';
     if (elAccuracy) elAccuracy.innerText = `±${Math.round(accuracy || 0)} m`;
     if (elDistance) {
       if (totalDistanceTraveled >= 1000) {
@@ -1113,7 +1113,10 @@
     }
     if (elUpdates) elUpdates.innerText = `${updatesCount} సార్లు`;
     if (elCoords) elCoords.innerText = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    if (elLastTime) elLastTime.innerText = isMoving ? 'కదులుతున్నారు' : 'ఆగి ఉన్నారు';
+    if (elLastTime) {
+      elLastTime.innerText = isMoving ? 'Moving' : 'Stopped';
+      elLastTime.style.color = isMoving ? '#34d399' : '#f59e0b';
+    }
 
     // Broadcast update to Control Room with bearing
     publishMyLocation(latitude, longitude, lastSpeed, accuracy, totalDistanceTraveled, lastBearing);
