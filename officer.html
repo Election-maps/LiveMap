@@ -777,11 +777,26 @@
       console.log('Officer connected to Real-time Broker!');
       const syncTopic = `srikakulam_police_tracker/${roomCode}/sync_request`;
       mqttClient.subscribe(syncTopic);
+
+      // Subscribe to Control Room remote commands
+      const controlTopic = `srikakulam_police_tracker/${roomCode}/control_command`;
+      mqttClient.subscribe(controlTopic, { qos: 1 });
     });
 
     mqttClient.on('message', (t, msg) => {
       try {
-        const payload = JSON.parse(msg.toString());
+        const str = msg.toString().trim();
+        if (!str) return;
+        const payload = JSON.parse(str);
+
+        // Control Room force stop command: completely stops tracking
+        if (payload.action === 'clear_all' || (payload.action === 'clear_unit' && currentSelectedUnit && (payload.unitId === currentSelectedUnit.id || payload.unitId === currentSelectedUnit.unitId))) {
+          console.log('Remote stop command received from Control Room:', payload);
+          stopTracking();
+          alert("కంట్రోల్ రూమ్ ద్వారా మీ లైవ్ లొకేషన్ తొలగించబడింది.\n\nమీరు అవసరమైతే మరలా 'లైవ్ లొకేషన్ ప్రారంభించండి' బటన్ నొక్కి షేర్ చేసుకోవాలి.");
+          return;
+        }
+
         if (payload.type === 'sync_request' && isTracking && lastLat !== null && lastLng !== null) {
           publishMyLocation(lastLat, lastLng, lastSpeed, lastAccuracy, totalDistanceTraveled);
         }
@@ -1190,7 +1205,9 @@
         lastUpdated: Date.now()
       };
       const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${currentSelectedUnit.id}`;
-      mqttClient.publish(unitTopic, JSON.stringify(stoppedPayload), { qos: 1, retain: true });
+      // Purge retained message on broker
+      mqttClient.publish(unitTopic, '', { qos: 1, retain: true });
+      mqttClient.publish(unitTopic, JSON.stringify(stoppedPayload), { qos: 0 });
     }
 
     // UI Reset

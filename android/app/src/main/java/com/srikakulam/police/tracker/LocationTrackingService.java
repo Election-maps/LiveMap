@@ -19,6 +19,8 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -99,6 +101,29 @@ public class LocationTrackingService extends Service implements LocationListener
                 String broker = "tcp://broker.emqx.io:1883";
                 String clientId = "skl_native_" + System.currentTimeMillis();
                 mqttClient = new MqttClient(broker, clientId, new MemoryPersistence());
+                mqttClient.setCallback(new MqttCallback() {
+                    @Override
+                    public void connectionLost(Throwable cause) {}
+
+                    @Override
+                    public void messageArrived(String topic, MqttMessage message) {
+                        try {
+                            String str = new String(message.getPayload(), "UTF-8");
+                            JSONObject json = new JSONObject(str);
+                            String action = json.optString("action", "");
+                            String targetUnitId = json.optString("unitId", "");
+                            if ("clear_all".equals(action) || ("clear_unit".equals(action) && unitId != null && unitId.equals(targetUnitId))) {
+                                Log.i(TAG, "Control command force stop received: " + action);
+                                stopTracking();
+                                stopSelf();
+                            }
+                        } catch (Exception ignored) {}
+                    }
+
+                    @Override
+                    public void deliveryComplete(IMqttDeliveryToken token) {}
+                });
+
                 MqttConnectOptions options = new MqttConnectOptions();
                 options.setCleanSession(true);
                 options.setConnectionTimeout(10);
@@ -106,6 +131,9 @@ public class LocationTrackingService extends Service implements LocationListener
                 options.setAutomaticReconnect(true);
                 mqttClient.connect(options);
                 Log.d(TAG, "Native MQTT Connected successfully!");
+
+                String commandTopic = "srikakulam_police_tracker/" + roomCode + "/control_command";
+                mqttClient.subscribe(commandTopic, 1);
             } catch (Exception e) {
                 Log.e(TAG, "MQTT Connection error: " + e.getMessage());
             }
@@ -332,9 +360,14 @@ public class LocationTrackingService extends Service implements LocationListener
                     json.put("lastUpdated", System.currentTimeMillis());
 
                     String unitTopic = "srikakulam_police_tracker/" + roomCode + "/officer/" + unitId;
+                    // Purge retained message on broker
+                    MqttMessage emptyMsg = new MqttMessage(new byte[0]);
+                    emptyMsg.setQos(1);
+                    emptyMsg.setRetained(true);
+                    mqttClient.publish(unitTopic, emptyMsg);
+
                     MqttMessage msg = new MqttMessage(json.toString().getBytes("UTF-8"));
-                    msg.setQos(1);
-                    msg.setRetained(true);
+                    msg.setQos(0);
                     mqttClient.publish(unitTopic, msg);
                     mqttClient.disconnect();
                 }

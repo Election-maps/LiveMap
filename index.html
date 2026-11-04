@@ -1118,13 +1118,44 @@ https://...
     } catch (e) {}
   }
 
+  function recordUnitAsDeleted(key) {
+    try {
+      let tombstone = {};
+      const raw = localStorage.getItem('skl_deleted_units_tombstone');
+      if (raw) tombstone = JSON.parse(raw);
+      tombstone[key] = Date.now();
+      localStorage.setItem('skl_deleted_units_tombstone', JSON.stringify(tombstone));
+    } catch(e) {}
+  }
+
+  function isUnitDeleted(key, msgTimestamp) {
+    try {
+      const allClearedTime = parseInt(localStorage.getItem('skl_all_cleared_timestamp') || '0', 10);
+      if (allClearedTime && (msgTimestamp || 0) <= allClearedTime) {
+        return true;
+      }
+      const raw = localStorage.getItem('skl_deleted_units_tombstone');
+      if (raw) {
+        const tombstone = JSON.parse(raw);
+        if (tombstone[key] && (msgTimestamp || 0) <= tombstone[key]) {
+          return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
   function restoreOfficersFromStorage() {
     try {
+      const allClearedTime = parseInt(localStorage.getItem('skl_all_cleared_timestamp') || '0', 10);
       const raw = localStorage.getItem('skl_persisted_officers');
       if (raw) {
         const data = JSON.parse(raw);
         for (const k in data) {
-          if (Date.now() - (data[k].lastUpdated || 0) < 24 * 3600 * 1000) {
+          const itemTime = data[k].lastUpdated || 0;
+          if (allClearedTime && itemTime <= allClearedTime) continue;
+          if (isUnitDeleted(k, itemTime)) continue;
+          if (Date.now() - itemTime < 12 * 3600 * 1000) {
             updateMemberOnMap(k, data[k], false);
           }
         }
@@ -1526,59 +1557,106 @@ https://...
     }
   };
 
-  // Clear Single Officer
+  // Clear Single Officer (Permanently deletes and stops tracking on phone)
   window.clearSingleOfficer = function(key) {
-    if (!confirm('ఈ లొకేషన్ మార్కర్‌ను మ్యాప్ నుండి తొలగించాలా?\n(Do you want to remove this location?)')) return;
+    if (!confirm('ఈ లొకేషన్ మార్కర్‌ను మ్యాప్ నుండి పూర్తిగా తొలగించాలా?\nఆఫీసర్ మొబైల్‌లో కూడా లైవ్ ట్రాకింగ్ ఆగిపోతుంది. బ్రౌజర్ రీఫ్రెష్ చేసినా ఈ లొకేషన్ రాదు.\nసిబ్బంది మళ్లీ లొకేషన్ షేర్ చేసుకుంటేనే మ్యాప్‌లో కనిపిస్తుంది.\n(Permanently delete this officer? Remote tracking will stop.)')) return;
+
     if (activeMobiles[key]) {
       if (activeMobiles[key].marker) map.removeLayer(activeMobiles[key].marker);
       if (activeMobiles[key].circle) map.removeLayer(activeMobiles[key].circle);
       if (activeMobiles[key].trail) map.removeLayer(activeMobiles[key].trail);
       delete activeMobiles[key];
     }
+
+    // Record tombstone timestamp so stale/cached messages are ignored on refresh
+    recordUnitAsDeleted(key);
     saveOfficersToStorage();
+
     if (mqttClient && mqttClient.connected) {
       try {
+        const controlTopic = `srikakulam_police_tracker/${roomCode}/control_command`;
+        // 1. Send remote stop command to the officer's phone
+        mqttClient.publish(controlTopic, JSON.stringify({
+          action: 'clear_unit',
+          unitId: key,
+          timestamp: Date.now()
+        }), { qos: 1 });
+
+        // 2. Permanently delete retained message on MQTT broker with empty payload
         const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${key}`;
-        mqttClient.publish(officerTopic, JSON.stringify({ status: 'stopped', lastUpdated: Date.now() }), { qos: 1, retain: true });
-      } catch(e) {}
+        mqttClient.publish(officerTopic, '', { qos: 1, retain: true });
+
+        // 3. Broadcast stopped state to general topic
+        mqttClient.publish(topic, JSON.stringify({
+          type: 'location',
+          unitId: key,
+          status: 'stopped',
+          lastUpdated: Date.now()
+        }), { qos: 0 });
+      } catch(e) {
+        console.error('Error broadcasting clear:', e);
+      }
     }
+
     updateKPIs();
+    populateMapTeamDropdown();
     renderDirectory();
-    showToast('లొకేషన్ తొలగించబడింది.');
+    showToast('లొకేషన్ పూర్తిగా తొలగించబడింది. ఆఫీసర్ ఫోన్‌లో ట్రాకింగ్ ఆపబడింది.');
   };
 
-  // Clear All Officers
+  // Clear All Officers (Permanently deletes all and stops all phones)
   window.clearAllOfficerLocations = function() {
-    if (!confirm('మ్యాప్‌లో ఉన్న అన్ని పాత లైవ్ లొకేషన్లను క్లియర్ చేయాలా?\n(Do you want to clear all existing live locations from the map?)')) return;
+    if (!confirm('మ్యాప్‌లో ఉన్న అన్ని లైవ్ లొకేషన్లను పూర్తిగా తొలగించాలా?\nఅన్ని మొబైల్స్‌లో ట్రాకింగ్ ఆగిపోతుంది. బ్రౌజర్ రీఫ్రెష్ చేసినా ఏ లొకేషన్ రాదు.\nసిబ్బంది అందరూ మళ్లీ లొకేషన్ షేర్ చేయాల్సి ఉంటుంది.\n(Permanently clear ALL officers? Tracking will stop on all phones.)')) return;
 
-    const keysToRemove = new Set(Object.keys(activeMobiles));
+    const allKeys = new Set(Object.keys(activeMobiles));
     try {
       const raw = localStorage.getItem('skl_persisted_officers');
       if (raw) {
         const data = JSON.parse(raw);
-        for (const k in data) keysToRemove.add(k);
+        for (const k in data) allKeys.add(k);
       }
     } catch(e) {}
 
-    keysToRemove.forEach(k => {
-      if (activeMobiles[k]) {
-        if (activeMobiles[k].marker) map.removeLayer(activeMobiles[k].marker);
-        if (activeMobiles[k].circle) map.removeLayer(activeMobiles[k].circle);
-        if (activeMobiles[k].trail) map.removeLayer(activeMobiles[k].trail);
-        delete activeMobiles[k];
-      }
-      if (mqttClient && mqttClient.connected) {
-        try {
-          const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${k}`;
-          mqttClient.publish(officerTopic, JSON.stringify({ status: 'stopped', lastUpdated: Date.now() }), { qos: 1, retain: true });
-        } catch(e) {}
-      }
+    allUnitsData.forEach(u => {
+      if (u.id) allKeys.add(u.id);
     });
 
+    for (const k in activeMobiles) {
+      if (activeMobiles[k].marker) map.removeLayer(activeMobiles[k].marker);
+      if (activeMobiles[k].circle) map.removeLayer(activeMobiles[k].circle);
+      if (activeMobiles[k].trail) map.removeLayer(activeMobiles[k].trail);
+      delete activeMobiles[k];
+    }
+
+    // Set global clear timestamp so refresh ignores any old retained messages
+    const now = Date.now();
+    localStorage.setItem('skl_all_cleared_timestamp', now.toString());
     localStorage.removeItem('skl_persisted_officers');
+    localStorage.removeItem('skl_deleted_units_tombstone');
+
+    if (mqttClient && mqttClient.connected) {
+      try {
+        const controlTopic = `srikakulam_police_tracker/${roomCode}/control_command`;
+        // 1. Send remote stop command to ALL phones
+        mqttClient.publish(controlTopic, JSON.stringify({
+          action: 'clear_all',
+          timestamp: now
+        }), { qos: 1 });
+
+        // 2. Permanently purge all retained unit messages from broker
+        allKeys.forEach(k => {
+          const officerTopic = `srikakulam_police_tracker/${roomCode}/officer/${k}`;
+          mqttClient.publish(officerTopic, '', { qos: 1, retain: true });
+        });
+      } catch(e) {
+        console.error('Error during clear all:', e);
+      }
+    }
+
     updateKPIs();
+    populateMapTeamDropdown();
     renderDirectory();
-    showToast('అన్ని పాత లొకేషన్లు క్లియర్ చేయబడ్డాయి! కొత్త లొకేషన్స్ తీసుకోవడానికి సిద్ధం.');
+    showToast('అన్నీ పూర్తిగా తొలగించబడ్డాయి. రిఫ్రెష్ చేసినా రావు. వారు మళ్లీ షేర్ చేయాలి.');
   };
 
   // Refresh icons every 5 seconds
@@ -1623,9 +1701,60 @@ https://...
 
     mqttClient.on('message', (t, message) => {
       try {
-        const payload = JSON.parse(message.toString());
+        const str = message.toString().trim();
+        // If empty payload, the retained message on broker was permanently purged!
+        if (!str) {
+          const parts = t.split('/');
+          const unitKey = parts[parts.length - 1];
+          if (activeMobiles[unitKey]) {
+            if (activeMobiles[unitKey].marker) map.removeLayer(activeMobiles[unitKey].marker);
+            if (activeMobiles[unitKey].circle) map.removeLayer(activeMobiles[unitKey].circle);
+            if (activeMobiles[unitKey].trail) map.removeLayer(activeMobiles[unitKey].trail);
+            delete activeMobiles[unitKey];
+            updateKPIs();
+            populateMapTeamDropdown();
+          }
+          return;
+        }
+
+        const payload = JSON.parse(str);
+
+        // Check if stopped or clear command
+        if (payload.status === 'stopped' || payload.action === 'clear_unit' || payload.action === 'clear_all') {
+          const key = payload.unitId || (payload.data && payload.data.unitId);
+          if (key && activeMobiles[key]) {
+            if (activeMobiles[key].marker) map.removeLayer(activeMobiles[key].marker);
+            if (activeMobiles[key].circle) map.removeLayer(activeMobiles[key].circle);
+            if (activeMobiles[key].trail) map.removeLayer(activeMobiles[key].trail);
+            delete activeMobiles[key];
+            updateKPIs();
+            populateMapTeamDropdown();
+            saveOfficersToStorage();
+          }
+          return;
+        }
+
+        const key = payload.unitId || ((payload.mandal || payload.ps) + '_' + (payload.route || payload.unitName)).trim().toLowerCase().replace(/\s+/g, '_');
+
+        // Check if unit was deleted in control room
+        if (isUnitDeleted(key, payload.lastUpdated)) {
+          // Unit was deleted in control room; drop stale update
+          return;
+        }
+
+        // If officer started a genuine new session after deletion, clear from tombstone
+        try {
+          const raw = localStorage.getItem('skl_deleted_units_tombstone');
+          if (raw) {
+            const tombstone = JSON.parse(raw);
+            if (tombstone[key] && (payload.lastUpdated || 0) > tombstone[key]) {
+              delete tombstone[key];
+              localStorage.setItem('skl_deleted_units_tombstone', JSON.stringify(tombstone));
+            }
+          }
+        } catch(e) {}
+
         if (payload.userId && payload.userId !== userId) {
-          const key = payload.unitId || ((payload.mandal || payload.ps) + '_' + (payload.route || payload.unitName)).trim().toLowerCase().replace(/\s+/g, '_');
           updateMemberOnMap(key, payload);
         }
       } catch (e) {
