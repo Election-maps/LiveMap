@@ -409,14 +409,28 @@
     </div>
   </header>
 
+  <!-- Direct Native APK Download Banner -->
+  <div style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid #3b82f6; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);">
+    <div>
+      <div style="font-weight: 700; color: #93c5fd; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+        <i class="fa-brands fa-android" style="color: #34d399; font-size: 18px;"></i>
+        <span>పోలీస్ ఆండ్రాయిడ్ APK యాప్</span>
+      </div>
+      <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">యాప్ క్లోజ్ చేసినా బ్యాక్‌గ్రౌండ్‌లో లొకేషన్ వెళ్తుంది</div>
+    </div>
+    <a href="SrikakulamPoliceTracker.apk" download="SrikakulamPoliceTracker.apk" style="text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; color: white; background: #2563eb; display: flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);">
+      <i class="fa-solid fa-download"></i> APK ఫైల్
+    </a>
+  </div>
+
   <!-- PWA Install Banner -->
   <div class="install-banner" id="pwa-install-banner">
     <div style="font-size: 12px;">
-      <strong>📲 పోలీస్ యాప్ ఇన్‌స్టాల్ చేసుకోండి</strong><br/>
-      <span style="color: var(--text-muted); font-size: 11px;">హోమ్ స్క్రీన్‌పై యాప్ లాగా పనిచేస్తుంది</span>
+      <strong>📲 హోమ్ స్క్రీన్‌కు చేర్చుకోండి</strong><br/>
+      <span style="color: var(--text-muted); font-size: 11px;">వెబ్ యాప్ లాగా పనిచేస్తుంది</span>
     </div>
     <button class="btn-install" id="btn-pwa-install">
-      <i class="fa-solid fa-download"></i> ఇన్‌స్టాల్
+      <i class="fa-solid fa-plus"></i> యాడ్ చేయి
     </button>
   </div>
 
@@ -1024,6 +1038,23 @@
     startBackgroundAudio();
     if (bgWorker) bgWorker.postMessage('start');
 
+    // Bridge with Native Android App Foreground Service if running inside APK
+    if (window.AndroidApp && typeof window.AndroidApp.startNativeTracking === 'function') {
+      try {
+        window.AndroidApp.startNativeTracking(
+          currentSelectedUnit.id,
+          currentSelectedUnit.category,
+          currentSelectedUnit.mandal,
+          currentSelectedUnit.unitName,
+          currentSelectedUnit.officer,
+          currentSelectedUnit.phone,
+          roomCode
+        );
+      } catch (err) {
+        console.warn('Native start tracking error:', err);
+      }
+    }
+
     // 1. Immediate initial GPS fix
     navigator.geolocation.getCurrentPosition(
       (pos) => handleNewGpsFix(pos, 'init'),
@@ -1102,6 +1133,13 @@
 
     releaseWakeLock();
     stopBackgroundAudio();
+
+    // Stop Native Android App Foreground Service if running inside APK
+    if (window.AndroidApp && typeof window.AndroidApp.stopNativeTracking === 'function') {
+      try {
+        window.AndroidApp.stopNativeTracking();
+      } catch (err) {}
+    }
 
     if (mqttClient && mqttClient.connected && currentSelectedUnit) {
       const stoppedPayload = {
