@@ -233,29 +233,37 @@ public class LocationTrackingService extends Service implements LocationListener
         float speed = location.getSpeed();
         float accuracy = location.getAccuracy();
 
+        if (accuracy > 35.0f) return; // filter noisy inaccurate GPS fixes
+
+        boolean isMoving = false;
         if (lastLat != 0 && lastLng != 0) {
             float[] results = new float[1];
             Location.distanceBetween(lastLat, lastLng, lat, lng, results);
-            if (results[0] >= 1.5) {
+            // Ignore stationary GPS noise (< 14 meters when speed is low)
+            if (results[0] >= 14.0f || (speed >= 0.8f && results[0] >= 8.0f)) {
                 totalDistanceMeters += results[0];
+                lastLat = lat;
+                lastLng = lng;
+                isMoving = true;
             }
+        } else {
+            lastLat = lat;
+            lastLng = lng;
         }
-        lastLat = lat;
-        lastLng = lng;
         updatesSent++;
 
-        int kmh = speed > 0 ? Math.round(speed * 3.6f) : 0;
+        int kmh = isMoving ? Math.round(speed * 3.6f) : 0;
         String distStr = totalDistanceMeters >= 1000
                 ? String.format("%.2f km", totalDistanceMeters / 1000f)
                 : Math.round(totalDistanceMeters) + " m";
 
-        String updateInfo = kmh + " km/h • " + distStr + " • అప్‌డేట్స్: " + updatesSent;
+        String updateInfo = (isMoving ? kmh + " km/h" : "ఆగి ఉన్నారు") + " • " + distStr + " • అప్‌డేట్స్: " + updatesSent;
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID, buildNotification(updateInfo));
         }
 
-        publishLocation(lat, lng, speed, accuracy);
+        publishLocation(lat, lng, isMoving ? speed : 0, accuracy);
     }
 
     private void publishLocation(double lat, double lng, float speed, float accuracy) {

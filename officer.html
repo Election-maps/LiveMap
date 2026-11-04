@@ -951,6 +951,8 @@
   let isTracking = false;
   let lastLat = null;
   let lastLng = null;
+  let anchorLat = null;
+  let anchorLng = null;
   let lastSpeed = 0;
   let lastAccuracy = 10;
   let totalDistanceTraveled = 0;
@@ -963,25 +965,41 @@
     const now = Date.now();
     lastGpsTimestamp = now;
 
+    // Filter weak / erratic GPS fixes (> 35m accuracy)
+    if (accuracy && accuracy > 35) {
+      return;
+    }
+
+    let isMoving = false;
     let stepDist = 0;
-    if (lastLat !== null && lastLng !== null) {
-      stepDist = calculateDistanceMeters(lastLat, lastLng, latitude, longitude);
-      // Accumulate real movement (filter noise below 1.5m)
-      if (stepDist >= 2.0) {
+
+    if (anchorLat === null || anchorLng === null) {
+      anchorLat = latitude;
+      anchorLng = longitude;
+      lastLat = latitude;
+      lastLng = longitude;
+    } else {
+      stepDist = calculateDistanceMeters(anchorLat, anchorLng, latitude, longitude);
+      const measuredSpeed = speed || 0;
+
+      // ANTI-JITTER FILTER: Only record movement if moved >= 14m (or >= 8m with speed >= 3 km/h)
+      // When person is sitting/standing still, GPS drift is ignored and NO trail is added!
+      if (stepDist >= 14.0 || (measuredSpeed >= 0.8 && stepDist >= 8.0)) {
+        isMoving = true;
         totalDistanceTraveled += stepDist;
+        anchorLat = latitude;
+        anchorLng = longitude;
         movementTrail.addLatLng([latitude, longitude]);
       }
-    } else {
-      movementTrail.addLatLng([latitude, longitude]);
     }
 
     lastLat = latitude;
     lastLng = longitude;
-    lastSpeed = speed || 0;
+    lastSpeed = isMoving ? (speed || (stepDist / 3.0)) : 0;
     lastAccuracy = accuracy || 10;
     updatesCount++;
 
-    const kmh = speed ? Math.round(speed * 3.6) : (stepDist > 5 ? Math.round(stepDist * 1.8) : 0);
+    const kmh = isMoving ? Math.round(lastSpeed * 3.6) : 0;
 
     // Update Cockpit UI elements
     const elSpeed = document.getElementById('disp-speed');
@@ -991,7 +1009,7 @@
     const elCoords = document.getElementById('disp-coords');
     const elLastTime = document.getElementById('disp-last-time');
 
-    if (elSpeed) elSpeed.innerText = `${kmh} km/h`;
+    if (elSpeed) elSpeed.innerText = isMoving ? `${kmh} km/h` : '0 km/h (ఆగి ఉన్నారు)';
     if (elAccuracy) elAccuracy.innerText = `±${Math.round(accuracy || 0)} m`;
     if (elDistance) {
       if (totalDistanceTraveled >= 1000) {
@@ -1002,10 +1020,10 @@
     }
     if (elUpdates) elUpdates.innerText = `${updatesCount} సార్లు`;
     if (elCoords) elCoords.innerText = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    if (elLastTime) elLastTime.innerText = 'ఇప్పుడే అప్‌డేట్';
+    if (elLastTime) elLastTime.innerText = isMoving ? 'కదులుతున్నారు' : 'ఆగి ఉన్నారు';
 
     // Broadcast update to Control Room
-    publishMyLocation(latitude, longitude, speed, accuracy, totalDistanceTraveled);
+    publishMyLocation(latitude, longitude, lastSpeed, accuracy, totalDistanceTraveled);
   }
 
   function startTracking() {
@@ -1026,6 +1044,8 @@
 
     isTracking = true;
     totalDistanceTraveled = 0;
+    anchorLat = null;
+    anchorLng = null;
     updatesCount = 0;
     movementTrail.setLatLngs([]);
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="te">
 <head>
   <meta charset="UTF-8">
@@ -1126,17 +1126,6 @@ https://...
         circle.addTo(map);
       }
 
-      // Movement trail polyline
-      const trail = L.polyline([[data.lat, data.lng]], {
-        color: theme.color,
-        weight: 3,
-        opacity: 0.75,
-        dashArray: '5, 6'
-      });
-      if (matchesFilter) {
-        trail.addTo(map);
-      }
-
       marker.bindPopup(buildPopupHtml(key, data, catKey, mandal, unitName, theme));
 
       activeMobiles[key] = {
@@ -1144,7 +1133,9 @@ https://...
         categoryKey: catKey,
         marker: marker,
         circle: circle,
-        trail: trail
+        trail: null,
+        lastTrailLat: data.lat,
+        lastTrailLng: data.lng
       };
 
       if (shouldToast) {
@@ -1169,15 +1160,34 @@ https://...
       m.circle.setLatLng([data.lat, data.lng]);
       m.circle.setRadius(data.accuracy || 20);
 
-      if (!m.trail) {
-        m.trail = L.polyline([[data.lat, data.lng]], {
-          color: theme.color,
-          weight: 3,
-          opacity: 0.75,
-          dashArray: '5, 6'
-        });
-      } else {
-        m.trail.addLatLng([data.lat, data.lng]);
+      // ANTI-JITTER FILTER: Only draw trail if officer has GENUINELY moved >= 15 meters!
+      // This stops trails from appearing when the person is stationary or sitting still.
+      if (!m.lastTrailLat || !m.lastTrailLng) {
+        m.lastTrailLat = data.lat;
+        m.lastTrailLng = data.lng;
+      }
+
+      const distFromLastTrail = map.distance([m.lastTrailLat, m.lastTrailLng], [data.lat, data.lng]);
+      const kmh = data.speed ? Math.round(data.speed * 3.6) : 0;
+
+      if (distFromLastTrail >= 15 || (kmh >= 3 && distFromLastTrail >= 10)) {
+        if (!m.trail) {
+          m.trail = L.polyline([[m.lastTrailLat, m.lastTrailLng], [data.lat, data.lng]], {
+            color: theme.color,
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 6'
+          });
+          const catMatch = (currentMapCategoryFilter === 'ALL' || currentMapCategoryFilter === catKey);
+          const mandalMatch = (currentMapMandalFilter === 'ALL' || (mandal && mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase()));
+          if (catMatch && mandalMatch) {
+            m.trail.addTo(map);
+          }
+        } else {
+          m.trail.addLatLng([data.lat, data.lng]);
+        }
+        m.lastTrailLat = data.lat;
+        m.lastTrailLng = data.lng;
       }
 
       const catMatch = (currentMapCategoryFilter === 'ALL' || currentMapCategoryFilter === catKey);
