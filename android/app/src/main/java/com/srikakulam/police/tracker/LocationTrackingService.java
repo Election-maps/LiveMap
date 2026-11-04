@@ -233,16 +233,16 @@ public class LocationTrackingService extends Service implements LocationListener
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     locationManager.requestLocationUpdates(
                             LocationManager.GPS_PROVIDER,
-                            2500L,
-                            1.5f,
+                            1500L,
+                            1.0f,
                             this
                     );
                 }
                 if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                     locationManager.requestLocationUpdates(
                             LocationManager.NETWORK_PROVIDER,
-                            3000L,
-                            2.0f,
+                            2000L,
+                            1.5f,
                             this
                     );
                 }
@@ -263,12 +263,16 @@ public class LocationTrackingService extends Service implements LocationListener
 
         if (accuracy > 35.0f) return; // filter noisy inaccurate GPS fixes
 
+        float bearing = location.hasBearing() ? location.getBearing() : 0.0f;
         boolean isMoving = false;
         if (lastLat != 0 && lastLng != 0) {
-            float[] results = new float[1];
+            float[] results = new float[2];
             Location.distanceBetween(lastLat, lastLng, lat, lng, results);
-            // Ignore stationary GPS noise (< 14 meters when speed is low)
-            if (results[0] >= 14.0f || (speed >= 0.8f && results[0] >= 8.0f)) {
+            if (!location.hasBearing() && results.length > 1) {
+                bearing = (results[1] + 360.0f) % 360.0f;
+            }
+            // Responsive movement detection: >= 2.0m when moving or >= 3.5m
+            if ((speed >= 0.4f && results[0] >= 2.0f) || results[0] >= 3.5f) {
                 totalDistanceMeters += results[0];
                 lastLat = lat;
                 lastLng = lng;
@@ -291,10 +295,10 @@ public class LocationTrackingService extends Service implements LocationListener
             nm.notify(NOTIFICATION_ID, buildNotification(updateInfo));
         }
 
-        publishLocation(lat, lng, isMoving ? speed : 0, accuracy);
+        publishLocation(lat, lng, isMoving ? speed : 0, accuracy, bearing, isMoving);
     }
 
-    private void publishLocation(double lat, double lng, float speed, float accuracy) {
+    private void publishLocation(double lat, double lng, float speed, float accuracy, float bearing, boolean isMoving) {
         new Thread(() -> {
             try {
                 if (mqttClient == null || !mqttClient.isConnected()) {
@@ -316,6 +320,8 @@ public class LocationTrackingService extends Service implements LocationListener
                     json.put("lng", lng);
                     json.put("speed", speed);
                     json.put("accuracy", accuracy);
+                    json.put("bearing", Math.round(bearing));
+                    json.put("isMoving", isMoving);
                     json.put("distanceTraveled", Math.round(totalDistanceMeters));
                     json.put("updatesCount", updatesSent);
                     json.put("lastUpdated", System.currentTimeMillis());

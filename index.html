@@ -423,60 +423,91 @@
       cursor: pointer;
     }
 
-    /* Smooth Marker Movement Animation ("ekkada vunna icon kuda move avvali") */
-    .leaflet-marker-icon.custom-police-marker,
-    .custom-police-marker,
-    .leaflet-marker-icon {
-      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
-    }
-
-    /* Custom Leaflet Police Markers */
+    /* Dynamic Police Markers & 60fps Smooth Vehicle Rendering */
     .police-marker-container {
       position: relative;
       text-align: center;
-      transition: transform 0.4s ease;
     }
 
     .police-marker-label {
       background: rgba(11, 26, 46, 0.95);
       color: #fff;
-      padding: 2px 7px;
-      border-radius: 10px;
+      padding: 3px 8px;
+      border-radius: 12px;
       font-size: 10px;
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.65);
       border: 1px solid var(--police-gold);
       position: absolute;
-      bottom: 36px;
+      bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .speed-pill {
+      background: rgba(56, 189, 248, 0.25);
+      color: #38bdf8;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: 800;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .vehicle-pointer-wrapper {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center center;
     }
 
     .police-marker-pin {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: 2px solid #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 14px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.6);
-      transition: transform 0.4s ease;
+      font-size: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      transition: transform 0.3s ease;
     }
 
     .police-marker-pulse {
       position: absolute;
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       top: -6px;
       left: -6px;
       border-radius: 50%;
       border: 3px solid #10b981;
       animation: police-pulse-anim 1.8s infinite;
       pointer-events: none;
+    }
+
+    @keyframes strobe-anim-red {
+      0%, 100% { fill: #ef4444; opacity: 1; filter: drop-shadow(0 0 6px #ef4444); }
+      50% { fill: #ffffff; opacity: 0.3; filter: none; }
+    }
+    @keyframes strobe-anim-blue {
+      0%, 100% { fill: #ffffff; opacity: 0.3; filter: none; }
+      50% { fill: #38bdf8; opacity: 1; filter: drop-shadow(0 0 6px #38bdf8); }
+    }
+    .police-strobe-l {
+      animation: strobe-anim-red 0.5s infinite alternate;
+    }
+    .police-strobe-r {
+      animation: strobe-anim-blue 0.5s infinite alternate;
     }
 
     @keyframes police-pulse-anim {
@@ -1065,17 +1096,42 @@ https://...
     }
   }
 
-  function createPoliceMarkerIcon(catKey, mandal, unitName, isLive = true) {
+  function createPoliceMarkerIcon(catKey, mandal, unitName, isLive = true, isMoving = false, bearing = 0, speedKmh = 0) {
     const theme = getCategoryTheme(catKey);
     const badgeText = `${catKey || 'RM'}: ${unitName || mandal}`;
     const opacity = isLive ? '1' : '0.85';
 
+    if (isLive && isMoving && speedKmh >= 2) {
+      // Dynamic Top-Down Police Navigation Cruiser Icon
+      return L.divIcon({
+        className: 'custom-police-marker',
+        html: `
+          <div class="police-marker-container" style="opacity: ${opacity};">
+            <div class="police-marker-label" style="border-color: ${theme.color};">
+              <span style="color:#10b981;">● </span>${badgeText} <span class="speed-pill">${speedKmh} km/h</span>
+            </div>
+            <div class="vehicle-pointer-wrapper" style="transform: rotate(${Math.round(bearing)}deg);">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="filter: drop-shadow(0 3px 8px rgba(0,0,0,0.65));">
+                <circle cx="20" cy="20" r="18" fill="rgba(15, 23, 42, 0.9)" stroke="#ffffff" stroke-width="2"/>
+                <path d="M20 5L30 28L20 23L10 28L20 5Z" fill="${theme.color}" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+                <rect x="15" y="17" width="4" height="3" rx="1" fill="#ef4444" class="police-strobe-l"/>
+                <rect x="21" y="17" width="4" height="3" rx="1" fill="#3b82f6" class="police-strobe-r"/>
+              </svg>
+            </div>
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+    }
+
+    // Stationary Police Badge Pin
     return L.divIcon({
       className: 'custom-police-marker',
       html: `
         <div class="police-marker-container" style="opacity: ${opacity};">
           <div class="police-marker-label" style="border-color: ${theme.color};">
-            ${isLive ? '<span style="color:#10b981;">● </span>' : ''}${badgeText}
+            ${isLive ? '<span style="color:#10b981;">● </span>' : ''}${badgeText} ${isLive ? '<span style="color:#94a3b8; font-size:9px; font-weight:normal;">(ఆగారు)</span>' : ''}
           </div>
           ${isLive ? '<div class="police-marker-pulse"></div>' : ''}
           <div class="police-marker-pin" style="background: ${theme.color};">
@@ -1083,9 +1139,72 @@ https://...
           </div>
         </div>
       `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17]
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
     });
+  }
+
+  // 60 FPS Native Smooth Marker Interpolator (Silky Smooth Movement)
+  function smoothGlideMarker(m, targetLat, targetLng, targetBearing, duration) {
+    if (!m || !m.marker) return;
+
+    if (!m.currentLat || !m.currentLng) {
+      m.currentLat = targetLat;
+      m.currentLng = targetLng;
+      m.currentBearing = targetBearing || 0;
+      m.marker.setLatLng([targetLat, targetLng]);
+      m.circle.setLatLng([targetLat, targetLng]);
+      return;
+    }
+
+    const dist = map.distance([m.currentLat, m.currentLng], [targetLat, targetLng]);
+    if (dist < 0.25) return; // negligible micro-drift
+
+    // Teleport if distance is enormous (> 1500m)
+    if (dist > 1500) {
+      m.currentLat = targetLat;
+      m.currentLng = targetLng;
+      m.marker.setLatLng([targetLat, targetLng]);
+      m.circle.setLatLng([targetLat, targetLng]);
+      return;
+    }
+
+    if (m.glideAnimId) {
+      cancelAnimationFrame(m.glideAnimId);
+      m.glideAnimId = null;
+    }
+
+    const startLat = m.currentLat;
+    const startLng = m.currentLng;
+    const startTime = performance.now();
+    const animDuration = Math.max(1000, Math.min(2600, duration || 1800));
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1.0, elapsed / animDuration);
+
+      // Smooth Ease-out interpolation
+      const ease = 1 - Math.pow(1 - progress, 2);
+      const curLat = startLat + (targetLat - startLat) * ease;
+      const curLng = startLng + (targetLng - startLng) * ease;
+
+      m.currentLat = curLat;
+      m.currentLng = curLng;
+      m.marker.setLatLng([curLat, curLng]);
+      m.circle.setLatLng([curLat, curLng]);
+
+      if (currentlyFollowedOfficerKey === m.unitId) {
+        map.panTo([curLat, curLng], { animate: false });
+      }
+
+      if (progress < 1.0) {
+        m.glideAnimId = requestAnimationFrame(step);
+      } else {
+        m.glideAnimId = null;
+      }
+    }
+
+    m.glideAnimId = requestAnimationFrame(step);
   }
 
   // LocalStorage Persistence across browser refresh
@@ -1260,60 +1379,66 @@ https://...
       m.officer = data.officer || data.name || m.officer;
       m.phone = data.phone || m.phone;
 
-      const prevLat = m.lat;
-      const prevLng = m.lng;
+      const prevLat = m.currentLat || m.lat;
+      const prevLng = m.currentLng || m.lng;
+      const moveDist = map.distance([prevLat, prevLng], [data.lat, data.lng]);
+
+      // Calculate bearing angle
+      let bearing = m.bearing || 0;
+      if (data.bearing !== undefined && data.bearing !== null) {
+        bearing = data.bearing;
+      } else if (moveDist >= 1.5) {
+        bearing = calculateBearing(prevLat, prevLng, data.lat, data.lng);
+      }
+      m.bearing = bearing;
+
+      const kmh = data.speed ? Math.round(data.speed * 3.6) : (moveDist >= 1.5 ? Math.round((moveDist / 2.0) * 3.6) : 0);
+      const isMoving = kmh >= 2 || moveDist >= 2.0;
+      m.isMoving = isMoving;
+
       m.lat = data.lat;
       m.lng = data.lng;
-      m.speed = data.speed;
-      m.accuracy = data.accuracy;
+      m.speed = data.speed || (isMoving ? kmh / 3.6 : 0);
+      m.accuracy = data.accuracy || m.accuracy || 10;
       m.distanceTraveled = data.distanceTraveled || m.distanceTraveled || 0;
       m.lastUpdated = data.lastUpdated || Date.now();
 
-      // Smooth Leaflet Marker movement (CSS transition provides smooth glide!)
-      m.marker.setLatLng([data.lat, data.lng]);
-      if (m.currentIsLive !== status.isLive) {
-        m.marker.setIcon(createPoliceMarkerIcon(catKey, mandal, unitName, status.isLive));
+      // Check if visual icon type changed (Moving Cruiser vs Stationary Badge)
+      const iconTypeChanged = (m.wasMoving !== isMoving) || (m.currentIsLive !== status.isLive);
+      if (iconTypeChanged) {
+        m.wasMoving = isMoving;
         m.currentIsLive = status.isLive;
-      }
-      m.circle.setLatLng([data.lat, data.lng]);
-      m.circle.setRadius(data.accuracy || 20);
-
-      // Rotate marker pin in heading direction when moving
-      if (prevLat && prevLng) {
-        const moveDist = map.distance([prevLat, prevLng], [data.lat, data.lng]);
-        if (moveDist >= 3) {
-          const bearing = calculateBearing(prevLat, prevLng, data.lat, data.lng);
-          m.bearing = bearing;
-          const el = m.marker.getElement();
-          if (el) {
-            const pin = el.querySelector('.police-marker-pin');
-            if (pin) pin.style.transform = `rotate(${Math.round(bearing)}deg)`;
-          }
+        m.marker.setIcon(createPoliceMarkerIcon(catKey, mandal, unitName, status.isLive, isMoving, bearing, kmh));
+      } else if (isMoving) {
+        // Just smoothly update rotation and speed label without destroying marker
+        const el = m.marker.getElement();
+        if (el) {
+          const pointer = el.querySelector('.vehicle-pointer-wrapper');
+          if (pointer) pointer.style.transform = `rotate(${Math.round(bearing)}deg)`;
+          const speedBadge = el.querySelector('.speed-pill');
+          if (speedBadge) speedBadge.innerText = `${kmh} km/h`;
         }
       }
 
-      // Smooth auto-follow if selected by Control Room
-      if (currentlyFollowedOfficerKey === key) {
-        map.panTo([data.lat, data.lng], { animate: true, duration: 0.8 });
-      }
+      // 60 FPS Native Butter-Smooth Glide
+      smoothGlideMarker(m, data.lat, data.lng, bearing, 2000);
+      m.circle.setRadius(data.accuracy || 20);
 
-      // ANTI-JITTER FILTER: Only draw trail if officer has GENUINELY moved >= 15 meters!
-      // This stops trails from appearing when the person is stationary or sitting still.
+      // Smooth Trail Drawing
       if (!m.lastTrailLat || !m.lastTrailLng) {
         m.lastTrailLat = data.lat;
         m.lastTrailLng = data.lng;
       }
 
       const distFromLastTrail = map.distance([m.lastTrailLat, m.lastTrailLng], [data.lat, data.lng]);
-      const kmh = data.speed ? Math.round(data.speed * 3.6) : 0;
 
-      if (distFromLastTrail >= 15 || (kmh >= 3 && distFromLastTrail >= 10)) {
+      if (distFromLastTrail >= 3.0) {
         if (!m.trail) {
           m.trail = L.polyline([[m.lastTrailLat, m.lastTrailLng], [data.lat, data.lng]], {
             color: theme.color,
-            weight: 3,
-            opacity: 0.8,
-            dashArray: '5, 6'
+            weight: 3.5,
+            opacity: 0.85,
+            dashArray: '4, 6'
           });
           const catMatch = (currentMapCategoryFilter === 'ALL' || currentMapCategoryFilter === catKey);
           const mandalMatch = (currentMapMandalFilter === 'ALL' || (mandal && mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase()));
@@ -1659,12 +1784,16 @@ https://...
     showToast('అన్నీ పూర్తిగా తొలగించబడ్డాయి. రిఫ్రెష్ చేసినా రావు. వారు మళ్లీ షేర్ చేయాలి.');
   };
 
-  // Refresh icons every 5 seconds
+  // Periodic check for offline status transition without destroying active markers
   setInterval(() => {
     for (const key in activeMobiles) {
       const m = activeMobiles[key];
       const status = getMemberStatus(m.lastUpdated);
-      m.marker.setIcon(createPoliceMarkerIcon(m.categoryKey, m.mandal, m.unitName, status.isLive));
+      if (m.currentIsLive !== status.isLive) {
+        m.currentIsLive = status.isLive;
+        const kmh = Math.round((m.speed || 0) * 3.6);
+        m.marker.setIcon(createPoliceMarkerIcon(m.categoryKey, m.mandal, m.unitName, status.isLive, m.isMoving, m.bearing, kmh));
+      }
     }
   }, 5000);
 
