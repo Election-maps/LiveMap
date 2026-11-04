@@ -476,9 +476,15 @@
     </div>
 
     <!-- Background Mode Active Notice -->
-    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; color: #a7f3d0; text-align: left; line-height: 1.4;">
-      <i class="fa-solid fa-house-circle-check" style="color: #34d399; margin-right: 4px; font-size: 13px;"></i>
-      <strong>బ్యాక్‌గ్రౌండ్ మోడ్ ఆన్‌లో ఉంది:</strong> మీరు <strong>HOME బటన్</strong> ప్రెస్ చేసి వాట్సాప్ చూస్తున్నా బ్యాక్‌గ్రౌండ్‌లో లొకేషన్ నిరంతరం కంట్రోల్ రూమ్‌కు వెళ్తూనే ఉంటుంది.
+    <div id="cockpit-bg-notice" style="background: rgba(30, 58, 138, 0.25); border: 1.5px solid #3b82f6; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 11.5px; color: #bfdbfe; text-align: left; line-height: 1.5;">
+      <div style="font-weight: 700; color: #93c5fd; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-circle-info" style="color: #60a5fa; font-size: 14px;"></i>
+        <span>లొకేషన్ షేరింగ్ స్టేటస్:</span>
+      </div>
+      <div>
+        • బ్రౌజర్‌లో స్క్రీన్ ఆన్‌లో ఉన్నంతవరకు లొకేషన్ నిరంతరం కంట్రోల్ రూమ్‌కు వెళ్తుంది.<br/>
+        • <strong>HOME బటన్ ప్రెస్ చేసినా లేదా స్క్రీన్ లాక్ చేసినా లొకేషన్ ఆగకుండా వెళ్లడానికి</strong> పైన ఉన్న <a href="SrikakulamPoliceTracker.apk" download="SrikakulamPoliceTracker.apk" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"APK యాప్"</a> డౌన్‌లోడ్ చేసి ఇన్‌స్టాల్ చేసుకోండి.
+      </div>
     </div>
 
     <!-- Stop Button -->
@@ -1157,6 +1163,19 @@
           currentSelectedUnit.phone,
           roomCode
         );
+        const bgNotice = document.getElementById('cockpit-bg-notice');
+        if (bgNotice) {
+          bgNotice.style.background = 'rgba(16, 185, 129, 0.2)';
+          bgNotice.style.borderColor = '#10b981';
+          bgNotice.style.color = '#a7f3d0';
+          bgNotice.innerHTML = `
+            <div style="font-weight:700; color:#34d399; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-circle-check" style="font-size:14px;"></i>
+              <span>ఆండ్రాయిడ్ యాప్ సర్వీస్ ఆన్‌లో ఉంది!</span>
+            </div>
+            <div>✅ మీరు HOME బటన్ ప్రెస్ చేసినా, వాట్సాప్ చూస్తున్నా లేదా స్క్రీన్ ఆఫ్ చేసినా లొకేషన్ నిరంతరం కంట్రోల్ రూమ్‌కు వెళ్తూనే ఉంటుంది.</div>
+          `;
+        }
       } catch (err) {
         console.warn('Native start tracking error:', err);
       }
