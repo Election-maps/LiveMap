@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <!-- MQTT.js library for real-time synchronization -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- SheetJS library for in-browser Excel Import & Export -->
+  <script src="xlsx.full.min.js"></script>
   <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
   <script src="route_mobiles_data.js?v=20261104"></script>
   <!-- Pre-loaded 1,196 MPTC & ZPTC Polling Stations Data -->
@@ -207,14 +209,141 @@
       border-radius: 50%;
     }
 
-    .kpi-pill .dot-live {
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      animation: pulse-dot 1.5s infinite;
+    /* Master High-Tech Command Deck */
+    .command-deck {
+      position: absolute;
+      top: 66px;
+      left: 12px;
+      right: 12px;
+      max-width: 1320px;
+      margin: 0 auto;
+      z-index: 1000;
+      background: rgba(11, 22, 40, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 14px;
+      padding: 8px 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65), 0 0 18px rgba(30, 58, 138, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: auto;
     }
 
-    .kpi-pill .dot-offline {
-      background: var(--text-muted);
+    .deck-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .deck-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .deck-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(255, 255, 255, 0.16);
+      margin: 0 4px;
+    }
+
+    .cat-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #cbd5e1;
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .cat-btn:hover {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #ffffff;
+    }
+    .cat-btn.active {
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      color: #ffffff;
+      border-color: #60a5fa;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.55);
+    }
+
+    /* Layer Toggle Buttons in Deck */
+    .deck-toggle-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .deck-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+    .deck-toggle-btn.active#btn-toggle-routes {
+      background: rgba(220, 38, 38, 0.35);
+      border-color: #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+    }
+    .deck-toggle-btn.active#btn-toggle-borders {
+      background: rgba(37, 99, 235, 0.35);
+      border-color: #3b82f6;
+      color: #93c5fd;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+    }
+    .deck-toggle-btn.active#btn-toggle-psl {
+      background: rgba(16, 185, 129, 0.32);
+      border-color: #10b981;
+      color: #6ee7b7;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+    }
+
+    /* Status Mini Pills */
+    .deck-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    .deck-status-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .deck-status-pill .dot-live {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      animation: pulse-dot 1.5s infinite;
+    }
+    .deck-status-pill .dot-offline {
+      background: #64748b;
     }
 
     @keyframes pulse-dot {
@@ -223,191 +352,76 @@
       100% { transform: scale(0.9); opacity: 0.7; }
     }
 
-    /* Category Filter Pills Bar on Map */
-    .category-filter-bar {
-      position: absolute;
-      top: 96px;
-      left: 12px;
-      z-index: 999;
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
-      max-width: calc(100vw - 24px);
-      padding: 2px 2px 6px 2px;
-      pointer-events: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .category-filter-bar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .cat-btn {
-      background: rgba(14, 23, 38, 0.92);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: #cbd5e1;
-      padding: 5px 12px;
-      border-radius: 18px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-
-    .cat-btn:hover {
-      background: rgba(30, 58, 138, 0.85);
-      color: white;
-      border-color: #38bdf8;
-    }
-
-    .cat-btn.active {
-      background: #1e3a8a;
-      color: #38bdf8;
-      border-color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
-    }
-
-    /* Floating Map Filter Dropdowns on Map */
-    .map-dropdown-container {
-      position: absolute;
-      top: 136px;
-      left: 12px;
-      z-index: 999;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      pointer-events: auto;
-      max-width: calc(100vw - 24px);
-    }
-
+    /* Dropdowns in Deck */
     .map-dropdown-box {
       display: flex;
       align-items: center;
-      background: rgba(11, 20, 26, 0.94);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 12px;
-      padding: 2px 10px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 2px 8px;
       transition: all 0.2s;
     }
-
     .map-dropdown-box:focus-within {
       border-color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
-
     .map-dropdown-box .dropdown-icon {
       color: #38bdf8;
-      font-size: 13px;
+      font-size: 12px;
       margin-right: 6px;
     }
-
     .map-select {
       background: transparent;
       border: none;
       color: #ffffff;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 7px 4px;
+      padding: 5px 3px;
       outline: none;
       cursor: pointer;
-      max-width: 220px;
+      max-width: 210px;
     }
-
     .map-select.select-team {
-      max-width: 290px;
+      max-width: 270px;
       color: #7dd3fc;
     }
-
     .map-select option {
       background: #0f172a;
       color: #ffffff;
-      font-size: 13px;
-      padding: 8px;
+      font-size: 12.5px;
+      padding: 6px;
     }
 
-    @media (max-width: 600px) {
-      .category-filter-bar {
-        top: 92px;
-        left: 8px;
-        max-width: calc(100vw - 16px);
-      }
-      .map-dropdown-container {
-        top: 132px;
-        left: 8px;
-        gap: 6px;
-        max-width: calc(100vw - 16px);
-      }
-      .map-select {
-        font-size: 11.5px;
-        max-width: 140px;
-        padding: 5px 2px;
-      }
-      .map-select.select-team {
-        max-width: 175px;
-      }
-      .map-dropdown-box {
-        padding: 1px 7px;
-      }
-      .psl-filter-subbar {
-        top: 172px;
-        left: 8px;
-        max-width: calc(100vw - 16px);
-      }
-    }
-
-    /* Polling Stations (PSL) UI & Marker Styling */
-    .psl-filter-subbar {
-      position: absolute;
-      top: 180px;
-      left: 12px;
-      z-index: 998;
+    /* Sensitivity Cluster */
+    .deck-sens-cluster {
       display: flex;
-      gap: 5px;
-      overflow-x: auto;
-      white-space: nowrap;
-      max-width: calc(100vw - 24px);
-      padding: 3px 8px;
-      background: rgba(11, 20, 26, 0.92);
-      backdrop-filter: blur(8px);
-      border-radius: 16px;
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
       align-items: center;
-      scrollbar-width: none;
+      gap: 5px;
+      flex-wrap: nowrap;
     }
-    .psl-filter-subbar::-webkit-scrollbar { display: none; }
-    .psl-subbar-title {
+    .deck-sens-cluster .sens-title {
       font-size: 11px;
       font-weight: 700;
       color: #93c5fd;
-      margin-right: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      margin-right: 2px;
     }
     .psl-sens-btn {
-      padding: 3px 9px;
+      padding: 4px 10px;
       font-size: 11px;
-      font-weight: 600;
-      border-radius: 12px;
+      font-weight: 700;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(30, 41, 59, 0.8);
+      background: rgba(30, 41, 59, 0.85);
       color: #cbd5e1;
       cursor: pointer;
       transition: all 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
     }
     .psl-sens-btn:hover {
-      background: rgba(59, 130, 246, 0.4);
+      background: rgba(59, 130, 246, 0.35);
       color: #fff;
     }
     .psl-sens-btn.active {
@@ -415,6 +429,37 @@
       color: #fff;
       border-color: #60a5fa;
       box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-header.btn-excel-action {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10b981;
+      color: #34d399;
+    }
+    .btn-header.btn-excel-action:hover {
+      background: rgba(16, 185, 129, 0.4);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    @media (max-width: 900px) {
+      .command-deck {
+        top: 60px;
+        left: 8px;
+        right: 8px;
+        padding: 6px 8px;
+        gap: 6px;
+      }
+      .deck-divider {
+        display: none;
+      }
+      .map-select {
+        max-width: 135px;
+        font-size: 11px;
+      }
+      .map-select.select-team {
+        max-width: 165px;
+      }
     }
     .psl-btn-badge {
       display: inline-flex;
@@ -933,6 +978,130 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* Excel Import Modal Styles */
+    .btn-header.btn-excel-action {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10b981;
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .btn-header.btn-excel-action:hover {
+      background: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .excel-import-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 16px;
+      margin: 14px 0 16px 0;
+    }
+    .excel-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+    .excel-card:hover {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 4px 22px rgba(0, 0, 0, 0.45);
+    }
+    .excel-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .excel-card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .excel-card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+    .excel-card-desc {
+      font-size: 11.5px;
+      color: #94a3b8;
+      line-height: 1.45;
+      margin-top: 2px;
+    }
+    .excel-dropzone {
+      border: 2px dashed rgba(255, 255, 255, 0.22);
+      border-radius: 10px;
+      padding: 18px 14px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.03);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .excel-dropzone:hover, .excel-dropzone.dragover {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.09);
+      transform: translateY(-1px);
+    }
+    .excel-dropzone i {
+      font-size: 26px;
+      color: #38bdf8;
+    }
+    .excel-dropzone .dz-main-text {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .excel-dropzone .dz-sub-text {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .excel-status-badge {
+      font-size: 11.5px;
+      padding: 8px 11px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      color: #6ee7b7;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .excel-status-badge.has-custom {
+      background: rgba(59, 130, 246, 0.16);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+    }
+    .excel-status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .excel-info-banner {
+      background: rgba(30, 58, 138, 0.35);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -953,6 +1122,12 @@
       </div>
     </div>
     <div class="nav-actions">
+      <!-- Excel Import & Live Mapping Button -->
+      <button class="btn-header btn-excel-action" id="btn-open-excel-modal" onclick="openExcelModal()" title="ఎక్సెల్ ఫైళ్లను అప్‌లోడ్ చేసి మ్యాప్‌పై అప్‌డేట్ చేయండి">
+        <i class="fa-solid fa-file-excel" style="color: #34d399;"></i>
+        <span>ఎక్సెల్ ఇంపోర్ట్</span>
+      </button>
+
       <!-- Officer App Direct Link -->
       <a href="officer.html?room=SrikakulamPolice" target="_blank" class="btn-header btn-track-action" title="ఫీల్డ్ ఆఫీసర్ యాప్ ఓపెన్ చేయండి" style="text-decoration: none;">
         <i class="fa-solid fa-mobile-screen"></i>
@@ -998,69 +1173,79 @@
   <!-- Live Map Viewport - 100% Unobstructed Clean View -->
   <div id="map"></div>
 
-  <!-- Top Floating KPI Stats Bar -->
-  <div class="kpi-bar">
-    <div class="kpi-pill">
-      <span class="dot dot-live"></span>
-      <span>లైవ్ (Live): <strong id="kpi-live" style="color: #34d399;">0</strong></span>
-    </div>
-    <div class="kpi-pill">
-      <span class="dot dot-offline"></span>
-      <span>ఆఫ్‌లైన్ (Offline): <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
-    </div>
-    <div class="kpi-pill">
-      <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
-      <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
-    </div>
-    <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
-      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
-    </div>
-  </div>
+  <!-- Unified Police Command Deck (Replaces Cluttered Floating Bars) -->
+  <div class="command-deck" id="command-deck">
+    <!-- Top Deck: Unit Categories, Layers & Live KPI Status -->
+    <div class="deck-row">
+      <div class="deck-cluster" id="forces-cat-cluster">
+        <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (<span id="count-cat-all">364</span>)</button>
+        <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (<span id="count-cat-rm">264</span>)</button>
+        <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (<span id="count-cat-sf">59</span>)</button>
+        <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (<span id="count-cat-ssf">30</span>)</button>
+        <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (<span id="count-cat-qrt">6</span>)</button>
+        <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (<span id="count-cat-res">5</span>)</button>
+      </div>
 
-  <!-- Category Filter Pills Bar on Map (Routes, SF, SSF, QRTs, Reserve Parties) -->
-  <div class="category-filter-bar">
-    <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
-    <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
-    <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
-    <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
-    <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
-    <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
-    <button class="cat-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" style="border-color: #ef4444; background: rgba(220, 38, 38, 0.45);" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-route" style="color: #fca5a5;"></i> 🛣️ రూట్లు (Routes)
-    </button>
-    <button class="cat-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" style="border-color: #3b82f6; background: rgba(37, 99, 235, 0.45);" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-draw-polygon" style="color: #93c5fd;"></i> 🗺️ సరిహద్దులు (Borders)
-    </button>
-    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,196)
-    </button>
-  </div>
+      <div class="deck-divider"></div>
 
-  <!-- Floating Map Filter Dropdowns: Mandal & Route/Party Selector -->
-  <div class="map-dropdown-container">
-    <div class="map-dropdown-box">
-      <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
-      <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
-        <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
-      </select>
+      <!-- Map Layer Toggles -->
+      <div class="deck-cluster">
+        <button class="deck-toggle-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-route" style="color: #f87171;"></i>
+          <span>రోడ్ రూట్లు</span>
+        </button>
+        <button class="deck-toggle-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-draw-polygon" style="color: #60a5fa;"></i>
+          <span>సరిహద్దులు</span>
+        </button>
+        <button class="deck-toggle-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-person-booth" style="color: #34d399;"></i>
+          <span>కేంద్రాలు (<span id="kpi-psl">1,196</span>)</span>
+        </button>
+      </div>
+
+      <div class="deck-divider"></div>
+
+      <!-- Live GPS Telemetry Mini Pills -->
+      <div class="deck-cluster">
+        <div class="deck-status-pill">
+          <span class="dot dot-live"></span>
+          <span>లైవ్: <strong id="kpi-live" style="color: #34d399;">0</strong></span>
+        </div>
+        <div class="deck-status-pill">
+          <span class="dot dot-offline"></span>
+          <span>ఆఫ్ లైన్: <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
+        </div>
+      </div>
     </div>
 
-    <div class="map-dropdown-box">
-      <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
-      <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
-        <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
-      </select>
-    </div>
-  </div>
+    <!-- Bottom Deck: Dropdown Filters & Sensitivity Subbar -->
+    <div class="deck-row" style="margin-top: 1px;">
+      <div class="deck-cluster">
+        <div class="map-dropdown-box">
+          <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
+          <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
+            <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
+          </select>
+        </div>
 
-  <!-- Sensitivity Filter Sub-bar for Polling Stations -->
-  <div class="psl-filter-subbar" id="psl-filter-subbar">
-    <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
-    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
-    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
-    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
-    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
+        <div class="map-dropdown-box">
+          <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
+          <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
+            <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Polling Station Sensitivity Controls -->
+      <div class="deck-sens-cluster" id="psl-filter-subbar">
+        <span class="sens-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
+        <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')" id="sens-btn-all">⚪ అన్నీ (<span id="sens-cnt-all">1,196</span>)</button>
+        <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')" id="sens-btn-norm"><span class="psl-btn-badge badge-n">N</span> <span id="sens-cnt-norm">832</span></button>
+        <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')" id="sens-btn-sens"><span class="psl-btn-badge badge-s">S</span> <span id="sens-cnt-sens">223</span></button>
+        <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')" id="sens-btn-hyper"><span class="psl-btn-badge badge-h">H</span> <span id="sens-cnt-hyper">141</span></button>
+      </div>
+    </div>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -1160,6 +1345,93 @@ https://...
   </div>
 </div>
 
+<!-- Excel Files Dynamic Importer Modal -->
+<div class="modal-backdrop" id="modal-excel">
+  <div class="modal-card" style="max-width: 780px;">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-file-excel" style="color: #34d399;"></i>
+        <span>ఎక్సెల్ ఫైల్స్ ఇంపోర్ట్ & లైవ్ రీ-మ్యాపింగ్ (Dynamic Excel Importer)</span>
+      </h3>
+      <button class="btn-close" onclick="closeExcelModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.5; margin-bottom: 8px;">
+        మీ వద్ద ఉన్న కొత్త/సవరించిన ఎక్సెల్ ఫైళ్లను ఇక్కడ అప్‌లోడ్ చేయండి. బ్రౌజర్‌లోనే ఎక్సెల్ రీడ్ జరిగి, మ్యాప్‌పై అన్ని పోలింగ్ కేంద్రాల పిన్స్ ([N], [S], [H]), పెట్రోలింగ్ రూట్లు మరియు 364 పోలీసు బలగాల వివరాలు తక్షణమే అప్‌డేట్ అవుతాయి.
+      </p>
+
+      <div class="excel-import-grid">
+        <!-- Card 1: Polling Stations & Routes Excel -->
+        <div class="excel-card">
+          <div class="excel-card-header">
+            <div class="excel-card-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">
+              <i class="fa-solid fa-person-booth"></i>
+            </div>
+            <div>
+              <div class="excel-card-title">1. పోలింగ్ కేంద్రాలు (PSLs) & రూట్లు</div>
+              <div class="excel-card-desc">3. MPTC and ZPTC Google Mapping final.xlsx</div>
+            </div>
+          </div>
+
+          <input type="file" id="file-input-psl" accept=".xlsx, .xls" style="display: none;" onchange="handlePslFileSelect(event)">
+          <div class="excel-dropzone" id="dropzone-psl" onclick="document.getElementById('file-input-psl').click()">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span class="dz-main-text">ఎక్సెల్ ఫైల్ ఎంచుకోండి లేదా ఇక్కడ డ్రాప్ చేయండి</span>
+            <span class="dz-sub-text">1,196 పోలింగ్ కేంద్రాలు, Lat/Lng కోఆర్డినేట్స్, రూట్ ఇన్‌ఛార్జ్‌లు</span>
+          </div>
+
+          <div class="excel-status-badge" id="badge-psl-status">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="txt-psl-status">సిస్టమ్ డేటా: 1,196 కేంద్రాలు (832 సాధారణ, 223 సెన్సిటివ్, 141 హైపర్ సెన్సిటివ్)</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Forces & Teams Excel -->
+        <div class="excel-card">
+          <div class="excel-card-header">
+            <div class="excel-card-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div class="excel-card-title">2. పోలీస్ బందోబస్తు దళాలు (Forces)</div>
+              <div class="excel-card-desc">Routes, SF, SSF, QRTs, Reserve Parties.xlsx</div>
+            </div>
+          </div>
+
+          <input type="file" id="file-input-forces" accept=".xlsx, .xls" style="display: none;" onchange="handleForcesFileSelect(event)">
+          <div class="excel-dropzone" id="dropzone-forces" onclick="document.getElementById('file-input-forces').click()">
+            <i class="fa-solid fa-cloud-arrow-up" style="color: #60a5fa;"></i>
+            <span class="dz-main-text">ఎక్సెల్ ఫైల్ ఎంచుకోండి లేదా ఇక్కడ డ్రాప్ చేయండి</span>
+            <span class="dz-sub-text">264 Routes, 59 SF, 30 SSF, 6 QRTs, 5 Reserve Parties</span>
+          </div>
+
+          <div class="excel-status-badge" id="badge-forces-status">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="txt-forces-status">సిస్టమ్ డేటా: 364 బందోబస్తు టీమ్‌లు (Routes, SF, SSF, QRTs, Reserve)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="excel-info-banner">
+        <i class="fa-solid fa-shield-heart" style="color: #38bdf8; font-size: 16px; flex-shrink: 0;"></i>
+        <span>
+          <strong>ఆటోమేటిక్ లోకల్ సేవ్:</strong> మీరు అప్‌లోడ్ చేసిన ఎక్సెల్ డేటా మీ బ్రౌజర్ లోకల్ స్టోరేజ్‌లో సురక్షితంగా భద్రపరచబడుతుంది. పేజీని రీఫ్రెష్ చేసినా మీ కస్టమ్ ఎక్సెల్ మ్యాపింగ్ యథాతథంగా కొనసాగుతుంది.
+        </span>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content: space-between;">
+      <button class="btn-header" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); color: #fca5a5;" onclick="resetToDefaultExcelData()" title="అప్‌లోడ్ చేసిన కస్టమ్ డేటాను తొలగించి ఒరిజినల్ డేటాను పునరుద్ధరించండి">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>డిఫాల్ట్ ఒరిజినల్ డేటా రీసెట్</span>
+      </button>
+      <button class="btn-header" style="background: #2563eb; color: #ffffff; border-color: #3b82f6;" onclick="closeExcelModal()">
+        <i class="fa-solid fa-check"></i>
+        <span>పూర్తయింది (Done)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Notification Toast -->
 <div class="toast" id="toast">
   <i class="fa-solid fa-circle-check" style="color: #34d399;"></i>
@@ -1171,8 +1443,27 @@ https://...
 
 <script>
   // -------------------------------------------------------------
-  // Data Load: 364 Units (Routes, SF, SSF, QRTs, Reserve Parties)
+  // Data Load: 364 Units & LocalStorage Custom Excel Integration
   // -------------------------------------------------------------
+  try {
+    const savedCustomForces = localStorage.getItem('CUSTOM_FORCES_DATA');
+    if (savedCustomForces) {
+      const parsedForces = JSON.parse(savedCustomForces);
+      if (Array.isArray(parsedForces) && parsedForces.length > 0) {
+        window.ROUTE_MOBILES_DATA = parsedForces;
+      }
+    }
+    const savedCustomPsl = localStorage.getItem('CUSTOM_MPTC_ZPTC_DATA');
+    if (savedCustomPsl) {
+      const parsedPsl = JSON.parse(savedCustomPsl);
+      if (Array.isArray(parsedPsl) && parsedPsl.length > 0) {
+        window.MPTC_ZPTC_DATA = parsedPsl;
+      }
+    }
+  } catch(storageErr) {
+    console.warn("Could not retrieve custom datasets from localStorage:", storageErr);
+  }
+
   let allUnitsData = window.ROUTE_MOBILES_DATA || [];
 
   if (!allUnitsData || allUnitsData.length === 0) {
@@ -2705,6 +2996,8 @@ https://...
     populateMapMandalDropdown();
     populateMapTeamDropdown();
     applyPslFilters();
+    updateSensDeckCounts(allPslData);
+    updateForcesDeckCounts(allUnitsData);
     updateKPIs();
   }
 
@@ -2865,6 +3158,613 @@ https://...
       toast.classList.remove('show');
     }, 2800);
   }
+
+  // -------------------------------------------------------------
+  // Dynamic Excel Manager: In-Browser Parsing & Live Re-Mapping
+  // -------------------------------------------------------------
+  window.openExcelModal = function() {
+    updateExcelModalBadges();
+    const modal = document.getElementById('modal-excel');
+    if (modal) modal.classList.add('show');
+  };
+
+  window.closeExcelModal = function() {
+    const modal = document.getElementById('modal-excel');
+    if (modal) modal.classList.remove('show');
+  };
+
+  function updateExcelModalBadges() {
+    const pslBadge = document.getElementById('badge-psl-status');
+    const pslTxt = document.getElementById('txt-psl-status');
+    const isCustomPsl = !!localStorage.getItem('CUSTOM_MPTC_ZPTC_DATA');
+    const pslCount = (window.MPTC_ZPTC_DATA || allPslData || []).length;
+    if (pslBadge && pslTxt) {
+      if (isCustomPsl) {
+        pslBadge.className = 'excel-status-badge has-custom';
+        pslTxt.innerHTML = `<strong>⚡ కస్టమ్ ఎక్సెల్ యాక్టివ్:</strong> ${pslCount.toLocaleString()} పోలింగ్ కేంద్రాలు లోడ్ అయ్యాయి`;
+      } else {
+        pslBadge.className = 'excel-status-badge';
+        pslTxt.innerHTML = `<strong>✅ సిస్టమ్ డిఫాల్ట్:</strong> ${pslCount.toLocaleString()} కేంద్రాలు (832 సాధారణ, 223 సెన్సిటివ్, 141 హైపర్ సెన్సిటివ్)`;
+      }
+    }
+
+    const fBadge = document.getElementById('badge-forces-status');
+    const fTxt = document.getElementById('txt-forces-status');
+    const isCustomForces = !!localStorage.getItem('CUSTOM_FORCES_DATA');
+    const fCount = (window.ROUTE_MOBILES_DATA || allUnitsData || []).length;
+    if (fBadge && fTxt) {
+      if (isCustomForces) {
+        fBadge.className = 'excel-status-badge has-custom';
+        fTxt.innerHTML = `<strong>⚡ కస్టమ్ ఎక్సెల్ యాక్టివ్:</strong> ${fCount.toLocaleString()} బందోబస్తు టీమ్‌లు లోడ్ అయ్యాయి`;
+      } else {
+        fBadge.className = 'excel-status-badge';
+        fTxt.innerHTML = `<strong>✅ సిస్టమ్ డిఫాల్ట్:</strong> ${fCount.toLocaleString()} బందోబస్తు టీమ్‌లు (Routes, SF, SSF, QRTs, Reserve)`;
+      }
+    }
+  }
+
+  function updateSensDeckCounts(data) {
+    if (!data || !Array.isArray(data)) return;
+    const total = data.length;
+    let norm = 0, sens = 0, hyper = 0;
+    data.forEach(d => {
+      const s = (d.sensitivity || '').toUpperCase();
+      if (s === 'HYPER SENSITIVE') hyper++;
+      else if (s === 'SENSITIVE') sens++;
+      else norm++;
+    });
+
+    const elAll = document.getElementById('sens-cnt-all');
+    const elNorm = document.getElementById('sens-cnt-norm');
+    const elSens = document.getElementById('sens-cnt-sens');
+    const elHyper = document.getElementById('sens-cnt-hyper');
+    const elKpiPsl = document.getElementById('kpi-psl');
+
+    if (elAll) elAll.innerText = total.toLocaleString();
+    if (elNorm) elNorm.innerText = norm.toLocaleString();
+    if (elSens) elSens.innerText = sens.toLocaleString();
+    if (elHyper) elHyper.innerText = hyper.toLocaleString();
+    if (elKpiPsl) elKpiPsl.innerText = total.toLocaleString();
+  }
+
+  function updateForcesDeckCounts(units) {
+    if (!units || !Array.isArray(units)) return;
+    const total = units.length;
+    let rm = 0, sf = 0, ssf = 0, qrt = 0, res = 0;
+    units.forEach(u => {
+      const k = u.categoryKey || (u.category === 'Striking Forces' ? 'SF' : u.category === 'Special Striking Forces' ? 'SSF' : u.category === 'QRTs' ? 'QRT' : u.category === 'Reserve Parties' ? 'RESERVE' : 'RM');
+      if (k === 'RM') rm++;
+      else if (k === 'SF') sf++;
+      else if (k === 'SSF') ssf++;
+      else if (k === 'QRT') qrt++;
+      else if (k === 'RESERVE') res++;
+    });
+
+    const elAll = document.getElementById('count-cat-all');
+    const elRm = document.getElementById('count-cat-rm');
+    const elSf = document.getElementById('count-cat-sf');
+    const elSsf = document.getElementById('count-cat-ssf');
+    const elQrt = document.getElementById('count-cat-qrt');
+    const elRes = document.getElementById('count-cat-res');
+    const elOffline = document.getElementById('kpi-offline');
+    const elBtnRoutes = document.getElementById('txt-btn-routes');
+
+    if (elAll) elAll.innerText = total.toLocaleString();
+    if (elRm) elRm.innerText = rm.toLocaleString();
+    if (elSf) elSf.innerText = sf.toLocaleString();
+    if (elSsf) elSsf.innerText = ssf.toLocaleString();
+    if (elQrt) elQrt.innerText = qrt.toLocaleString();
+    if (elRes) elRes.innerText = res.toLocaleString();
+    if (elOffline) elOffline.innerText = total.toLocaleString();
+    if (elBtnRoutes) elBtnRoutes.innerText = `ఫోర్సెస్ (${total})`;
+  }
+
+  function cleanCoordinateVal(val) {
+    if (val === null || val === undefined) return null;
+    let s = String(val).trim().replace(/\s+/g, '');
+    s = s.replace(/\.\.+/g, '.').replace(/\.$/, '');
+    const num = parseFloat(s);
+    if (isNaN(num)) return null;
+    return num;
+  }
+
+  window.handlePslFileSelect = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (file) processPslExcelFile(file);
+    event.target.value = '';
+  };
+
+  window.handleForcesFileSelect = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (file) processForcesExcelFile(file);
+    event.target.value = '';
+  };
+
+  function processPslExcelFile(file) {
+    showToast('⏳ ఎక్సెల్ ఫైల్ చదువుతోంది (Reading Excel)...');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        let sheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('main')) || workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) throw new Error('ఎక్సెల్ షీట్ కనబడలేదు');
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if (!rows || rows.length < 2) throw new Error('ఎక్సెల్‌లో తగినంత డేటా లేదు');
+
+        let headerIdx = 0;
+        for (let r = 0; r < Math.min(10, rows.length); r++) {
+          const rowStr = (rows[r] || []).join(' ').toLowerCase();
+          if (rowStr.includes('mandal') && (rowStr.includes('mptc') || rowStr.includes('route') || rowStr.includes('lat'))) {
+            headerIdx = r;
+            break;
+          }
+        }
+
+        const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+        
+        function findCol(keywords, fallback) {
+          for (let c = 0; c < headers.length; c++) {
+            for (const kw of keywords) {
+              if (headers[c].includes(kw)) return c;
+            }
+          }
+          return fallback;
+        }
+
+        const colLat = findCol(['latitude', 'lat'], 25);
+        const colLng = findCol(['longitude', 'long', 'lng'], 26);
+        const colMandal = findCol(['name of the mandal', 'mandal'], 1);
+        const colMptc = findCol(['name of the mptc', 'mptc'], 2);
+        const colRoute = findCol(['route_no', 'route no'], 3);
+        const colIncharge = findCol(['route inchage', 'incharge', 'inchage'], 4);
+        const colSupport = findCol(['supporting'], 5);
+        const colHq = findCol(['head quarter', 'hq'], 6);
+        const colStf = findCol(['striking force'], 7);
+        const colSstf = findCol(['special str'], 8);
+        const colQrt = findCol(['qrt'], 9);
+        const colPs = findCol(['name of the ps', 'police station'], 10);
+        const colPsRoute = findCol(['ps and route'], 11);
+        const colCode = findCol(['code'], 12);
+        const colPsl = findCol(['polling station location', 'psl'], 13);
+        const colCount = findCol(['no. of poli', 'no of poli'], 15);
+        const colVoters = findCol(['voter'], 16);
+        const colBlo = findCol(['blo'], 17);
+        const colDist = findCol(['distance'], 18);
+        const colSens = findCol(['sensitivity', 'sens'], 19);
+
+        const parsedPsls = [];
+        let validIdx = 1;
+
+        for (let r = headerIdx + 1; r < rows.length; r++) {
+          const row = rows[r];
+          if (!row || row.length === 0) continue;
+
+          let mandal = String(row[colMandal] || '').trim();
+          let pslName = String(row[colPsl] || row[colPsl + 1] || '').trim();
+          if (!mandal && !pslName) continue;
+
+          let rawLat = row[colLat];
+          let rawLng = row[colLng];
+          let lat = cleanCoordinateVal(rawLat);
+          let lng = cleanCoordinateVal(rawLng);
+
+          if (lat !== null && lng !== null && lat > 80 && lng < 25) {
+            const tmp = lat;
+            lat = lng;
+            lng = tmp;
+          }
+
+          if (lat === null || isNaN(lat)) lat = 18.2969;
+          if (lng === null || isNaN(lng)) lng = 83.8968;
+
+          let sensRaw = String(row[colSens] || '').trim().toUpperCase();
+          let sensitivity = 'NORMAL';
+          if (sensRaw.includes('HYPER')) sensitivity = 'HYPER SENSITIVE';
+          else if (sensRaw.includes('SENSITIVE')) sensitivity = 'SENSITIVE';
+
+          let mptc = String(row[colMptc] || mandal).trim();
+          let routeNo = String(row[colRoute] || '').replace(/[^0-9]/g, '').trim();
+          let incharge = String(row[colIncharge] || '').trim();
+          let support = String(row[colSupport] || '').trim();
+          let hq = String(row[colHq] || '').trim();
+          let ps = String(row[colPs] || mandal).trim();
+          let code = String(row[colCode] || '').trim();
+          let psCount = String(row[colCount] || '1').trim();
+          let voters = String(row[colVoters] || '').trim();
+          let blo = String(row[colBlo] || '').trim();
+          let distFromPs = String(row[colDist] || '').trim();
+
+          parsedPsls.push({
+            id: 'PSL_' + (r + 1),
+            sNo: validIdx++,
+            mandal: mandal,
+            mptc: mptc,
+            routeNo: routeNo,
+            pslName: pslName || (mandal + ' Center'),
+            hq: hq,
+            ps: ps,
+            psRoute: (ps + routeNo).replace(/\s+/g, ''),
+            code: code,
+            lat: lat,
+            lng: lng,
+            sensitivity: sensitivity,
+            psCount: psCount,
+            voters: voters,
+            blo: blo,
+            distFromPs: distFromPs,
+            incharge: incharge,
+            support: support,
+            stf: String(row[colStf] || '').trim(),
+            sstf: String(row[colSstf] || '').trim(),
+            qrt: String(row[colQrt] || '').trim()
+          });
+        }
+
+        if (parsedPsls.length === 0) {
+          throw new Error('ఎక్సెల్ నుండి పోలింగ్ కేంద్రాల డేటాను సేకరించడం సాధ్యపడలేదు.');
+        }
+
+        window.MPTC_ZPTC_DATA = parsedPsls;
+        allPslData = parsedPsls;
+        try {
+          localStorage.setItem('CUSTOM_MPTC_ZPTC_DATA', JSON.stringify(parsedPsls));
+        } catch(storeErr) {
+          console.warn('localStorage quota exceeded', storeErr);
+        }
+
+        updateSensDeckCounts(parsedPsls);
+        applyPslFilters();
+        applyRoadRoutes();
+        populateMapMandalDropdown();
+        populateMapTeamDropdown();
+        updateExcelModalBadges();
+
+        showToast(`🎉 ${parsedPsls.length.toLocaleString()} పోలింగ్ కేంద్రాలు విజయవంతంగా ఇంపోర్ట్ అయ్యాయి! మ్యాప్ అప్‌డేట్ అయింది.`);
+      } catch (err) {
+        console.error('Error processing PSL Excel:', err);
+        alert('ఎక్సెల్ ప్రాసెసింగ్ లోపం: ' + err.message);
+        showToast('❌ ఎక్సెల్ ఫైల్ ప్రాసెస్ చేయలేకపోయాము');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function cleanUnitId(str) {
+    return String(str || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  function processForcesExcelFile(file) {
+    showToast('⏳ బందోబస్తు ఎక్సెల్ ఫైల్ చదువుతోంది (Reading Forces Excel)...');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const allParsedUnits = [];
+
+        // 1. Route Mobiles Sheet
+        const rmSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('route')) || 'Route Mobiles';
+        if (workbook.Sheets[rmSheetName]) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[rmSheetName], { header: 1, defval: '' });
+          let headerIdx = 2;
+          for (let r = 0; r < Math.min(8, rows.length); r++) {
+            const line = (rows[r] || []).join(' ').toLowerCase();
+            if (line.includes('mandal') && line.includes('route')) {
+              headerIdx = r;
+              break;
+            }
+          }
+          for (let r = headerIdx + 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            const mandal = String(row[1] || '').trim();
+            const routeNo = String(row[2] || '').trim();
+            const incharge = String(row[4] || '').trim();
+            const support = String(row[5] || '').trim();
+            const hq = String(row[6] || '').trim();
+            const psCovered = String(row[3] || '').trim();
+            if (!mandal && !routeNo && !incharge) continue;
+
+            const phoneMatch = incharge.match(/(\d{10})/);
+            const phone = phoneMatch ? phoneMatch[1] : '';
+
+            allParsedUnits.push({
+              id: `RM_${cleanUnitId(mandal)}_${cleanUnitId(routeNo)}`,
+              category: 'Route Mobiles',
+              categoryKey: 'RM',
+              mandal: mandal,
+              route: `RM-${routeNo}`,
+              unitName: `RM-${routeNo} (${hq || mandal})`,
+              hq: hq,
+              officer: incharge,
+              phone: phone,
+              supporting: support,
+              pollingStations: psCovered
+            });
+          }
+        }
+
+        // 2. Striking Forces Sheet
+        const sfSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('striking') && !n.toLowerCase().includes('special')) || 'Striking Forces';
+        if (workbook.Sheets[sfSheetName]) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sfSheetName], { header: 1, defval: '' });
+          let curMandal = '', curSfNo = '', curHq = '', curIncharge = '', curPhone = '', curSupportArr = [];
+
+          function pushCurrentSf() {
+            if (curMandal && (curIncharge || curSfNo)) {
+              allParsedUnits.push({
+                id: `SF_${cleanUnitId(curMandal)}_${cleanUnitId(curSfNo)}`,
+                category: 'Striking Forces',
+                categoryKey: 'SF',
+                mandal: curMandal,
+                route: `SF-${curSfNo}`,
+                unitName: `SF-${curSfNo} (${curHq || curMandal})`,
+                hq: curHq,
+                officer: curIncharge,
+                phone: curPhone,
+                supporting: curSupportArr.join('; '),
+                pollingStations: ''
+              });
+            }
+          }
+
+          let headerIdx = 2;
+          for (let r = 0; r < Math.min(8, rows.length); r++) {
+            const line = (rows[r] || []).join(' ').toLowerCase();
+            if (line.includes('mandal') && line.includes('striking')) {
+              headerIdx = r;
+              break;
+            }
+          }
+
+          for (let r = headerIdx + 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            const mandal = String(row[1] || '').trim();
+            const sfNo = String(row[2] || '').trim();
+            const hq = String(row[3] || '').trim();
+            const incharge = String(row[4] || '').trim();
+            const support = String(row[5] || '').trim();
+
+            if (mandal || sfNo) {
+              pushCurrentSf();
+              curMandal = mandal;
+              curSfNo = sfNo;
+              curHq = hq;
+              curIncharge = incharge;
+              const pm = incharge.match(/(\d{10})/);
+              curPhone = pm ? pm[1] : '';
+              curSupportArr = support ? [support] : [];
+            } else if (support) {
+              curSupportArr.push(support);
+            }
+          }
+          pushCurrentSf();
+        }
+
+        // 3. Special Striking Forces Sheet
+        const ssfSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('special')) || 'Special Striking Forces';
+        if (workbook.Sheets[ssfSheetName]) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[ssfSheetName], { header: 1, defval: '' });
+          let curMandal = '', curHq = '', curIncharge = '', curPhone = '', curSupportArr = [], ssfIdx = 1;
+
+          function pushCurrentSsf() {
+            if (curMandal && curIncharge) {
+              allParsedUnits.push({
+                id: `SSF_${cleanUnitId(curMandal)}_${ssfIdx}`,
+                category: 'Special Striking Forces',
+                categoryKey: 'SSF',
+                mandal: curMandal,
+                route: `SSF-${ssfIdx}`,
+                unitName: `SSF (${curHq || curMandal})`,
+                hq: curHq,
+                officer: curIncharge,
+                phone: curPhone,
+                supporting: curSupportArr.join('; '),
+                pollingStations: ''
+              });
+              ssfIdx++;
+            }
+          }
+
+          let headerIdx = 2;
+          for (let r = 0; r < Math.min(8, rows.length); r++) {
+            const line = (rows[r] || []).join(' ').toLowerCase();
+            if (line.includes('mandal') && line.includes('ssf')) {
+              headerIdx = r;
+              break;
+            }
+          }
+
+          for (let r = headerIdx + 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            const mandal = String(row[1] || '').trim();
+            const hq = String(row[2] || '').trim();
+            const incharge = String(row[3] || '').trim();
+            const support = String(row[4] || '').trim();
+
+            if (mandal || incharge) {
+              pushCurrentSsf();
+              curMandal = mandal;
+              curHq = hq;
+              curIncharge = incharge;
+              const pm = incharge.match(/(\d{10})/);
+              curPhone = pm ? pm[1] : '';
+              curSupportArr = support ? [support] : [];
+            } else if (support) {
+              curSupportArr.push(support);
+            }
+          }
+          pushCurrentSsf();
+        }
+
+        // 4. QRTs Sheet
+        const qrtSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('qrt')) || 'QRTss';
+        if (workbook.Sheets[qrtSheetName]) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[qrtSheetName], { header: 1, defval: '' });
+          let curQrtNo = '', curMandalArr = [], curHq = '', curOfficer = '', curPhone = '', curSupportArr = [];
+
+          function pushCurrentQrt() {
+            if (curQrtNo && curOfficer) {
+              allParsedUnits.push({
+                id: `QRT_${cleanUnitId(curQrtNo)}`,
+                category: 'QRTs',
+                categoryKey: 'QRT',
+                mandal: curMandalArr.join(', '),
+                route: `QRT-${curQrtNo}`,
+                unitName: `QRT-${curQrtNo} (${curHq})`,
+                hq: curHq,
+                officer: curOfficer,
+                phone: curPhone,
+                supporting: curSupportArr.join('; '),
+                pollingStations: ''
+              });
+            }
+          }
+
+          for (let r = 3; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            const qrtNo = String(row[0] || '').trim();
+            const mandal = String(row[1] || '').trim();
+            const hq = String(row[2] || '').trim();
+            const officer = String(row[3] || '').trim();
+            const support = String(row[4] || '').trim();
+
+            if (qrtNo) {
+              pushCurrentQrt();
+              curQrtNo = qrtNo;
+              curMandalArr = mandal ? [mandal] : [];
+              curHq = hq;
+              curOfficer = officer;
+              const pm = officer.match(/(\d{10})/);
+              curPhone = pm ? pm[1] : '';
+              curSupportArr = support ? [support] : [];
+            } else {
+              if (mandal) curMandalArr.push(mandal);
+              if (support) curSupportArr.push(support);
+            }
+          }
+          pushCurrentQrt();
+        }
+
+        // 5. Reserve Parties Sheets
+        const reserveSheets = workbook.SheetNames.filter(n => n.toLowerCase().includes('reserve'));
+        reserveSheets.forEach(sName => {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sName], { header: 1, defval: '' });
+          let leader = '', phone = '', supportList = [];
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            const rank = String(row[3] || '').trim();
+            const name = String(row[2] || '').trim();
+            const ph = String(row[5] || '').trim();
+            if ((rank.includes('SP') || rank.includes('RI') || rank.includes('SI')) && !leader && name) {
+              leader = `${name} (${rank})`;
+              phone = ph;
+            } else if (name) {
+              supportList.push(`${name} (${rank} ${ph})`);
+            }
+          }
+          if (leader || supportList.length > 0) {
+            allParsedUnits.push({
+              id: cleanUnitId(sName),
+              category: 'Reserve Parties',
+              categoryKey: 'RESERVE',
+              mandal: 'District HQ',
+              route: sName,
+              unitName: sName,
+              hq: 'DAR, Srikakulam',
+              officer: leader || sName,
+              phone: phone,
+              supporting: supportList.slice(0, 10).join('; '),
+              pollingStations: ''
+            });
+          }
+        });
+
+        if (allParsedUnits.length === 0) {
+          throw new Error('బందోబస్తు ఎక్సెల్ నుండి డేటాను సేకరించడం సాధ్యపడలేదు.');
+        }
+
+        window.ROUTE_MOBILES_DATA = allParsedUnits;
+        allUnitsData = allParsedUnits;
+        try {
+          localStorage.setItem('CUSTOM_FORCES_DATA', JSON.stringify(allParsedUnits));
+        } catch(storeErr) {
+          console.warn('localStorage quota exceeded', storeErr);
+        }
+
+        updateForcesDeckCounts(allParsedUnits);
+        populateMapMandalDropdown();
+        populateMapTeamDropdown();
+        if (typeof renderDirectory === 'function') renderDirectory();
+        updateExcelModalBadges();
+
+        showToast(`🎉 ${allParsedUnits.length.toLocaleString()} పోలీస్ బందోబస్తు దళాలు విజయవంతంగా ఇంపోర్ట్ అయ్యాయి!`);
+      } catch (err) {
+        console.error('Error processing Forces Excel:', err);
+        alert('బందోబస్తు ఎక్సెల్ ప్రాసెసింగ్ లోపం: ' + err.message);
+        showToast('❌ బందోబస్తు ఎక్సెల్ ఫైల్ ప్రాసెస్ చేయలేకపోయాము');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  window.resetToDefaultExcelData = function() {
+    if (confirm('మీరు అప్‌లోడ్ చేసిన కస్టమ్ ఎక్సెల్ ఫైళ్లను తొలగించి, సిస్టమ్ ఒరిజినల్ డిఫాల్ట్ డేటాను పునరుద్ధరించాలనుకుంటున్నారా?')) {
+      localStorage.removeItem('CUSTOM_MPTC_ZPTC_DATA');
+      localStorage.removeItem('CUSTOM_FORCES_DATA');
+      showToast('🔄 డిఫాల్ట్ డేటా పునరుద్ధరించబడుతోంది...');
+      setTimeout(() => {
+        location.reload();
+      }, 500);
+    }
+  };
+
+  // Drag and Drop listeners setup
+  function setupExcelDropzones() {
+    const dzPsl = document.getElementById('dropzone-psl');
+    const dzForces = document.getElementById('dropzone-forces');
+
+    function attachEvents(dz, handler) {
+      if (!dz) return;
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dz.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.add('dragover');
+        }, false);
+      });
+      ['dragleave', 'drop'].forEach(eventName => {
+        dz.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.remove('dragover');
+        }, false);
+      });
+      dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.classList.remove('dragover');
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          handler(files[0]);
+        }
+      }, false);
+    }
+
+    attachEvents(dzPsl, processPslExcelFile);
+    attachEvents(dzForces, processForcesExcelFile);
+  }
+
+  setupExcelDropzones();
 
   if (allUnitsData && allUnitsData.length > 0) {
     initControlRoomUI();
