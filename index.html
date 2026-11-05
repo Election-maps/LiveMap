@@ -1102,6 +1102,113 @@
       gap: 10px;
       line-height: 1.45;
     }
+
+    /* Polling Station Search & Header Button Styles */
+    .btn-header.btn-psl-search-action {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .btn-header.btn-psl-search-action:hover {
+      background: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .psl-quick-search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .deck-psl-input {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 6px;
+      outline: none;
+      width: 170px;
+      transition: width 0.22s ease;
+    }
+    .deck-psl-input:focus {
+      width: 215px;
+    }
+    .deck-psl-input::placeholder {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .deck-psl-results {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 330px;
+      max-height: 380px;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 10px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+      z-index: 1500;
+      display: none;
+    }
+    .psl-res-item {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s ease;
+    }
+    .psl-res-item:last-child {
+      border-bottom: none;
+    }
+    .psl-res-item:hover {
+      background: rgba(56, 189, 248, 0.18);
+    }
+    .psl-res-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+    .psl-card-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+    .psl-card-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+    .psl-card-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: white;
+      flex-shrink: 0;
+    }
+    .psl-card-badge.badge-n, .psl-res-badge.badge-n { background: #059669; }
+    .psl-card-badge.badge-s, .psl-res-badge.badge-s { background: #d97706; }
+    .psl-card-badge.badge-h, .psl-res-badge.badge-h { background: #dc2626; box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); }
   </style>
 </head>
 <body>
@@ -1126,6 +1233,12 @@
       <button class="btn-header btn-excel-action" id="btn-open-excel-modal" onclick="openExcelModal()" title="ఎక్సెల్ ఫైళ్లను అప్‌లోడ్ చేసి మ్యాప్‌పై అప్‌డేట్ చేయండి">
         <i class="fa-solid fa-file-excel" style="color: #34d399;"></i>
         <span>ఎక్సెల్ ఇంపోర్ట్</span>
+      </button>
+
+      <!-- Dedicated Polling Station Search Button in Header -->
+      <button class="btn-header btn-psl-search-action" id="btn-open-psl-modal-hdr" onclick="openPslSearchModal()" title="1,196 పోలింగ్ కేంద్రాలను శోధించండి (Search Polling Stations)">
+        <i class="fa-solid fa-person-booth" style="color: #34d399;"></i>
+        <span>కేంద్రాల శోధన</span>
       </button>
 
       <!-- Officer App Direct Link -->
@@ -1230,10 +1343,21 @@
         </div>
 
         <div class="map-dropdown-box">
-          <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
-          <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
-            <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
+          <i class="fa-solid fa-car-side dropdown-icon" style="color: #38bdf8;"></i>
+          <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="పోలీస్ రూట్ / బందోబస్తు పార్టీని ఎంచుకోండి (Select Route / Force Party)">
+            <option value="">🚓 రూట్ / పార్టీని ఎంచుకోండి (Select Route / Force)</option>
           </select>
+        </div>
+
+        <!-- Dedicated Polling Station Search Box in Deck -->
+        <div class="map-dropdown-box psl-quick-search-box" id="psl-search-box-container">
+          <i class="fa-solid fa-person-booth dropdown-icon" style="color: #34d399;"></i>
+          <input type="text" id="deck-psl-search-input" class="deck-psl-input" placeholder="పోలింగ్ కేంద్రం శోధన..." autocomplete="off" oninput="handleDeckPslSearch(this.value)" onfocus="handleDeckPslSearch(this.value)">
+          <button class="btn-clear-search" id="btn-clear-deck-psl" onclick="clearDeckPslSearch()" style="display:none; background:none; border:none; color:#94a3b8; cursor:pointer; padding:0 3px;">✕</button>
+          <button class="btn-deck-search-modal" onclick="openPslSearchModal()" title="మరింత విస్తృత శోధన (Full PSL Search Modal)" style="background:none; border:none; color:#38bdf8; cursor:pointer; padding:2px 6px; font-size:12px;">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </button>
+          <div class="deck-psl-results" id="deck-psl-results"></div>
         </div>
       </div>
 
@@ -1262,6 +1386,47 @@
     <button class="fab" id="fab-dist-center" title="శ్రీకాకుళం జిల్లా మధ్యలోకి వెళ్లు">
       <i class="fa-solid fa-crosshairs"></i>
     </button>
+  </div>
+</div>
+
+<!-- Polling Stations Search & Navigation Modal -->
+<div class="modal-backdrop" id="modal-psl-search">
+  <div class="modal-card" style="max-width: 760px;">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-person-booth" style="color: #34d399;"></i>
+        <span>పోలింగ్ కేంద్రాల శోధన (1,196 Polling Stations)</span>
+      </h3>
+      <button class="btn-close" onclick="closePslSearchModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Search & Filters -->
+      <div class="search-filter-box">
+        <input type="text" class="custom-input" style="flex: 2; min-width: 190px;" id="psl-modal-search-input" placeholder="కేంద్రం / స్కూల్ పేరు, గ్రామం, MPTC, రూట్ లేదా కోడ్ శోధించండి..." oninput="renderPslSearchResults()">
+        <select class="custom-select" style="flex: 1.2; min-width: 140px;" id="psl-modal-filter-mandal" onchange="renderPslSearchResults()">
+          <option value="ALL">అన్ని మండలాలు (All Mandals)</option>
+        </select>
+        <select class="custom-select" style="flex: 1; min-width: 120px;" id="psl-modal-filter-sens" onchange="renderPslSearchResults()">
+          <option value="ALL">అన్ని కేటగిరీలు (All)</option>
+          <option value="NORMAL">⚪ సాధారణ (Normal)</option>
+          <option value="SENSITIVE">🟠 సెన్సిటివ్ (Sensitive)</option>
+          <option value="HYPER SENSITIVE">🔴 హైపర్ సెన్సిటివ్ (Hyper)</option>
+        </select>
+      </div>
+
+      <div style="font-size: 11.5px; color: #94a3b8; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+        <span>ఫలితాలు: <strong id="psl-modal-results-count" style="color: #38bdf8;">0</strong> కేంద్రాలు కనుగొనబడ్డాయి</span>
+        <span style="font-size: 11px; color: #64748b;">(కేంద్రంపై క్లిక్ చేయగానే మ్యాప్‌పై నేరుగా జూమ్ అవుతుంది)</span>
+      </div>
+
+      <!-- PSL Cards Grid -->
+      <div class="routes-grid" id="psl-modal-list-container" style="max-height: 52vh; overflow-y: auto;">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-close" onclick="closePslSearchModal()">మూసివేయి (Close)</button>
+    </div>
   </div>
 </div>
 
@@ -2600,14 +2765,27 @@ https://...
       sel.value = 'ALL';
       currentMapMandalFilter = 'ALL';
     }
+
+    const pslModalMandal = document.getElementById('psl-modal-filter-mandal');
+    if (pslModalMandal) {
+      const pslVal = pslModalMandal.value;
+      pslModalMandal.innerHTML = '<option value="ALL">అన్ని మండలాలు (All Mandals)</option>';
+      sorted.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.innerText = m;
+        pslModalMandal.appendChild(opt);
+      });
+      if (mandalsSet.has(pslVal)) pslModalMandal.value = pslVal;
+    }
   }
 
-  // Populate Specific Route / Party Dropdown List
+  // Populate Specific Route / Party Dropdown List (Forces Only: Routes, SF, SSF, QRTs, Reserve)
   function populateMapTeamDropdown() {
     const sel = document.getElementById('select-map-team');
     if (!sel) return;
     const currentVal = sel.value;
-    sel.innerHTML = '<option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Route / Party)</option>';
+    sel.innerHTML = '<option value="">🚓 రూట్ / పార్టీని ఎంచుకోండి (Select Route / Force)</option>';
 
     // Filter allUnitsData matching current category and mandal
     const filteredUnits = allUnitsData.filter(u => {
@@ -2656,59 +2834,14 @@ https://...
     });
     sel.appendChild(grpOther);
 
-    // 3. Polling Stations (PSLs) matching Mandal
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const matchedPsls = pslData.filter(p => {
-      return currentMapMandalFilter === 'ALL' || (p.mandal && p.mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase());
-    });
-
-    if (matchedPsls.length > 0) {
-      const grpPsl = document.createElement('optgroup');
-      grpPsl.label = `🗳️ పోలింగ్ కేంద్రాలు (${matchedPsls.length} PSLs)`;
-      const limit = Math.min(120, matchedPsls.length);
-      for (let i = 0; i < limit; i++) {
-        const p = matchedPsls[i];
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.innerText = `🏫 [${p.mptc}] ${p.pslName} (${p.sensitivity})`;
-        grpPsl.appendChild(opt);
-      }
-      if (matchedPsls.length > 120) {
-        const moreOpt = document.createElement('option');
-        moreOpt.disabled = true;
-        moreOpt.innerText = `... ఇంకా ${matchedPsls.length - 120} కేంద్రాలు ఉన్నాయి (మండలం ఎంచుకోండి)`;
-        grpPsl.appendChild(moreOpt);
-      }
-      sel.appendChild(grpPsl);
-    }
-
-    if (currentVal && (filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal)) || matchedPsls.some(p => p.id === currentVal))) {
+    if (currentVal && filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal))) {
       sel.value = currentVal;
     }
   }
 
-  // Handle Team Selection: Zooms directly to officer or PSL on map
+  // Handle Team Selection: Zooms directly to officer or force unit on map
   window.handleMapTeamChange = function(unitId) {
     if (!unitId) return;
-
-    // Check if it's a Polling Station ID (PSL_...)
-    if (unitId.startsWith('PSL_')) {
-      const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-      const item = pslData.find(p => p.id === unitId);
-      if (item) {
-        if (!isPslLayerActive) {
-          window.togglePslLayer();
-        }
-        map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
-        pslLayerGroup.eachLayer(layer => {
-          if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
-            setTimeout(() => layer.openPopup(), 400);
-          }
-        });
-        showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
-      }
-      return;
-    }
 
     const m = activeMobiles[unitId];
     if (m && m.marker) {
@@ -2718,6 +2851,16 @@ https://...
       showToast(`[${m.categoryKey}] ${m.unitName} (${m.mandal}) లైవ్ ఆటో-ఫాలో మోడ్ ఆన్ చేయబడింది`);
     } else {
       currentlyFollowedOfficerKey = null;
+      // If offline, check if unit has a headquarters or known mandal center
+      const u = allUnitsData.find(item => (item.id === unitId || item.unitId === unitId));
+      if (u) {
+        showToast(`⚪ [${u.category}] ${u.unitName} ప్రస్తుతం ఆఫ్‌లైన్‌లో ఉన్నారు (ఆఫీసర్: ${u.officer || 'N/A'})`);
+        if (u.mandal) {
+          fitToMandal(u.mandal);
+        }
+      }
+    }
+  };
       const u = allUnitsData.find(item => (item.id === unitId || item.unitId === unitId));
       if (u) {
         const ph = cleanPhoneNumber(u.phone);
@@ -3158,6 +3301,277 @@ https://...
       toast.classList.remove('show');
     }, 2800);
   }
+
+  // -------------------------------------------------------------
+  // Dedicated Polling Station Search & Navigation Logic
+  // -------------------------------------------------------------
+  const modalPslSearch = document.getElementById('modal-psl-search');
+  const pslModalSearchInput = document.getElementById('psl-modal-search-input');
+  const pslModalFilterMandal = document.getElementById('psl-modal-filter-mandal');
+  const pslModalFilterSens = document.getElementById('psl-modal-filter-sens');
+  const pslModalListContainer = document.getElementById('psl-modal-list-container');
+  const pslModalResultsCount = document.getElementById('psl-modal-results-count');
+
+  window.openPslSearchModal = function() {
+    // Populate mandals in modal filter if empty
+    if (pslModalFilterMandal && pslModalFilterMandal.options.length <= 1) {
+      const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+      const mandalsSet = new Set();
+      pslData.forEach(p => { if (p.mandal) mandalsSet.add(p.mandal.trim()); });
+      const sorted = Array.from(mandalsSet).sort();
+      sorted.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.innerText = m;
+        pslModalFilterMandal.appendChild(opt);
+      });
+    }
+
+    // Sync with current deck mandal filter if set
+    if (currentMapMandalFilter !== 'ALL' && pslModalFilterMandal) {
+      pslModalFilterMandal.value = currentMapMandalFilter;
+    }
+
+    if (modalPslSearch) modalPslSearch.classList.add('show');
+    if (pslModalSearchInput) {
+      setTimeout(() => pslModalSearchInput.focus(), 150);
+    }
+    renderPslSearchResults();
+  };
+
+  window.closePslSearchModal = function() {
+    if (modalPslSearch) modalPslSearch.classList.remove('show');
+  };
+
+  window.renderPslSearchResults = function() {
+    if (!pslModalListContainer) return;
+    const query = (pslModalSearchInput ? pslModalSearchInput.value : '').trim().toLowerCase();
+    const filterMandal = pslModalFilterMandal ? pslModalFilterMandal.value : 'ALL';
+    const filterSens = pslModalFilterSens ? pslModalFilterSens.value : 'ALL';
+
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    const matched = pslData.filter(item => {
+      if (filterMandal !== 'ALL' && item.mandal && item.mandal.trim().toLowerCase() !== filterMandal.toLowerCase()) {
+        return false;
+      }
+      if (filterSens !== 'ALL' && item.sensitivity !== filterSens) {
+        return false;
+      }
+      if (!query) return true;
+
+      const searchable = [
+        item.pslName,
+        item.mandal,
+        item.mptc,
+        item.routeNo ? `రూట్-${item.routeNo} route ${item.routeNo}` : '',
+        item.ps,
+        item.code,
+        item.blo,
+        item.incharge,
+        item.sensitivity
+      ].join(' ').toLowerCase();
+
+      return searchable.includes(query);
+    });
+
+    if (pslModalResultsCount) {
+      pslModalResultsCount.innerText = matched.length.toLocaleString();
+    }
+
+    if (matched.length === 0) {
+      pslModalListContainer.innerHTML = `
+        <div style="text-align: center; padding: 30px 10px; color: #64748b;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 26px; color: #f59e0b; margin-bottom: 8px;"></i>
+          <p style="font-size: 13px;">మీ శోధనకు తగిన పోలింగ్ కేంద్రాలు కనుగొనబడలేదు.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Limit to top 120 for smooth 60fps scrolling
+    const limit = Math.min(120, matched.length);
+    let html = '';
+
+    for (let i = 0; i < limit; i++) {
+      const p = matched[i];
+      let badgeLetter = 'N';
+      let badgeClass = 'badge-n';
+      if (p.sensitivity === 'HYPER SENSITIVE') {
+        badgeLetter = 'H';
+        badgeClass = 'badge-h';
+      } else if (p.sensitivity === 'SENSITIVE') {
+        badgeLetter = 'S';
+        badgeClass = 'badge-s';
+      }
+
+      html += `
+        <div class="psl-card-item">
+          <div class="psl-card-badge ${badgeClass}" title="${p.sensitivity}">
+            ${badgeLetter}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #ffffff; line-height: 1.35; margin-bottom: 2px;">
+              🏫 ${p.pslName}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; display: flex; gap: 8px; flex-wrap: wrap;">
+              <span>🏛️ <strong>${p.mandal}</strong> (${p.mptc} MPTC)</span>
+              ${p.routeNo ? `<span>🚓 రూట్-${p.routeNo}</span>` : ''}
+              ${p.ps ? `<span>(${p.ps} PS)</span>` : ''}
+              ${p.voters ? `<span>👥 ${p.voters} ఓటర్లు</span>` : ''}
+            </div>
+            ${p.incharge ? `<div style="font-size: 10.5px; color: #cbd5e1; margin-top: 3px;">👮 ${p.incharge.replace(/\n/g, ' ')}</div>` : ''}
+          </div>
+          <button class="btn-header" style="background: rgba(37, 99, 235, 0.25); border-color: #3b82f6; color: #93c5fd; padding: 6px 12px; font-size: 11.5px; flex-shrink: 0;" onclick="zoomToPsl('${p.id}')">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span>జూమ్</span>
+          </button>
+        </div>
+      `;
+    }
+
+    if (matched.length > 120) {
+      html += `
+        <div style="text-align: center; padding: 8px; color: #94a3b8; font-size: 11px;">
+          ఇంకా <strong>${matched.length - 120}</strong> కేంద్రాలు ఉన్నాయి. మరింత నిర్దిష్టంగా శోధించండి లేదా మండలం ఎంచుకోండి.
+        </div>
+      `;
+    }
+
+    pslModalListContainer.innerHTML = html;
+  };
+
+  // Inline Deck Search
+  window.handleDeckPslSearch = function(query) {
+    const resBox = document.getElementById('deck-psl-results');
+    const clearBtn = document.getElementById('btn-clear-deck-psl');
+    if (!resBox) return;
+
+    const q = (query || '').trim().toLowerCase();
+    if (clearBtn) clearBtn.style.display = q ? 'inline-block' : 'none';
+
+    if (!q || q.length < 2) {
+      resBox.style.display = 'none';
+      return;
+    }
+
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    const matched = pslData.filter(item => {
+      if (currentMapMandalFilter !== 'ALL' && item.mandal && item.mandal.trim().toLowerCase() !== currentMapMandalFilter.toLowerCase()) {
+        return false;
+      }
+      const searchable = [
+        item.pslName,
+        item.mandal,
+        item.mptc,
+        item.routeNo ? `రూట్-${item.routeNo} ${item.routeNo}` : '',
+        item.ps,
+        item.code
+      ].join(' ').toLowerCase();
+      return searchable.includes(q);
+    });
+
+    if (matched.length === 0) {
+      resBox.innerHTML = `
+        <div style="padding: 12px; font-size: 11.5px; color: #94a3b8; text-align: center;">
+          కేంద్రాలు కనుగొనబడలేదు
+        </div>
+      `;
+      resBox.style.display = 'block';
+      return;
+    }
+
+    const limit = Math.min(10, matched.length);
+    let html = '';
+    for (let i = 0; i < limit; i++) {
+      const p = matched[i];
+      let badgeLetter = 'N';
+      let badgeClass = 'badge-n';
+      if (p.sensitivity === 'HYPER SENSITIVE') {
+        badgeLetter = 'H';
+        badgeClass = 'badge-h';
+      } else if (p.sensitivity === 'SENSITIVE') {
+        badgeLetter = 'S';
+        badgeClass = 'badge-s';
+      }
+
+      html += `
+        <div class="psl-res-item" onclick="zoomToPsl('${p.id}')">
+          <div class="psl-res-badge ${badgeClass}">${badgeLetter}</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${p.pslName}
+            </div>
+            <div class="psl-res-meta">
+              <span>🏛️ ${p.mandal}</span>
+              <span>[${p.mptc}]</span>
+              ${p.routeNo ? `<span>🚓 రూట్-${p.routeNo}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (matched.length > 10) {
+      html += `
+        <div style="padding: 8px 12px; background: rgba(0,0,0,0.35); border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+          <a href="javascript:void(0)" onclick="openPslSearchModal()" style="color: #38bdf8; font-size: 11.5px; font-weight: 700; text-decoration: none;">
+            🔍 అన్ని ${matched.length} కేంద్రాలను చూడండి ↗
+          </a>
+        </div>
+      `;
+    }
+
+    resBox.innerHTML = html;
+    resBox.style.display = 'block';
+  };
+
+  window.clearDeckPslSearch = function() {
+    const input = document.getElementById('deck-psl-search-input');
+    const resBox = document.getElementById('deck-psl-results');
+    const clearBtn = document.getElementById('btn-clear-deck-psl');
+    if (input) input.value = '';
+    if (resBox) resBox.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+  };
+
+  // Close deck PSL search results on outside click
+  document.addEventListener('click', (e) => {
+    const container = document.getElementById('psl-search-box-container');
+    const resBox = document.getElementById('deck-psl-results');
+    if (container && !container.contains(e.target) && resBox) {
+      resBox.style.display = 'none';
+    }
+  });
+
+  window.zoomToPsl = function(pslId) {
+    if (!pslId) return;
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    const item = pslData.find(p => p.id === pslId || String(p.sNo) === String(pslId));
+    if (!item) return;
+
+    // Ensure PSL layer is active
+    if (!isPslLayerActive) {
+      window.togglePslLayer();
+    }
+
+    // Close search modal and inline dropdown
+    closePslSearchModal();
+    const dropdown = document.getElementById('deck-psl-results');
+    if (dropdown) dropdown.style.display = 'none';
+
+    // Fly directly to station
+    map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
+
+    setTimeout(() => {
+      pslLayerGroup.eachLayer(layer => {
+        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
+          layer.openPopup();
+        }
+      });
+    }, 400);
+
+    showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
+  };
 
   // -------------------------------------------------------------
   // Dynamic Excel Manager: In-Browser Parsing & Live Re-Mapping
