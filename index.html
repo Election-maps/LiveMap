@@ -15,6 +15,10 @@
   <script src="route_mobiles_data.js?v=20261104"></script>
   <!-- Pre-loaded 1,196 MPTC & ZPTC Polling Stations Data -->
   <script src="mptc_zptc_data.js?v=20261105"></script>
+  <!-- Pre-loaded Road Routes Geometry -->
+  <script src="routes_geometry.js?v=20261105"></script>
+  <!-- Pre-loaded 30 Mandal Boundaries GeoJSON -->
+  <script src="mandal_borders.js?v=20261105"></script>
 
   <style>
     :root {
@@ -472,6 +476,17 @@
       font-size: 11px !important;
       padding: 4px 8px !important;
       box-shadow: 0 3px 10px rgba(0,0,0,0.5) !important;
+    }
+    .route-outline {
+      pointer-events: none;
+    }
+    .route-polyline {
+      cursor: pointer;
+      transition: stroke-width 0.15s ease, stroke 0.15s ease;
+    }
+    .route-polyline:hover {
+      stroke-width: 6.5px !important;
+      stroke: #991b1b !important;
     }
 
     /* Action Buttons bottom right */
@@ -1011,7 +1026,13 @@
     <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
     <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
     <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
-    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);">
+    <button class="cat-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" style="border-color: #ef4444; background: rgba(220, 38, 38, 0.45);" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-route" style="color: #fca5a5;"></i> 🛣️ రూట్లు (Routes)
+    </button>
+    <button class="cat-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" style="border-color: #3b82f6; background: rgba(37, 99, 235, 0.45);" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-draw-polygon" style="color: #93c5fd;"></i> 🗺️ సరిహద్దులు (Borders)
+    </button>
+    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
       <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,196)
     </button>
   </div>
@@ -1206,11 +1227,15 @@ https://...
   });
 
   // -------------------------------------------------------------
-  // Data Load: 1,196 MPTC & ZPTC Polling Stations Data
+  // Data Load: 1,196 MPTC & ZPTC Polling Stations Data, Routes & Borders
   // -------------------------------------------------------------
   let allPslData = window.MPTC_ZPTC_DATA || [];
+  const mandalBordersLayerGroup = L.layerGroup().addTo(map);
+  const routesLayerGroup = L.layerGroup().addTo(map);
   const pslLayerGroup = L.layerGroup().addTo(map);
   let isPslLayerActive = true;
+  let isRoutesLayerActive = true;
+  let isBordersLayerActive = true;
   let currentPslSensitivityFilter = 'ALL';
 
   if (!allPslData || allPslData.length === 0) {
@@ -1219,12 +1244,18 @@ https://...
       .then(data => {
         allPslData = data;
         applyPslFilters();
+        applyRoadRoutes();
+        drawMandalBorders();
         populateMapMandalDropdown();
         populateMapTeamDropdown();
       })
       .catch(err => console.error("Error loading mptc_zptc_locations.json:", err));
   } else {
-    setTimeout(() => { applyPslFilters(); }, 100);
+    setTimeout(() => {
+      applyPslFilters();
+      applyRoadRoutes();
+      drawMandalBorders();
+    }, 100);
   }
 
   function buildPslPopupHtml(item) {
@@ -1389,6 +1420,255 @@ https://...
       btn.classList.toggle('active', btn.getAttribute('data-sens') === sens);
     });
     applyPslFilters();
+  };
+
+  // -------------------------------------------------------------
+  // Precomputed Road Routes & Mandal Boundaries Rendering Logic
+  // -------------------------------------------------------------
+  const ROMAN_NUM_MAP = {
+    '1':'I','2':'II','3':'III','4':'IV','5':'V','6':'VI','7':'VII','8':'VIII','9':'IX','10':'X',
+    '11':'XI','12':'XII','13':'XIII','14':'XIV','15':'XV','16':'XVI','17':'XVII','18':'XVIII','19':'XIX','20':'XX'
+  };
+
+  function findRouteGeometry(ps, mandal, routeNo) {
+    if (!window.PRECOMPUTED_ROUTES) return null;
+    const p = (ps || '').trim();
+    const m = (mandal || '').trim();
+    const r = (routeNo || '').toString().trim();
+    const rRoman = ROMAN_NUM_MAP[r] || r;
+    const altP = p.replace(/\s+PS$/i, '').trim();
+    const altM = m.replace(/\s+Mandal$/i, '').trim();
+
+    const candidates = [
+      `${p}_${r}`,
+      `${p}_${rRoman}`,
+      `${altP}_${r}`,
+      `${altP}_${rRoman}`,
+      `${m}_${r}`,
+      `${m}_${rRoman}`,
+      `${altM}_${r}`,
+      `${altM}_${rRoman}`
+    ];
+
+    for (const cand of candidates) {
+      if (cand && window.PRECOMPUTED_ROUTES[cand] && window.PRECOMPUTED_ROUTES[cand].coordinates) {
+        return window.PRECOMPUTED_ROUTES[cand];
+      }
+    }
+    return null;
+  }
+
+  function getCurvedSplineCoords(points, numInterpolations = 12) {
+    if (!points || points.length < 2) return points || [];
+    if (points.length === 2) {
+      const p1 = points[0], p2 = points[1];
+      const midLat = (p1[0] + p2[0]) / 2, midLng = (p1[1] + p2[1]) / 2;
+      const dLat = p2[0] - p1[0], dLng = p2[1] - p1[1];
+      const ctrlLat = midLat - dLng * 0.08, ctrlLng = midLng + dLat * 0.08;
+      const curved = [];
+      for (let i = 0; i <= numInterpolations; i++) {
+        const t = i / numInterpolations;
+        const lat = (1 - t) * (1 - t) * p1[0] + 2 * (1 - t) * t * ctrlLat + t * t * p2[0];
+        const lng = (1 - t) * (1 - t) * p1[1] + 2 * (1 - t) * t * ctrlLng + t * t * p2[1];
+        curved.push([lat, lng]);
+      }
+      return curved;
+    }
+
+    const curved = [];
+    const pts = [points[0], ...points, points[points.length - 1]];
+    for (let i = 0; i < pts.length - 3; i++) {
+      const p0 = pts[i], p1 = pts[i + 1], p2 = pts[i + 2], p3 = pts[i + 3];
+      for (let j = 0; j < numInterpolations; j++) {
+        const t = j / numInterpolations, t2 = t * t, t3 = t2 * t;
+        const lat = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
+        const lng = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+        curved.push([lat, lng]);
+      }
+    }
+    curved.push(points[points.length - 1]);
+    return curved;
+  }
+
+  function applyRoadRoutes() {
+    routesLayerGroup.clearLayers();
+    if (!isRoutesLayerActive) return;
+
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    if (!data || data.length === 0) return;
+
+    const routeGroups = {};
+    data.forEach(item => {
+      if (!item.routeNo) return;
+      if (currentMapMandalFilter !== 'ALL') {
+        if (!item.mandal || item.mandal.trim().toLowerCase() !== currentMapMandalFilter.toLowerCase()) {
+          return;
+        }
+      }
+      const key = `${item.ps || item.mandal}_${item.routeNo}`;
+      if (!routeGroups[key]) {
+        routeGroups[key] = {
+          ps: item.ps || item.mandal,
+          mandal: item.mandal,
+          routeNo: item.routeNo,
+          incharge: item.incharge || '',
+          support: item.support || '',
+          stations: []
+        };
+      }
+      routeGroups[key].stations.push(item);
+    });
+
+    Object.keys(routeGroups).forEach(k => {
+      const rg = routeGroups[k];
+      const pre = findRouteGeometry(rg.ps, rg.mandal, rg.routeNo);
+      let coords = null;
+      let distKm = pre ? pre.distKm : null;
+
+      if (pre && pre.coordinates && pre.coordinates.length > 1) {
+        coords = pre.coordinates;
+      } else {
+        const pts = rg.stations.map(s => [s.lat, s.lng]);
+        if (pts.length >= 2) {
+          coords = getCurvedSplineCoords(pts);
+        }
+      }
+
+      if (!coords || coords.length < 2) return;
+
+      const outline = L.polyline(coords, {
+        color: '#ffffff',
+        weight: 6,
+        opacity: 0.95,
+        interactive: false,
+        className: 'route-outline'
+      });
+
+      const polyline = L.polyline(coords, {
+        color: '#dc2626',
+        weight: 4.2,
+        opacity: 0.92,
+        className: 'route-polyline'
+      });
+
+      const popupHtml = `
+        <div style="font-family: sans-serif; min-width: 250px; max-width: 310px; color: #1e293b;">
+          <div style="background: #dc2626; color: #ffffff; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span>🚓 రూట్-${rg.routeNo} (${rg.ps} PS)</span>
+            <span style="background: rgba(255,255,255,0.25); font-size: 10px; padding: 2px 6px; border-radius: 4px;">${rg.mandal}</span>
+          </div>
+          <div style="font-size: 11.5px; padding: 8px 2px; line-height: 1.5;">
+            ${distKm ? `<div>📏 <strong>రహదారి దూరం:</strong> ~${distKm} KM</div>` : ''}
+            ${rg.incharge ? `<div>👮 <strong>ఇన్‌ఛార్జ్:</strong> ${rg.incharge.replace(/\n/g, ' ')}</div>` : ''}
+            ${rg.support ? `<div>🤝 <strong>సహాయ సిబ్బంది:</strong> ${rg.support.replace(/\n/g, ' ')}</div>` : ''}
+            <div style="margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 5px;">
+              <strong>🏫 పోలింగ్ కేంద్రాలు (${rg.stations.length}):</strong>
+              <div style="max-height: 130px; overflow-y: auto; margin-top: 4px; font-size: 11px; color: #475569;">
+                ${rg.stations.map((s, idx) => `<div>${idx + 1}. <b>${s.pslName}</b> (${s.mptc})</div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      polyline.bindPopup(popupHtml);
+      polyline.bindTooltip(`<b>🚓 రూట్-${rg.routeNo} (${rg.ps} PS)</b><br/><span style="color:#fde047;">${rg.mandal} మండలం</span> | ${rg.stations.length} పోలింగ్ కేంద్రాలు`, {
+        sticky: true,
+        className: 'psl-tooltip'
+      });
+
+      routesLayerGroup.addLayer(outline);
+      routesLayerGroup.addLayer(polyline);
+    });
+  }
+
+  function drawMandalBorders() {
+    mandalBordersLayerGroup.clearLayers();
+    if (!isBordersLayerActive || !window.MANDAL_BORDERS) return;
+
+    const layer = L.geoJSON(window.MANDAL_BORDERS, {
+      style: function(feature) {
+        const isSelected = currentMapMandalFilter !== 'ALL' && 
+          feature.properties && 
+          feature.properties.name && 
+          feature.properties.name.toLowerCase() === currentMapMandalFilter.toLowerCase();
+
+        return {
+          color: isSelected ? '#ef4444' : '#2563eb',
+          weight: isSelected ? 3.5 : 2,
+          opacity: isSelected ? 0.95 : 0.85,
+          fillColor: '#3b82f6',
+          fillOpacity: isSelected ? 0.12 : 0.04
+        };
+      },
+      onEachFeature: function(feature, layer) {
+        const name = (feature.properties && feature.properties.name) ? feature.properties.name : 'Mandal';
+        layer.bindTooltip(`<b>📍 ${name} మండలం</b>`, { sticky: true, className: 'psl-tooltip' });
+        layer.on('click', function() {
+          const sel = document.getElementById('select-map-mandal');
+          if (sel) {
+            for (let i = 0; i < sel.options.length; i++) {
+              if (sel.options[i].value.toLowerCase() === name.toLowerCase()) {
+                sel.selectedIndex = i;
+                window.handleMapMandalChange(sel.options[i].value);
+                break;
+              }
+            }
+          }
+        });
+      }
+    });
+
+    mandalBordersLayerGroup.addLayer(layer);
+  }
+
+  function fitToMandal(mandalName) {
+    if (!mandalName || mandalName === 'ALL') return;
+    if (window.MANDAL_BORDERS && window.MANDAL_BORDERS.features) {
+      const feat = window.MANDAL_BORDERS.features.find(f => 
+        f.properties && f.properties.name && f.properties.name.toLowerCase() === mandalName.toLowerCase()
+      );
+      if (feat) {
+        const tempLayer = L.geoJSON(feat);
+        map.fitBounds(tempLayer.getBounds(), { padding: [30, 30], maxZoom: 14 });
+        return;
+      }
+    }
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    const pts = data.filter(p => p.mandal && p.mandal.toLowerCase() === mandalName.toLowerCase()).map(p => [p.lat, p.lng]);
+    if (pts.length > 0) {
+      map.fitBounds(pts, { padding: [30, 30], maxZoom: 14 });
+    }
+  }
+
+  window.toggleRoadRoutesLayer = function() {
+    isRoutesLayerActive = !isRoutesLayerActive;
+    const btn = document.getElementById('btn-toggle-routes');
+    if (isRoutesLayerActive) {
+      if (btn) btn.classList.add('active');
+      if (!map.hasLayer(routesLayerGroup)) map.addLayer(routesLayerGroup);
+      applyRoadRoutes();
+      showToast('🛣️ పోలీస్ పెట్రోలింగ్ రోడ్ రూట్లు మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
+    } else {
+      if (btn) btn.classList.remove('active');
+      if (map.hasLayer(routesLayerGroup)) map.removeLayer(routesLayerGroup);
+      showToast('🛣️ రోడ్ రూట్లు ఆఫ్ చేయబడ్డాయి');
+    }
+  };
+
+  window.toggleMandalBordersLayer = function() {
+    isBordersLayerActive = !isBordersLayerActive;
+    const btn = document.getElementById('btn-toggle-borders');
+    if (isBordersLayerActive) {
+      if (btn) btn.classList.add('active');
+      if (!map.hasLayer(mandalBordersLayerGroup)) map.addLayer(mandalBordersLayerGroup);
+      drawMandalBorders();
+      showToast('🗺️ మండల సరిహద్దులు (Mandal Borders) ఆన్ చేయబడ్డాయి');
+    } else {
+      if (btn) btn.classList.remove('active');
+      if (map.hasLayer(mandalBordersLayerGroup)) map.removeLayer(mandalBordersLayerGroup);
+      showToast('🗺️ మండల సరిహద్దులు ఆఫ్ చేయబడ్డాయి');
+    }
   };
 
   let isSatellite = false;
@@ -1986,8 +2266,11 @@ https://...
     populateMapTeamDropdown();
     applyMapFilters();
     applyPslFilters();
+    applyRoadRoutes();
+    drawMandalBorders();
     if (mandalName !== 'ALL') {
       showToast(`${mandalName} మండలం ఫిల్టర్ చేయబడింది`);
+      fitToMandal(mandalName);
     }
   };
 
