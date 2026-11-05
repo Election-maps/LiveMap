@@ -16,9 +16,9 @@
   <!-- Pre-loaded 1,196 MPTC & ZPTC Polling Stations Data -->
   <script src="mptc_zptc_data.js?v=20261105"></script>
   <!-- Pre-loaded Road Routes Geometry -->
-  <script src="routes_geometry.js?v=20261105"></script>
+  <script src="routes_geometry.js?v=20261105_v2"></script>
   <!-- Pre-loaded 30 Mandal Boundaries GeoJSON -->
-  <script src="mandal_borders.js?v=20261105"></script>
+  <script src="mandal_borders.js?v=20261105_v2"></script>
 
   <style>
     :root {
@@ -1594,17 +1594,18 @@ https://...
           feature.properties.name.toLowerCase() === currentMapMandalFilter.toLowerCase();
 
         return {
-          color: isSelected ? '#ef4444' : '#2563eb',
-          weight: isSelected ? 3.5 : 2,
-          opacity: isSelected ? 0.95 : 0.85,
+          color: isSelected ? '#dc2626' : '#1d4ed8',
+          weight: isSelected ? 4 : 2.5,
+          opacity: isSelected ? 0.95 : 0.88,
           fillColor: '#3b82f6',
-          fillOpacity: isSelected ? 0.12 : 0.04
+          fillOpacity: isSelected ? 0.12 : 0.03
         };
       },
       onEachFeature: function(feature, layer) {
         const name = (feature.properties && feature.properties.name) ? feature.properties.name : 'Mandal';
         layer.bindTooltip(`<b>📍 ${name} మండలం</b>`, { sticky: true, className: 'psl-tooltip' });
-        layer.on('click', function() {
+        layer.on('click', function(e) {
+          if (e && e.originalEvent) L.DomEvent.stopPropagation(e);
           const sel = document.getElementById('select-map-mandal');
           if (sel) {
             for (let i = 0; i < sel.options.length; i++) {
