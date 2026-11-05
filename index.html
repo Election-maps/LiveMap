@@ -412,29 +412,57 @@
       border-color: #60a5fa;
       box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
     }
-    .psl-marker-pin {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: flex;
+    .psl-btn-badge {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-      border: 2px solid #ffffff;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-right: 5px;
+      border: 1.5px solid #ffffff;
+      vertical-align: middle;
+      line-height: 1;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+    .psl-btn-badge.badge-n {
+      background: #0fb881;
+    }
+    .psl-btn-badge.badge-s {
+      background: #f59e0b;
+    }
+    .psl-btn-badge.badge-h {
+      background: #e71f44;
+    }
+    .custom-psl-marker {
+      background: transparent !important;
+      border: none !important;
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: transform 0.18s ease-out;
     }
-    .psl-marker-pin:hover {
-      transform: scale(1.35);
-      z-index: 1000 !important;
+    .custom-psl-marker:hover {
+      transform: scale(1.32) translateY(-4px);
+      z-index: 99999 !important;
     }
-    .psl-sens-hyper {
-      animation: psl-pulse 2s infinite;
+    .psl-teardrop-pin {
+      display: block;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+      transition: filter 0.2s ease;
     }
-    @keyframes psl-pulse {
-      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    .psl-teardrop-pin:hover {
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+    }
+    .psl-sens-hyper .psl-teardrop-pin {
+      filter: drop-shadow(0 0 6px rgba(231, 31, 68, 0.85)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+      animation: psl-hyper-pulse 1.8s infinite;
+    }
+    @keyframes psl-hyper-pulse {
+      0% { filter: drop-shadow(0 0 4px rgba(231, 31, 68, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)); }
+      50% { filter: drop-shadow(0 0 10px rgba(231, 31, 68, 0.95)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5)); }
+      100% { filter: drop-shadow(0 0 4px rgba(231, 31, 68, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)); }
     }
     .psl-tooltip {
       background: rgba(15, 23, 42, 0.95) !important;
@@ -1009,9 +1037,9 @@
   <div class="psl-filter-subbar" id="psl-filter-subbar">
     <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
     <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
-    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')">🟢 Normal (832)</button>
-    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')">🟡 Sensitive (223)</button>
-    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')">🔴 Hyper Sensitive (141)</button>
+    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
+    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
+    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -1262,33 +1290,42 @@ https://...
   }
 
   function createPslMarker(item) {
-    let pinColor = '#10b981';
-    let pinBorder = '#ffffff';
+    let pinColor = '#0fb881';
+    let letter = 'N';
     let glowClass = '';
 
-    if (item.sensitivity === 'HYPER SENSITIVE') {
-      pinColor = '#ef4444';
+    if (item.sensitivity === 'HYPER SENSITIVE' || item.sensitivity === 'CRITICAL') {
+      pinColor = '#e71f44';
+      letter = 'H';
       glowClass = 'psl-sens-hyper';
     } else if (item.sensitivity === 'SENSITIVE') {
       pinColor = '#f59e0b';
+      letter = 'S';
     }
 
     const icon = L.divIcon({
-      className: 'custom-psl-marker',
+      className: `custom-psl-marker ${glowClass}`,
       html: `
-        <div class="psl-marker-pin ${glowClass}" style="background: ${pinColor}; border-color: ${pinBorder};" title="${item.pslName} (${item.sensitivity})">
-          <i class="fa-solid fa-person-booth" style="font-size: 9.5px; color: #ffffff;"></i>
-        </div>
+        <svg viewBox="0 0 30 40" width="26" height="36" class="psl-teardrop-pin" style="display:block;">
+          <path d="M 15,1.5 A 13.5,13.5 0 0,1 27.5,21 L 15.6,38.8 C 15.3,39.2 14.7,39.2 14.4,38.8 L 2.5,21 A 13.5,13.5 0 0,1 15,1.5 Z" 
+                fill="${pinColor}" 
+                stroke="#ffffff" 
+                stroke-width="2.2" 
+                stroke-linejoin="round"/>
+          <circle cx="15" cy="14.5" r="7.8" fill="#ffffff"/>
+          <text x="15" y="14.8" text-anchor="middle" dominant-baseline="central" font-family="'Segoe UI', Roboto, Arial, sans-serif" font-weight="900" font-size="11.5" fill="${pinColor}">${letter}</text>
+        </svg>
       `,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
+      iconSize: [26, 36],
+      iconAnchor: [13, 36],
+      popupAnchor: [0, -36]
     });
 
     const marker = L.marker([item.lat, item.lng], { icon: icon });
     marker.bindPopup(buildPslPopupHtml(item));
     marker.bindTooltip(`<b>${item.pslName}</b><br/><span style="color:#fde047;">${item.mptc} MPTC</span> (${item.sensitivity})`, {
       direction: 'top',
-      offset: [0, -10],
+      offset: [0, -36],
       className: 'psl-tooltip'
     });
 
