@@ -462,7 +462,7 @@
       color: #fde047;
       font-weight: 600;
       white-space: nowrap;
-      max-width: 220px;
+      max-width: 320px;
       overflow: hidden;
       text-overflow: ellipsis;
       display: flex;
@@ -1137,22 +1137,38 @@ https://...
     }
   }
 
-  function formatOfficerInchargeDisplay(officerStr) {
-    if (!officerStr) return '';
+  function formatOfficerInchargeDisplay(officerStr, mandal = '') {
+    const defaultPs = mandal ? (mandal.endsWith('PS') ? mandal : `${mandal} PS`) : '';
+    if (!officerStr) return defaultPs;
     const parts = officerStr.split(',').map(p => p.trim()).filter(Boolean);
-    if (parts.length === 0) return '';
+    if (parts.length === 0) return defaultPs;
     const cleaned = parts.filter(p => !/^\d{10}$/.test(p.replace(/\s+/g, '')));
-    if (cleaned.length >= 2) {
-      return `${cleaned[0]}, ${cleaned[1]}`;
+    
+    let nameAndRank = '';
+    let psPart = '';
+
+    if (cleaned.length >= 3) {
+      nameAndRank = `${cleaned[0]}, ${cleaned[1]}`;
+      psPart = cleaned[2];
+    } else if (cleaned.length === 2) {
+      nameAndRank = `${cleaned[0]}, ${cleaned[1]}`;
+      psPart = defaultPs;
+    } else if (cleaned.length === 1) {
+      nameAndRank = cleaned[0];
+      psPart = defaultPs;
     }
-    return cleaned[0] || officerStr;
+
+    if (nameAndRank && psPart) {
+      return `${nameAndRank} (${psPart})`;
+    }
+    return nameAndRank || psPart || officerStr;
   }
 
   function createPoliceMarkerIcon(catKey, mandal, unitName, isLive = true, isMoving = false, bearing = 0, speedKmh = 0, rawOfficer = '') {
     const theme = getCategoryTheme(catKey);
     const badgeText = `${catKey || 'RM'}: ${unitName || mandal}`;
     const opacity = isLive ? '1' : '0.85';
-    const officerDisp = formatOfficerInchargeDisplay(rawOfficer);
+    const officerDisp = formatOfficerInchargeDisplay(rawOfficer, mandal);
     const officerHtml = officerDisp 
       ? `<div class="officer-incharge-badge"><i class="fa-solid fa-user-shield" style="font-size:9px;"></i><span>${officerDisp}</span></div>` 
       : '';
@@ -1362,6 +1378,7 @@ https://...
           [${catKey}] ${mandal} - ${unitName}
         </div>
         <strong style="color: #0f172a; font-size: 13px;">${data.officer || data.name || 'Officer'}</strong><br/>
+        <span style="font-size: 11px; color: #475569;">🏛️ పోలీస్ స్టేషన్: <strong>${mandal.endsWith('PS') ? mandal : mandal + ' PS'}</strong></span><br/>
         <span style="font-size: 11px; color: #475569;">📞 ఫోన్: <strong>${data.phone || 'N/A'}</strong></span><br/>
         ${data.hq ? `<span style="font-size: 11px; color: #475569;">📍 HQ: ${data.hq}</span><br/>` : ''}
         <span style="font-size: 11px; color: #475569;">⚡ Speed: <strong>${kmh} km/h ${kmh > 0 || data.isMoving ? '<span style="color:#16a34a; font-weight:bold;">(Moving)</span>' : '<span style="color:#d97706; font-weight:bold;">(Stopped)</span>'}</strong></span><br/>

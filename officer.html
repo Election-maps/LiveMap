@@ -717,22 +717,38 @@
   let curOfficerLat = null;
   let curOfficerLng = null;
 
-  function formatOfficerInchargeDisplay(officerStr) {
-    if (!officerStr) return '';
+  function formatOfficerInchargeDisplay(officerStr, mandal = '') {
+    const defaultPs = mandal ? (mandal.endsWith('PS') ? mandal : `${mandal} PS`) : '';
+    if (!officerStr) return defaultPs;
     const parts = officerStr.split(',').map(p => p.trim()).filter(Boolean);
-    if (parts.length === 0) return '';
+    if (parts.length === 0) return defaultPs;
     const cleaned = parts.filter(p => !/^\d{10}$/.test(p.replace(/\s+/g, '')));
-    if (cleaned.length >= 2) {
-      return `${cleaned[0]}, ${cleaned[1]}`;
+    
+    let nameAndRank = '';
+    let psPart = '';
+
+    if (cleaned.length >= 3) {
+      nameAndRank = `${cleaned[0]}, ${cleaned[1]}`;
+      psPart = cleaned[2];
+    } else if (cleaned.length === 2) {
+      nameAndRank = `${cleaned[0]}, ${cleaned[1]}`;
+      psPart = defaultPs;
+    } else if (cleaned.length === 1) {
+      nameAndRank = cleaned[0];
+      psPart = defaultPs;
     }
-    return cleaned[0] || officerStr;
+
+    if (nameAndRank && psPart) {
+      return `${nameAndRank} (${psPart})`;
+    }
+    return nameAndRank || psPart || officerStr;
   }
 
-  function updateMyMarkerOnMap(lat, lng, accuracy, labelText, bearing, isMoving, kmh, rawOfficer) {
+  function updateMyMarkerOnMap(lat, lng, accuracy, labelText, bearing, isMoving, kmh, rawOfficer, mandal = '') {
     if (!myMarker) {
       curOfficerLat = lat;
       curOfficerLng = lng;
-      const offDisp = formatOfficerInchargeDisplay(rawOfficer);
+      const offDisp = formatOfficerInchargeDisplay(rawOfficer, mandal);
       const icon = L.divIcon({
         className: 'my-location-marker',
         html: `
@@ -902,7 +918,7 @@
     mqttClient.publish(generalTopic, JSON.stringify(payload), { qos: 0 });
 
     const kmh = (speed || 0) > 0 ? Math.round(speed * 3.6) : 0;
-    updateMyMarkerOnMap(lat, lng, accuracy, `${currentSelectedUnit.mandal} - ${currentSelectedUnit.unitName}`, bearing, kmh > 0, kmh, currentSelectedUnit.officer);
+    updateMyMarkerOnMap(lat, lng, accuracy, `${currentSelectedUnit.mandal} - ${currentSelectedUnit.unitName}`, bearing, kmh > 0, kmh, currentSelectedUnit.officer, currentSelectedUnit.mandal);
   }
 
   // -------------------------------------------------------------
