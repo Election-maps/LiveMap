@@ -13,6 +13,8 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
   <script src="route_mobiles_data.js?v=20261104"></script>
+  <!-- Pre-loaded 1,194 MPTC & ZPTC Polling Stations Data -->
+  <script src="mptc_zptc_data.js?v=20261105"></script>
 
   <style>
     :root {
@@ -352,6 +354,96 @@
       .map-dropdown-box {
         padding: 1px 7px;
       }
+      .psl-filter-subbar {
+        top: 172px;
+        left: 8px;
+        max-width: calc(100vw - 16px);
+      }
+    }
+
+    /* Polling Stations (PSL) UI & Marker Styling */
+    .psl-filter-subbar {
+      position: absolute;
+      top: 180px;
+      left: 12px;
+      z-index: 998;
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      white-space: nowrap;
+      max-width: calc(100vw - 24px);
+      padding: 3px 8px;
+      background: rgba(11, 20, 26, 0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      align-items: center;
+      scrollbar-width: none;
+    }
+    .psl-filter-subbar::-webkit-scrollbar { display: none; }
+    .psl-subbar-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #93c5fd;
+      margin-right: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .psl-sens-btn {
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .psl-sens-btn:hover {
+      background: rgba(59, 130, 246, 0.4);
+      color: #fff;
+    }
+    .psl-sens-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #60a5fa;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+    }
+    .psl-marker-pin {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+      border: 2px solid #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .psl-marker-pin:hover {
+      transform: scale(1.35);
+      z-index: 1000 !important;
+    }
+    .psl-sens-hyper {
+      animation: psl-pulse 2s infinite;
+    }
+    @keyframes psl-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .psl-tooltip {
+      background: rgba(15, 23, 42, 0.95) !important;
+      color: #f8fafc !important;
+      border: 1px solid #3b82f6 !important;
+      border-radius: 6px !important;
+      font-size: 11px !important;
+      padding: 4px 8px !important;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.5) !important;
     }
 
     /* Action Buttons bottom right */
@@ -877,6 +969,10 @@
       <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
       <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
     </div>
+    <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
+      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,194</strong></span>
+    </div>
   </div>
 
   <!-- Category Filter Pills Bar on Map (Routes, SF, SSF, QRTs, Reserve Parties) -->
@@ -887,6 +983,9 @@
     <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
     <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
     <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
+    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);">
+      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,194)
+    </button>
   </div>
 
   <!-- Floating Map Filter Dropdowns: Mandal & Route/Party Selector -->
@@ -904,6 +1003,15 @@
         <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
       </select>
     </div>
+  </div>
+
+  <!-- Sensitivity Filter Sub-bar for Polling Stations -->
+  <div class="psl-filter-subbar" id="psl-filter-subbar">
+    <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
+    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,194)</button>
+    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')">🟢 Normal (832)</button>
+    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')">🟡 Sensitive (222)</button>
+    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')">🔴 Hyper Sensitive (140)</button>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -1068,6 +1176,183 @@ https://...
   map.on('dragstart', () => {
     currentlyFollowedOfficerKey = null;
   });
+
+  // -------------------------------------------------------------
+  // Data Load: 1,194 MPTC & ZPTC Polling Stations Data
+  // -------------------------------------------------------------
+  let allPslData = window.MPTC_ZPTC_DATA || [];
+  const pslLayerGroup = L.layerGroup().addTo(map);
+  let isPslLayerActive = true;
+  let currentPslSensitivityFilter = 'ALL';
+
+  if (!allPslData || allPslData.length === 0) {
+    fetch('mptc_zptc_locations.json')
+      .then(res => res.json())
+      .then(data => {
+        allPslData = data;
+        applyPslFilters();
+        populateMapMandalDropdown();
+        populateMapTeamDropdown();
+      })
+      .catch(err => console.error("Error loading mptc_zptc_locations.json:", err));
+  } else {
+    setTimeout(() => { applyPslFilters(); }, 100);
+  }
+
+  function buildPslPopupHtml(item) {
+    let themeBg = '#1e3a8a';
+    let badgeBg = '#10b981';
+    if (item.sensitivity === 'HYPER SENSITIVE') {
+      themeBg = '#7f1d1d';
+      badgeBg = '#ef4444';
+    } else if (item.sensitivity === 'SENSITIVE') {
+      themeBg = '#78350f';
+      badgeBg = '#f59e0b';
+    }
+
+    let inchargeClean = item.incharge || '';
+    let inchargePhoneMatch = inchargeClean.match(/(\d{10})/);
+    let inchargePhone = inchargePhoneMatch ? inchargePhoneMatch[1] : '';
+
+    return `
+      <div style="font-family: sans-serif; min-width: 250px; max-width: 310px; color: #1e293b;">
+        <div style="background: ${themeBg}; color: #ffffff; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 11.5px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span>🏛️ ${item.mandal} - ${item.mptc} MPTC</span>
+          <span style="background: ${badgeBg}; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase;">${item.sensitivity}</span>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px; line-height: 1.3;">
+          🏫 ${item.pslName}
+        </div>
+
+        <div style="font-size: 11px; color: #475569; margin-bottom: 6px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <span>🗳️ పోలింగ్ కేంద్రాలు: <strong>${item.psCount || 1}</strong></span>
+          ${item.voters ? `<span>👥 ఓటర్లు: <strong>${item.voters}</strong></span>` : ''}
+          ${item.code ? `<span>📍 కోడ్: <strong>${item.code}</strong></span>` : ''}
+        </div>
+
+        <div style="font-size: 11px; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; line-height: 1.45;">
+          <div>🚓 <strong>రూట్ / పోలీస్ స్టేషన్:</strong> ${item.routeNo ? `రూట్-${item.routeNo}` : ''} (${item.ps || item.mandal} PS)</div>
+          ${item.distFromPs ? `<div>📏 <strong>PS నుండి దూరం:</strong> ${item.distFromPs}</div>` : ''}
+          ${item.incharge ? `<div style="margin-top:3px;">👮 <strong>రూట్ ఇన్‌ఛార్జ్:</strong> ${item.incharge.replace(/\n/g, ' ')}</div>` : ''}
+          ${item.support ? `<div>🤝 <strong>సహాయ సిబ్బంది:</strong> ${item.support.replace(/\n/g, ' ')}</div>` : ''}
+        </div>
+
+        ${(item.stf || item.sstf || item.qrt) ? `
+          <div style="font-size: 10.5px; color: #475569; background: #f1f5f9; border-radius: 6px; padding: 5px 8px; margin-bottom: 6px; line-height: 1.4;">
+            ${item.stf ? `<div>🛡️ <strong>స్ట్రైకింగ్ ఫోర్స్:</strong> ${item.stf.replace(/\n/g, ' ')}</div>` : ''}
+            ${item.sstf ? `<div>⚡ <strong>స్పెషల్ ఫోర్స్:</strong> ${item.sstf.replace(/\n/g, ' ')}</div>` : ''}
+            ${item.qrt ? `<div>🚨 <strong>QRT:</strong> ${item.qrt.replace(/\n/g, ' ')}</div>` : ''}
+          </div>
+        ` : ''}
+
+        ${item.blo ? `
+          <div style="font-size: 10.5px; color: #065f46; margin-bottom: 6px;">
+            👤 <strong>BLO:</strong> ${item.blo.replace(/\n/g, ' ')}
+          </div>
+        ` : ''}
+
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+          ${inchargePhone ? `<a href="tel:${inchargePhone}" style="flex:1; text-align:center; padding:5px 8px; background:#2563eb; color:white; border-radius:4px; text-decoration:none; font-size:11px; font-weight:600;"><i class="fa-solid fa-phone"></i> కాల్</a>` : ''}
+          ${inchargePhone ? `<a href="https://wa.me/91${inchargePhone}" target="_blank" style="flex:1; text-align:center; padding:5px 8px; background:#16a34a; color:white; border-radius:4px; text-decoration:none; font-size:11px; font-weight:600;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ''}
+          <button onclick="map.flyTo([${item.lat}, ${item.lng}], 18)" style="padding:5px 8px; background:#475569; color:white; border:none; border-radius:4px; font-size:11px; cursor:pointer;" title="జూమ్ చేయండి"><i class="fa-solid fa-magnifying-glass-plus"></i> జూమ్</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function createPslMarker(item) {
+    let pinColor = '#10b981';
+    let pinBorder = '#ffffff';
+    let glowClass = '';
+
+    if (item.sensitivity === 'HYPER SENSITIVE') {
+      pinColor = '#ef4444';
+      glowClass = 'psl-sens-hyper';
+    } else if (item.sensitivity === 'SENSITIVE') {
+      pinColor = '#f59e0b';
+    }
+
+    const icon = L.divIcon({
+      className: 'custom-psl-marker',
+      html: `
+        <div class="psl-marker-pin ${glowClass}" style="background: ${pinColor}; border-color: ${pinBorder};" title="${item.pslName} (${item.sensitivity})">
+          <i class="fa-solid fa-person-booth" style="font-size: 9.5px; color: #ffffff;"></i>
+        </div>
+      `,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    const marker = L.marker([item.lat, item.lng], { icon: icon });
+    marker.bindPopup(buildPslPopupHtml(item));
+    marker.bindTooltip(`<b>${item.pslName}</b><br/><span style="color:#fde047;">${item.mptc} MPTC</span> (${item.sensitivity})`, {
+      direction: 'top',
+      offset: [0, -10],
+      className: 'psl-tooltip'
+    });
+
+    return marker;
+  }
+
+  function applyPslFilters() {
+    pslLayerGroup.clearLayers();
+    if (!isPslLayerActive) return;
+
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    let count = 0;
+    let bounds = [];
+
+    data.forEach(item => {
+      // Mandal filter
+      if (currentMapMandalFilter !== 'ALL') {
+        if (!item.mandal || item.mandal.trim().toLowerCase() !== currentMapMandalFilter.toLowerCase()) {
+          return;
+        }
+      }
+
+      // Sensitivity filter
+      if (currentPslSensitivityFilter !== 'ALL') {
+        if (item.sensitivity !== currentPslSensitivityFilter) {
+          return;
+        }
+      }
+
+      const m = createPslMarker(item);
+      pslLayerGroup.addLayer(m);
+      bounds.push([item.lat, item.lng]);
+      count++;
+    });
+
+    const elPslKpi = document.getElementById('kpi-psl');
+    if (elPslKpi) elPslKpi.innerText = count.toLocaleString();
+  }
+
+  window.togglePslLayer = function() {
+    isPslLayerActive = !isPslLayerActive;
+    const btn = document.getElementById('btn-toggle-psl');
+    const subbar = document.getElementById('psl-filter-subbar');
+    if (isPslLayerActive) {
+      if (btn) btn.classList.add('active');
+      if (subbar) subbar.style.display = 'flex';
+      if (!map.hasLayer(pslLayerGroup)) map.addLayer(pslLayerGroup);
+      applyPslFilters();
+      showToast('🗳️ పోలింగ్ కేంద్రాలు (1,194) మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
+    } else {
+      if (btn) btn.classList.remove('active');
+      if (subbar) subbar.style.display = 'none';
+      if (map.hasLayer(pslLayerGroup)) map.removeLayer(pslLayerGroup);
+      showToast('🗳️ పోలింగ్ కేంద్రాలు ఆఫ్ చేయబడ్డాయి');
+    }
+  };
+
+  window.filterPslSensitivity = function(sens) {
+    currentPslSensitivityFilter = sens;
+    document.querySelectorAll('.psl-sens-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-sens') === sens);
+    });
+    applyPslFilters();
+  };
 
   let isSatellite = false;
   document.getElementById('btn-toggle-layer').addEventListener('click', () => {
@@ -1663,6 +1948,7 @@ https://...
     currentMapMandalFilter = mandalName;
     populateMapTeamDropdown();
     applyMapFilters();
+    applyPslFilters();
     if (mandalName !== 'ALL') {
       showToast(`${mandalName} మండలం ఫిల్టర్ చేయబడింది`);
     }
@@ -1681,6 +1967,11 @@ https://...
       if (currentMapCategoryFilter === 'ALL' || uCat === currentMapCategoryFilter) {
         if (u.mandal) mandalsSet.add(u.mandal.trim());
       }
+    });
+
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    pslData.forEach(p => {
+      if (p.mandal) mandalsSet.add(p.mandal.trim());
     });
 
     const sorted = Array.from(mandalsSet).sort();
@@ -1753,14 +2044,60 @@ https://...
     });
     sel.appendChild(grpOther);
 
-    if (currentVal && filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal))) {
+    // 3. Polling Stations (PSLs) matching Mandal
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    const matchedPsls = pslData.filter(p => {
+      return currentMapMandalFilter === 'ALL' || (p.mandal && p.mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase());
+    });
+
+    if (matchedPsls.length > 0) {
+      const grpPsl = document.createElement('optgroup');
+      grpPsl.label = `🗳️ పోలింగ్ కేంద్రాలు (${matchedPsls.length} PSLs)`;
+      const limit = Math.min(120, matchedPsls.length);
+      for (let i = 0; i < limit; i++) {
+        const p = matchedPsls[i];
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = `🏫 [${p.mptc}] ${p.pslName} (${p.sensitivity})`;
+        grpPsl.appendChild(opt);
+      }
+      if (matchedPsls.length > 120) {
+        const moreOpt = document.createElement('option');
+        moreOpt.disabled = true;
+        moreOpt.innerText = `... ఇంకా ${matchedPsls.length - 120} కేంద్రాలు ఉన్నాయి (మండలం ఎంచుకోండి)`;
+        grpPsl.appendChild(moreOpt);
+      }
+      sel.appendChild(grpPsl);
+    }
+
+    if (currentVal && (filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal)) || matchedPsls.some(p => p.id === currentVal))) {
       sel.value = currentVal;
     }
   }
 
-  // Handle Team Selection: Zooms directly to officer on map
+  // Handle Team Selection: Zooms directly to officer or PSL on map
   window.handleMapTeamChange = function(unitId) {
     if (!unitId) return;
+
+    // Check if it's a Polling Station ID (PSL_...)
+    if (unitId.startsWith('PSL_')) {
+      const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+      const item = pslData.find(p => p.id === unitId);
+      if (item) {
+        if (!isPslLayerActive) {
+          window.togglePslLayer();
+        }
+        map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
+        pslLayerGroup.eachLayer(layer => {
+          if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
+            setTimeout(() => layer.openPopup(), 400);
+          }
+        });
+        showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
+      }
+      return;
+    }
+
     const m = activeMobiles[unitId];
     if (m && m.marker) {
       currentlyFollowedOfficerKey = unitId;
@@ -2046,6 +2383,7 @@ https://...
 
     populateMapMandalDropdown();
     populateMapTeamDropdown();
+    applyPslFilters();
     updateKPIs();
   }
 
