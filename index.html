@@ -191,30 +191,64 @@
       background: #0f172a;
     }
 
-    /* Floating KPI Stats Bar (Top Left) */
-    .kpi-bar {
+    /* Unified Command Deck (Top Clean Dock) */
+    .unified-command-deck {
       position: absolute;
-      top: 60px;
+      top: 56px;
       left: 14px;
+      right: 14px;
       z-index: 999;
+      background: linear-gradient(180deg, rgba(9, 16, 30, 0.95) 0%, rgba(5, 10, 20, 0.97) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 16px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      padding: 8px 14px;
       display: flex;
+      flex-direction: column;
       gap: 8px;
-      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: auto;
+    }
+
+    .deck-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .deck-row-top {
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 7px;
+    }
+
+    .deck-row-bottom {
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .kpi-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
       flex-wrap: wrap;
     }
 
     .kpi-pill {
-      pointer-events: auto;
-      background: linear-gradient(180deg, rgba(16, 27, 46, 0.92) 0%, rgba(9, 16, 29, 0.94) 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 6px 13px;
-      border-radius: 20px;
+      background: rgba(16, 27, 46, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 5px 11px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       font-size: 11.5px;
       font-weight: 600;
       color: #e2e8f0;
@@ -224,7 +258,6 @@
     .kpi-pill:hover {
       border-color: rgba(56, 189, 248, 0.45);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     }
 
     .kpi-pill .dot {
@@ -249,19 +282,152 @@
       100% { transform: scale(0.9); opacity: 0.7; }
     }
 
-    /* Category Filter Pills Bar on Map */
-    .category-filter-bar {
-      position: absolute;
-      top: 100px;
-      left: 14px;
-      z-index: 999;
+    .deck-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
+    .deck-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .layers-group {
       display: flex;
-      gap: 7px;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .layer-toggle-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .layer-toggle-btn:hover {
+      background: rgba(59, 130, 246, 0.3);
+      color: #ffffff;
+      border-color: #60a5fa;
+      transform: translateY(-1px);
+    }
+
+    .layer-toggle-btn.active {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-deck-collapse {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.2s;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .btn-deck-collapse:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
+
+    .dropdowns-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .map-dropdown-box {
+      display: flex;
+      align-items: center;
+      background: rgba(16, 27, 46, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      padding: 3px 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .map-dropdown-box:hover {
+      border-color: rgba(56, 189, 248, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .map-dropdown-box:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+    }
+
+    .map-dropdown-box .dropdown-icon {
+      color: #38bdf8;
+      font-size: 12.5px;
+      margin-right: 6px;
+    }
+
+    .map-select {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 4px;
+      outline: none;
+      cursor: pointer;
+      min-width: 170px;
+      max-width: 260px;
+    }
+
+    .map-select.select-team {
+      min-width: 230px;
+      max-width: 380px;
+      color: #7dd3fc;
+    }
+
+    .map-select option {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 12.5px;
+      padding: 8px;
+    }
+
+    /* Category Filter Pills */
+    .category-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       overflow-x: auto;
       white-space: nowrap;
-      max-width: calc(100vw - 28px);
-      padding: 3px 3px 8px 3px;
-      pointer-events: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -271,107 +437,50 @@
     }
 
     .cat-btn {
-      background: linear-gradient(180deg, rgba(16, 27, 46, 0.92) 0%, rgba(9, 16, 29, 0.94) 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(16, 27, 46, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.14);
       color: #cbd5e1;
-      padding: 6px 13px;
-      border-radius: 20px;
+      padding: 5px 11px;
+      border-radius: 16px;
       font-size: 11.5px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
     }
 
     .cat-btn:hover {
-      background: linear-gradient(180deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+      background: rgba(30, 58, 138, 0.7);
       color: #ffffff;
       border-color: #60a5fa;
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
     }
 
     .cat-btn.active {
       background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
       color: #ffffff;
       border-color: #93c5fd;
-      box-shadow: 0 0 16px rgba(37, 99, 235, 0.6), 0 3px 10px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.55);
     }
 
-    /* Floating Map Filter Dropdowns on Map */
-    .map-dropdown-container {
-      position: absolute;
-      top: 146px;
-      left: 14px;
-      z-index: 999;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      pointer-events: auto;
-      max-width: calc(100vw - 28px);
-    }
-
-    .map-dropdown-box {
+    /* Sensitivity Sub-bar for Polling Stations */
+    .psl-filter-subbar {
       display: flex;
       align-items: center;
-      background: linear-gradient(180deg, rgba(16, 27, 46, 0.94) 0%, rgba(8, 16, 30, 0.96) 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      border-radius: 22px;
-      padding: 3px 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.22s ease;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.1);
+      scrollbar-width: none;
     }
+    .psl-filter-subbar::-webkit-scrollbar { display: none; }
 
-    .map-dropdown-box:hover {
-      border-color: rgba(56, 189, 248, 0.6);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
-      transform: translateY(-1px);
-    }
-
-    .map-dropdown-box:focus-within {
-      border-color: #38bdf8;
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), 0 6px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .map-dropdown-box .dropdown-icon {
-      color: #38bdf8;
-      font-size: 13px;
-      margin-right: 6px;
-    }
-
-    .map-select {
-      background: transparent;
-      border: none;
-      color: #ffffff;
-      font-size: 12.5px;
-      font-weight: 600;
-      padding: 6px 4px;
-      outline: none;
-      cursor: pointer;
-      max-width: 220px;
-    }
-
-    .map-select.select-team {
-      max-width: 290px;
-      color: #7dd3fc;
-    }
-
-    .map-select option {
-      background: #0f172a;
-      color: #ffffff;
-      font-size: 13px;
-      padding: 8px;
-    }
-
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       header {
         padding: 7px 10px;
       }
@@ -389,76 +498,41 @@
       .btn-header {
         padding: 6px 9px;
       }
-      .kpi-bar {
-        top: 54px;
+      .unified-command-deck {
         left: 8px;
-        gap: 5px;
+        right: 8px;
+        top: 50px;
+        padding: 6px 10px;
+        gap: 6px;
+      }
+      .deck-row-top {
+        padding-bottom: 6px;
+      }
+      .deck-divider {
+        display: none;
       }
       .kpi-pill {
+        padding: 4px 8px;
+        font-size: 10.5px;
+      }
+      .map-select {
+        min-width: 130px;
+        max-width: 160px;
+        font-size: 11px;
+      }
+      .map-select.select-team {
+        min-width: 170px;
+        max-width: 220px;
+      }
+      .layer-toggle-btn {
         padding: 4px 9px;
         font-size: 10.5px;
       }
-      .category-filter-bar {
-        top: 90px;
-        left: 8px;
-        max-width: calc(100vw - 16px);
-        gap: 5px;
-      }
       .cat-btn {
-        padding: 5px 10px;
+        padding: 4px 9px;
         font-size: 10.5px;
       }
-      .map-dropdown-container {
-        top: 128px;
-        left: 8px;
-        gap: 6px;
-        max-width: calc(100vw - 16px);
-      }
-      .map-select {
-        font-size: 11px;
-        max-width: 140px;
-        padding: 5px 2px;
-      }
-      .map-select.select-team {
-        max-width: 170px;
-      }
-      .map-dropdown-box {
-        padding: 2px 8px;
-      }
-      .psl-filter-subbar {
-        top: 166px;
-        left: 8px;
-        max-width: calc(100vw - 16px);
-        padding: 3px 6px;
-      }
-      .psl-sens-btn {
-        padding: 3px 7px;
-        font-size: 10px;
-      }
     }
-
-    /* Polling Stations (PSL) UI & Marker Styling */
-    .psl-filter-subbar {
-      position: absolute;
-      top: 194px;
-      left: 14px;
-      z-index: 998;
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
-      max-width: calc(100vw - 28px);
-      padding: 4px 10px;
-      background: linear-gradient(180deg, rgba(14, 23, 40, 0.94) 0%, rgba(8, 14, 26, 0.96) 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 22px;
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      align-items: center;
-      scrollbar-width: none;
-    }
-    .psl-filter-subbar::-webkit-scrollbar { display: none; }
     .psl-subbar-title {
       font-size: 11.5px;
       font-weight: 700;
@@ -1152,69 +1226,91 @@
   <!-- Live Map Viewport - 100% Unobstructed Clean View -->
   <div id="map"></div>
 
-  <!-- Top Floating KPI Stats Bar -->
-  <div class="kpi-bar">
-    <div class="kpi-pill">
-      <span class="dot dot-live"></span>
-      <span>లైవ్ (Live): <strong id="kpi-live" style="color: #34d399;">0</strong></span>
-    </div>
-    <div class="kpi-pill">
-      <span class="dot dot-offline"></span>
-      <span>ఆఫ్‌లైన్ (Offline): <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
-    </div>
-    <div class="kpi-pill">
-      <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
-      <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
-    </div>
-    <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
-      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
-    </div>
-  </div>
+  <!-- Unified Command Deck (Clean, Neat & Organized) -->
+  <div class="unified-command-deck" id="unified-command-deck">
+    <!-- Row 1: Real-time Status (KPIs) & Map Layer Toggles -->
+    <div class="deck-row deck-row-top">
+      <div class="kpi-group">
+        <div class="kpi-pill">
+          <span class="dot dot-live"></span>
+          <span>లైవ్: <strong id="kpi-live" style="color: #34d399;">0</strong></span>
+        </div>
+        <div class="kpi-pill">
+          <span class="dot dot-offline"></span>
+          <span>ఆఫ్‌లైన్: <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
+        </div>
+        <div class="kpi-pill">
+          <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
+          <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
+        </div>
+        <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
+          <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
+        </div>
+      </div>
 
-  <!-- Category Filter Pills Bar on Map (Routes, SF, SSF, QRTs, Reserve Parties) -->
-  <div class="category-filter-bar">
-    <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
-    <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
-    <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
-    <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
-    <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
-    <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
-    <button class="cat-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" style="border-color: #ef4444; background: rgba(220, 38, 38, 0.45);" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-route" style="color: #fca5a5;"></i> 🛣️ రూట్లు (Routes)
-    </button>
-    <button class="cat-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" style="border-color: #3b82f6; background: rgba(37, 99, 235, 0.45);" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-draw-polygon" style="color: #93c5fd;"></i> 🗺️ సరిహద్దులు (Borders)
-    </button>
-    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
-      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,196)
-    </button>
-  </div>
+      <div class="deck-divider"></div>
 
-  <!-- Floating Map Filter Dropdowns: Mandal & Route/Party Selector -->
-  <div class="map-dropdown-container">
-    <div class="map-dropdown-box">
-      <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
-      <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
-        <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
-      </select>
+      <!-- Dedicated Map Layers Switch Group -->
+      <div class="layers-group">
+        <span class="deck-section-label"><i class="fa-solid fa-layer-group"></i> లేయర్లు:</span>
+        <button class="layer-toggle-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-route"></i> <span>రూట్లు (Routes)</span>
+        </button>
+        <button class="layer-toggle-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-draw-polygon"></i> <span>సరిహద్దులు (Borders)</span>
+        </button>
+        <button class="layer-toggle-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+          <i class="fa-solid fa-person-booth"></i> <span>పోలింగ్ కేంద్రాలు</span>
+        </button>
+      </div>
+
+      <button class="btn-deck-collapse" id="btn-deck-collapse" onclick="toggleDeckCollapse()" title="కంట్రోల్స్ దాచు / చూపు">
+        <i class="fa-solid fa-chevron-up" id="icon-deck-collapse"></i>
+      </button>
     </div>
 
-    <div class="map-dropdown-box">
-      <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
-      <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
-        <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
-      </select>
-    </div>
-  </div>
+    <!-- Row 2: Search Dropdowns & Police Force Categories -->
+    <div class="deck-row deck-row-bottom" id="deck-row-filters">
+      <!-- Search Dropdowns -->
+      <div class="dropdowns-group">
+        <div class="map-dropdown-box">
+          <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
+          <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
+            <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
+          </select>
+        </div>
 
-  <!-- Sensitivity Filter Sub-bar for Polling Stations -->
-  <div class="psl-filter-subbar" id="psl-filter-subbar">
-    <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
-    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
-    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
-    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
-    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
+        <div class="map-dropdown-box">
+          <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
+          <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
+            <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="deck-divider"></div>
+
+      <!-- Police Force Category Pills -->
+      <div class="category-filter-bar">
+        <span class="deck-section-label" style="font-size: 11px;"><i class="fa-solid fa-filter"></i> టీమ్స్:</span>
+        <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
+        <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
+        <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
+        <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
+        <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
+        <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
+      </div>
+    </div>
+
+    <!-- Row 3: Sensitivity Filter Sub-bar for Polling Stations -->
+    <div class="psl-filter-subbar" id="psl-filter-subbar">
+      <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PS రకం:</span>
+      <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
+      <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
+      <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
+      <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
+    </div>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -1550,13 +1646,38 @@ https://...
     if (elPslKpi) elPslKpi.innerText = count.toLocaleString();
   }
 
+  // Toggle Command Deck Collapse / Expand
+  window.toggleDeckCollapse = function() {
+    const deck = document.getElementById('unified-command-deck');
+    const rowFilters = document.getElementById('deck-row-filters');
+    const pslBar = document.getElementById('psl-filter-subbar');
+    const icon = document.getElementById('icon-deck-collapse');
+    if (!deck) return;
+    const isCollapsed = deck.classList.toggle('collapsed');
+    if (isCollapsed) {
+      if (rowFilters) rowFilters.style.display = 'none';
+      if (pslBar) pslBar.style.display = 'none';
+      if (icon) {
+        icon.className = 'fa-solid fa-chevron-down';
+      }
+    } else {
+      if (rowFilters) rowFilters.style.display = 'flex';
+      if (pslBar && isPslLayerActive) pslBar.style.display = 'flex';
+      if (icon) {
+        icon.className = 'fa-solid fa-chevron-up';
+      }
+    }
+  };
+
   window.togglePslLayer = function() {
     isPslLayerActive = !isPslLayerActive;
     const btn = document.getElementById('btn-toggle-psl');
     const subbar = document.getElementById('psl-filter-subbar');
+    const deck = document.getElementById('unified-command-deck');
+    const isCollapsed = deck && deck.classList.contains('collapsed');
     if (isPslLayerActive) {
       if (btn) btn.classList.add('active');
-      if (subbar) subbar.style.display = 'flex';
+      if (subbar && !isCollapsed) subbar.style.display = 'flex';
       if (!map.hasLayer(pslLayerGroup)) map.addLayer(pslLayerGroup);
       applyPslFilters();
       showToast('🗳️ పోలింగ్ కేంద్రాలు (1,196) మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
