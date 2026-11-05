@@ -13,7 +13,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
   <script src="route_mobiles_data.js?v=20261104"></script>
-  <!-- Pre-loaded 1,194 MPTC & ZPTC Polling Stations Data -->
+  <!-- Pre-loaded 1,196 MPTC & ZPTC Polling Stations Data -->
   <script src="mptc_zptc_data.js?v=20261105"></script>
 
   <style>
@@ -971,7 +971,7 @@
     </div>
     <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
       <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
-      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,194</strong></span>
+      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
     </div>
   </div>
 
@@ -984,7 +984,7 @@
     <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
     <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
     <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);">
-      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,194)
+      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,196)
     </button>
   </div>
 
@@ -1008,10 +1008,10 @@
   <!-- Sensitivity Filter Sub-bar for Polling Stations -->
   <div class="psl-filter-subbar" id="psl-filter-subbar">
     <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
-    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,194)</button>
+    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
     <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')">🟢 Normal (832)</button>
-    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')">🟡 Sensitive (222)</button>
-    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')">🔴 Hyper Sensitive (140)</button>
+    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')">🟡 Sensitive (223)</button>
+    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')">🔴 Hyper Sensitive (141)</button>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -1178,7 +1178,7 @@ https://...
   });
 
   // -------------------------------------------------------------
-  // Data Load: 1,194 MPTC & ZPTC Polling Stations Data
+  // Data Load: 1,196 MPTC & ZPTC Polling Stations Data
   // -------------------------------------------------------------
   let allPslData = window.MPTC_ZPTC_DATA || [];
   const pslLayerGroup = L.layerGroup().addTo(map);
@@ -1337,7 +1337,7 @@ https://...
       if (subbar) subbar.style.display = 'flex';
       if (!map.hasLayer(pslLayerGroup)) map.addLayer(pslLayerGroup);
       applyPslFilters();
-      showToast('🗳️ పోలింగ్ కేంద్రాలు (1,194) మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
+      showToast('🗳️ పోలింగ్ కేంద్రాలు (1,196) మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
     } else {
       if (btn) btn.classList.remove('active');
       if (subbar) subbar.style.display = 'none';
