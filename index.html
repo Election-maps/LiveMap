@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="te">
 <head>
   <meta charset="UTF-8">
@@ -194,7 +194,7 @@
     /* Unified Command Deck (Pure White Theme - Clean, Movable & Crisp) */
     .unified-command-deck {
       position: absolute;
-      top: 56px;
+      top: 150px;
       left: 14px;
       right: auto;
       max-width: calc(100vw - 28px);
@@ -591,7 +591,7 @@
       .unified-command-deck {
         left: 8px;
         right: 8px;
-        top: 50px;
+        top: 165px;
         padding: 6px 10px;
         gap: 6px;
       }
@@ -1376,7 +1376,373 @@
       color: #475569 !important;
       font-weight: 600 !important;
     }
-  </style>
+  
+    /* ================= POLLING CENTER FILTERS & TABLE STYLES (MATCHING ROUTE MAP) ================= */
+    .psl-filter-header-panel {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      z-index: 990;
+      position: relative;
+      flex-shrink: 0;
+      color: #0f172a;
+    }
+
+    .psl-filter-row-1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cat-pill-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 11.5px;
+    }
+
+    .cat-pill-label {
+      font-weight: 700;
+      color: #334155;
+      margin-right: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .psl-pill-btn {
+      padding: 3px 11px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .psl-pill-btn.pill-all {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #1d4ed8;
+    }
+    .psl-pill-btn.pill-all:hover {
+      background: #1d4ed8;
+    }
+
+    .psl-pill-btn.pill-normal {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .psl-pill-btn.pill-normal:hover, .psl-pill-btn.pill-normal.active {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #059669;
+    }
+
+    .psl-pill-btn.pill-sensitive {
+      background: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .psl-pill-btn.pill-sensitive:hover, .psl-pill-btn.pill-sensitive.active {
+      background: #f59e0b;
+      color: #ffffff;
+      border-color: #d97706;
+    }
+
+    .psl-pill-btn.pill-critical {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+    }
+    .psl-pill-btn.pill-critical:hover, .psl-pill-btn.pill-critical.active {
+      background: #f97316;
+      color: #ffffff;
+      border-color: #ea580c;
+    }
+
+    .psl-pill-btn.pill-hyper {
+      background: #fff1f2;
+      color: #9f1239;
+      border: 1px solid #fecdd3;
+    }
+    .psl-pill-btn.pill-hyper:hover, .psl-pill-btn.pill-hyper.active {
+      background: #e11d48;
+      color: #ffffff;
+      border-color: #be123c;
+    }
+
+    .btn-psl-table-toggle {
+      background: #eef2ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(55, 48, 163, 0.1);
+    }
+    .btn-psl-table-toggle:hover {
+      background: #e0e7ff;
+      border-color: #a5b4fc;
+      transform: translateY(-1px);
+    }
+
+    .psl-filter-row-2 {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .psl-filter-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .psl-filter-col label {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .psl-filter-select {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 11.5px;
+      background: #ffffff;
+      color: #0f172a;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .psl-filter-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .psl-search-box {
+      position: relative;
+      flex: 1;
+      min-width: 170px;
+      max-width: 280px;
+    }
+
+    .psl-search-input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 5px 24px 5px 8px;
+      font-size: 11.5px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .psl-search-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-psl-search-clear {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px;
+    }
+    .btn-psl-search-clear:hover {
+      color: #334155;
+    }
+
+    .psl-autocomplete-dropdown {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+      z-index: 2500;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+    }
+    .psl-autocomplete-item {
+      padding: 7px 10px;
+      font-size: 11.5px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .psl-autocomplete-item:hover {
+      background: #f8fafc;
+    }
+    .psl-autocomplete-title {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .psl-autocomplete-meta {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .toggle-badge-routes {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #9f1239;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-badge-routes:hover {
+      background: #ffe4e6;
+    }
+
+    .toggle-badge-borders {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-weight: 600;
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-badge-borders:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-psl-reset {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-psl-reset:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .btn-psl-routes {
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+      transition: all 0.2s;
+    }
+    .btn-psl-routes:hover {
+      background: #1d4ed8;
+    }
+
+    /* Modal Table Styling */
+    .psl-table-wrapper {
+      max-height: 480px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .psl-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      text-align: left;
+    }
+    .psl-data-table th {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 8px 10px;
+      font-weight: 700;
+      font-size: 11px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .psl-data-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+    .psl-data-table tr:hover {
+      background: #f8fafc;
+    }
+    .btn-table-mapview {
+      background: #2563eb;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .btn-table-mapview:hover {
+      background: #1d4ed8;
+    }
+
+</style>
 </head>
 <body>
 
@@ -1439,6 +1805,114 @@
   </header>
 
   <!-- Live Map Viewport - 100% Unobstructed Clean View -->
+    <!-- ================= TOP POLLING CENTER FILTER PANEL (EXACT MATCHING ROUTE MAP) ================= -->
+  <div class="psl-filter-header-panel" id="live-psl-filter-panel">
+    <!-- Row 1: Category Filter Pills & Polling Stations Table Button -->
+    <div class="psl-filter-row-1">
+      <div class="cat-pill-group">
+        <span class="cat-pill-label">
+          <i class="fa-solid fa-filter" style="color: #2563eb;"></i> Category Filter:
+        </span>
+        <button type="button" class="psl-pill-btn pill-all active" id="pill-sens-all" onclick="setLivePslQuickCategory('ALL')">
+          All (<span id="count-sens-all">1,196</span>)
+        </button>
+        <button type="button" class="psl-pill-btn pill-normal" id="pill-sens-normal" onclick="setLivePslQuickCategory('NORMAL')">
+          Normal (<span id="count-sens-normal">832</span>)
+        </button>
+        <button type="button" class="psl-pill-btn pill-sensitive" id="pill-sens-sensitive" onclick="setLivePslQuickCategory('SENSITIVE')">
+          Sensitive (<span id="count-sens-sensitive">223</span>)
+        </button>
+        <button type="button" class="psl-pill-btn pill-critical" id="pill-sens-critical" onclick="setLivePslQuickCategory('CRITICAL')">
+          Critical (<span id="count-sens-critical">0</span>)
+        </button>
+        <button type="button" class="psl-pill-btn pill-hyper" id="pill-sens-hyper" onclick="setLivePslQuickCategory('HYPER SENSITIVE')">
+          Hyper Sensitive (<span id="count-sens-hyper">141</span>)
+        </button>
+      </div>
+
+      <div>
+        <button type="button" class="btn-psl-table-toggle" onclick="openLivePslTableModal()" id="btn-toggle-live-psl-table" title="View matching polling stations table">
+          <i class="fa-solid fa-table-list" style="color: #4f46e5;"></i> Polling Stations Table ( <span id="table-btn-psl-count">1196</span> )
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2: Comprehensive Dropdowns & Filters -->
+    <div class="psl-filter-row-2">
+      <!-- Police Station Filter -->
+      <div class="psl-filter-col" style="flex: 1; min-width: 140px; max-width: 220px;">
+        <label>POLICE STATION</label>
+        <select id="live-filter-ps" class="psl-filter-select" onchange="onLivePSChange(this.value)">
+          <option value="ALL">-- All Police Stations --</option>
+        </select>
+      </div>
+
+      <!-- Route No Filter -->
+      <div class="psl-filter-col" style="width: 120px; min-width: 100px;">
+        <label>ROUTE NO</label>
+        <select id="live-filter-route" class="psl-filter-select" onchange="applyAllLivePslFilters(true)">
+          <option value="ALL">-- All Routes --</option>
+        </select>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="psl-filter-col" style="width: 130px; min-width: 100px;">
+        <label>CATEGORY</label>
+        <select id="live-filter-cat" class="psl-filter-select" onchange="onLiveCategoryDropdownChange(this.value)">
+          <option value="ALL">-- All Categories --</option>
+          <option value="NORMAL">Normal</option>
+          <option value="SENSITIVE">Sensitive</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HYPER SENSITIVE">Hyper Sensitive</option>
+        </select>
+      </div>
+
+      <!-- Distance Filter -->
+      <div class="psl-filter-col" style="width: 125px; min-width: 100px;">
+        <label>DISTANCE (PS)</label>
+        <select id="live-filter-distance" class="psl-filter-select" onchange="applyAllLivePslFilters(false)">
+          <option value="ALL">-- All Distances --</option>
+          <option value="near">&le; 5 KM (Near)</option>
+          <option value="medium">5 - 12 KM</option>
+          <option value="far">&gt; 12 KM (Far)</option>
+        </select>
+      </div>
+
+      <!-- Search Village / School -->
+      <div class="psl-filter-col psl-search-box">
+        <label><i class="fa-solid fa-magnifying-glass" style="color: #2563eb;"></i> SEARCH VILLAGE / SCHOOL</label>
+        <div style="position: relative;">
+          <input type="text" id="live-filter-search" class="psl-search-input" placeholder="Type PSL (e.g. MPP School)..." oninput="onLivePslSearchInput(this.value)" autocomplete="off">
+          <button type="button" class="btn-psl-search-clear" onclick="clearLivePslSearch()" title="Clear">✕</button>
+          <div id="live-psl-autocomplete" class="psl-autocomplete-dropdown"></div>
+        </div>
+      </div>
+
+      <!-- Road Routes & Borders Checkbox Toggles -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label class="toggle-badge-routes">
+          <input type="checkbox" id="live-toggle-routes-chk" checked onchange="toggleRoadRoutesFromFilter(this.checked)" style="accent-color: #e11d48; cursor: pointer;">
+          <span><i class="fa-solid fa-route" style="color: #e11d48;"></i> Road Routes</span>
+        </label>
+        <label class="toggle-badge-borders">
+          <input type="checkbox" id="live-toggle-borders-chk" checked onchange="toggleBordersFromFilter(this.checked)" style="accent-color: #2563eb; cursor: pointer;">
+          <span>Borders</span>
+        </label>
+      </div>
+
+      <!-- Action Buttons: Reset & Routes Directory -->
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <button type="button" class="btn-psl-reset" onclick="resetAllLivePslFilters()" title="Reset all filters">
+          <i class="fa-solid fa-arrows-rotate"></i> Reset
+        </button>
+        <button type="button" class="btn-psl-routes" onclick="openDirectoryModal()" title="View all routes & villages directory">
+          <i class="fa-solid fa-list-ol"></i> Routes
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <div id="map"></div>
 
   <!-- Unified Command Deck (Clean, Neat, Movable & Organized) -->
@@ -1945,7 +2419,7 @@ https://...
         if (!isNaN(x) && !isNaN(y)) {
           const maxX = Math.max(10, window.innerWidth - 100);
           const maxY = Math.max(50, window.innerHeight - 80);
-          if (x >= 0 && x <= maxX && y >= 45 && y <= maxY) {
+          if (x >= 0 && x <= maxX && y >= 140 && y <= maxY) {
             deck.style.left = x + 'px';
             deck.style.top = y + 'px';
             deck.style.right = 'auto';
@@ -2011,7 +2485,7 @@ https://...
       // Ensure panel stays inside visible viewport
       const minX = 4;
       const maxX = Math.max(minX, window.innerWidth - deck.offsetWidth - 4);
-      const minY = 48; // Stay below top header bar
+      const minY = 140; // Stay below top header bar
       const maxY = Math.max(minY, window.innerHeight - deck.offsetHeight - 8);
 
       newX = Math.min(Math.max(minX, newX), maxX);
@@ -3726,7 +4200,486 @@ https://...
   if (allUnitsData && allUnitsData.length > 0) {
     initControlRoomUI();
   }
+
+  // =========================================================================
+  // LIVE POLLING CENTER FILTERING & TABLE LOGIC (MATCHING ROUTE MAP)
+  // =========================================================================
+  let currentFilterPS = 'ALL';
+  let currentFilterRoute = 'ALL';
+  let currentFilterCategory = 'ALL';
+  let currentFilterDistance = 'ALL';
+  let currentFilterSearchText = '';
+
+  function initLivePslFilterSystem() {
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    if (!data || data.length === 0) {
+      setTimeout(initLivePslFilterSystem, 250);
+      return;
+    }
+
+    populateLivePSDropdown();
+    applyAllLivePslFilters(false);
+  }
+
+  // Populate 30 Police Stations
+  function populateLivePSDropdown() {
+    const sel = document.getElementById('live-filter-ps');
+    if (!sel) return;
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+
+    const psSet = new Set();
+    data.forEach(item => {
+      const psName = (item.ps || item.mandal || '').trim();
+      if (psName) psSet.add(psName);
+    });
+
+    const sortedPS = Array.from(psSet).sort();
+    let opts = '<option value="ALL">-- All Police Stations --</option>';
+    sortedPS.forEach(ps => {
+      opts += '<option value="' + ps + '">' + ps + '</option>';
+    });
+    sel.innerHTML = opts;
+  }
+
+  // When Police Station changes: populate Route dropdown and apply filters
+  window.onLivePSChange = function(psVal) {
+    currentFilterPS = psVal || 'ALL';
+    currentFilterRoute = 'ALL';
+
+    // Populate Routes for this PS
+    const routeSel = document.getElementById('live-filter-route');
+    if (routeSel) {
+      const data = window.MPTC_ZPTC_DATA || allPslData || [];
+      const routesSet = new Set();
+
+      data.forEach(item => {
+        const itemPS = (item.ps || item.mandal || '').trim();
+        if (currentFilterPS === 'ALL' || itemPS.toLowerCase() === currentFilterPS.toLowerCase()) {
+          if (item.routeNo) routesSet.add(item.routeNo.toString().trim());
+        }
+      });
+
+      const sortedRoutes = Array.from(routesSet).sort((a,b) => (parseInt(a)||0) - (parseInt(b)||0));
+      let rOpts = '<option value="ALL">-- All Routes --</option>';
+      sortedRoutes.forEach(r => {
+        rOpts += '<option value="' + r + '">Route ' + r + '</option>';
+      });
+      routeSel.innerHTML = rOpts;
+    }
+
+    applyAllLivePslFilters(true);
+  };
+
+  // When Category Pill button is clicked
+  window.setLivePslQuickCategory = function(cat) {
+    currentFilterCategory = cat || 'ALL';
+
+    // Update Pill active states
+    const pills = {
+      'ALL': 'pill-sens-all',
+      'NORMAL': 'pill-sens-normal',
+      'SENSITIVE': 'pill-sens-sensitive',
+      'CRITICAL': 'pill-sens-critical',
+      'HYPER SENSITIVE': 'pill-sens-hyper'
+    };
+    for (const k in pills) {
+      const el = document.getElementById(pills[k]);
+      if (el) el.classList.toggle('active', k === currentFilterCategory);
+    }
+
+    // Sync Category Dropdown
+    const catSel = document.getElementById('live-filter-cat');
+    if (catSel) catSel.value = currentFilterCategory;
+
+    applyAllLivePslFilters(false);
+  };
+
+  // When Category Dropdown changes
+  window.onLiveCategoryDropdownChange = function(catVal) {
+    window.setLivePslQuickCategory(catVal);
+  };
+
+  // Search input typing handler with autocomplete
+  window.onLivePslSearchInput = function(val) {
+    currentFilterSearchText = (val || '').trim().toLowerCase();
+    const drop = document.getElementById('live-psl-autocomplete');
+    if (!drop) return;
+
+    if (!currentFilterSearchText || currentFilterSearchText.length < 2) {
+      drop.style.display = 'none';
+      drop.innerHTML = '';
+      applyAllLivePslFilters(false);
+      return;
+    }
+
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    const matches = data.filter(item => {
+      const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
+      return text.includes(currentFilterSearchText);
+    }).slice(0, 8);
+
+    if (matches.length > 0) {
+      drop.style.display = 'block';
+      let html = '';
+      matches.forEach(item => {
+        html += '<div class="psl-autocomplete-item" onclick="zoomToPslDirect(\'' + item.id + '\')">';
+        html += '<div class="psl-autocomplete-title">🏫 ' + item.pslName + '</div>';
+        html += '<div class="psl-autocomplete-meta">📍 ' + (item.ps || item.mandal) + ' PS • Route ' + (item.routeNo || '-') + ' • ' + item.mptc + ' MPTC (' + item.sensitivity + ')</div>';
+        html += '</div>';
+      });
+      drop.innerHTML = html;
+    } else {
+      drop.style.display = 'none';
+      drop.innerHTML = '';
+    }
+
+    applyAllLivePslFilters(false);
+  };
+
+  window.clearLivePslSearch = function() {
+    const input = document.getElementById('live-filter-search');
+    if (input) input.value = '';
+    const drop = document.getElementById('live-psl-autocomplete');
+    if (drop) {
+      drop.style.display = 'none';
+      drop.innerHTML = '';
+    }
+    currentFilterSearchText = '';
+    applyAllLivePslFilters(false);
+  };
+
+  // Zoom to direct station from suggestion or table
+  window.zoomToPslDirect = function(id) {
+    window.clearLivePslSearch();
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    const item = data.find(p => p.id === id);
+    if (!item) return;
+
+    if (!isPslLayerActive) {
+      window.togglePslLayer();
+    }
+
+    map.flyTo([item.lat, item.lng], 17, { animate: true, duration: 1.2 });
+    setTimeout(() => {
+      pslLayerGroup.eachLayer(layer => {
+        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
+          layer.openPopup();
+        }
+      });
+    }, 600);
+  };
+
+  // Road Routes & Borders checkbox handlers
+  window.toggleRoadRoutesFromFilter = function(checked) {
+    if (checked) {
+      if (!map.hasLayer(routesLayerGroup)) map.addLayer(routesLayerGroup);
+      isRoutesLayerActive = true;
+    } else {
+      if (map.hasLayer(routesLayerGroup)) map.removeLayer(routesLayerGroup);
+      isRoutesLayerActive = false;
+    }
+    const btnOld = document.getElementById('btn-toggle-routes');
+    if (btnOld) btnOld.classList.toggle('active', checked);
+  };
+
+  window.toggleBordersFromFilter = function(checked) {
+    if (checked) {
+      if (!map.hasLayer(mandalBordersLayerGroup)) map.addLayer(mandalBordersLayerGroup);
+      isBordersLayerActive = true;
+    } else {
+      if (map.hasLayer(mandalBordersLayerGroup)) map.removeLayer(mandalBordersLayerGroup);
+      isBordersLayerActive = false;
+    }
+    const btnOld = document.getElementById('btn-toggle-borders');
+    if (btnOld) btnOld.classList.toggle('active', checked);
+  };
+
+  // Reset all filters
+  window.resetAllLivePslFilters = function() {
+    currentFilterPS = 'ALL';
+    currentFilterRoute = 'ALL';
+    currentFilterCategory = 'ALL';
+    currentFilterDistance = 'ALL';
+    currentFilterSearchText = '';
+
+    const psSel = document.getElementById('live-filter-ps');
+    if (psSel) psSel.value = 'ALL';
+
+    const rSel = document.getElementById('live-filter-route');
+    if (rSel) rSel.innerHTML = '<option value="ALL">-- All Routes --</option>';
+
+    const catSel = document.getElementById('live-filter-cat');
+    if (catSel) catSel.value = 'ALL';
+
+    const distSel = document.getElementById('live-filter-distance');
+    if (distSel) distSel.value = 'ALL';
+
+    window.clearLivePslSearch();
+    window.setLivePslQuickCategory('ALL');
+
+    const chkRoutes = document.getElementById('live-toggle-routes-chk');
+    if (chkRoutes) { chkRoutes.checked = true; window.toggleRoadRoutesFromFilter(true); }
+
+    const chkBorders = document.getElementById('live-toggle-borders-chk');
+    if (chkBorders) { chkBorders.checked = true; window.toggleBordersFromFilter(true); }
+
+    map.setView(SRIKAKULAM_CENTER, 10);
+    applyAllLivePslFilters(false);
+  };
+
+  // Main Filtering Engine: Updates Map, Category Counts, and Bounds
+  function applyAllLivePslFilters(shouldFitBounds) {
+    pslLayerGroup.clearLayers();
+    if (!isPslLayerActive) return;
+
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    let countTotal = 0;
+    let countNormal = 0;
+    let countSensitive = 0;
+    let countCritical = 0;
+    let countHyper = 0;
+    const bounds = [];
+
+    const distSel = document.getElementById('live-filter-distance');
+    currentFilterDistance = distSel ? distSel.value : 'ALL';
+
+    const routeSel = document.getElementById('live-filter-route');
+    currentFilterRoute = routeSel ? routeSel.value : 'ALL';
+
+    data.forEach(item => {
+      const itemPS = (item.ps || item.mandal || '').trim();
+      const itemRoute = (item.routeNo || '').toString().trim();
+      const itemSens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
+
+      // Police Station Filter
+      if (currentFilterPS !== 'ALL') {
+        if (itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return;
+      }
+
+      // Route No Filter
+      if (currentFilterRoute !== 'ALL') {
+        if (itemRoute !== currentFilterRoute) return;
+      }
+
+      // Distance Filter
+      if (currentFilterDistance !== 'ALL') {
+        const dStr = (item.distFromPs || '').replace(/[^0-9.]/g, '');
+        const dNum = parseFloat(dStr) || 0;
+        if (currentFilterDistance === 'near' && dNum > 5) return;
+        if (currentFilterDistance === 'medium' && (dNum <= 5 || dNum > 12)) return;
+        if (currentFilterDistance === 'far' && dNum <= 12) return;
+      }
+
+      // Search Query
+      if (currentFilterSearchText) {
+        const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
+        if (!text.includes(currentFilterSearchText)) return;
+      }
+
+      // Counts tally for categories matching current PS/Route/Distance
+      countTotal++;
+      if (itemSens === 'NORMAL') countNormal++;
+      else if (itemSens === 'SENSITIVE') countSensitive++;
+      else if (itemSens === 'CRITICAL') countCritical++;
+      else if (itemSens === 'HYPER SENSITIVE') countHyper++;
+
+      // Sensitivity Filter
+      if (currentFilterCategory !== 'ALL') {
+        if (itemSens !== currentFilterCategory) return;
+      }
+
+      // Render marker on map
+      const m = createPslMarker(item);
+      pslLayerGroup.addLayer(m);
+      if (item.lat && item.lng) {
+        bounds.push([item.lat, item.lng]);
+      }
+    });
+
+    // Update Counts in UI
+    const elAll = document.getElementById('count-sens-all');
+    if (elAll) elAll.innerText = countTotal.toLocaleString();
+    const elNormal = document.getElementById('count-sens-normal');
+    if (elNormal) elNormal.innerText = countNormal.toLocaleString();
+    const elSens = document.getElementById('count-sens-sensitive');
+    if (elSens) elSens.innerText = countSensitive.toLocaleString();
+    const elCrit = document.getElementById('count-sens-critical');
+    if (elCrit) elCrit.innerText = countCritical.toLocaleString();
+    const elHyper = document.getElementById('count-sens-hyper');
+    if (elHyper) elHyper.innerText = countHyper.toLocaleString();
+
+    const elTableCount = document.getElementById('table-btn-psl-count');
+    if (elTableCount) elTableCount.innerText = countTotal.toLocaleString();
+
+    const elKpi = document.getElementById('kpi-psl');
+    if (elKpi) elKpi.innerText = countTotal.toLocaleString();
+
+    // Fit Bounds if needed
+    if (shouldFitBounds && bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
+    }
+  }
+
+  // =========================================================================
+  // POLLING STATIONS TABLE MODAL LOGIC
+  // =========================================================================
+  window.openLivePslTableModal = function() {
+    const modal = document.getElementById('modal-live-psl-table');
+    if (modal) modal.classList.add('show');
+    renderLivePslTableData();
+  };
+
+  window.closeLivePslTableModal = function() {
+    const modal = document.getElementById('modal-live-psl-table');
+    if (modal) modal.classList.remove('show');
+  };
+
+  window.renderLivePslTableData = function() {
+    const tbody = document.getElementById('modal-psl-table-tbody');
+    const headerCount = document.getElementById('modal-table-header-count');
+    const footerStatus = document.getElementById('modal-table-footer-status');
+    const searchInput = document.getElementById('modal-table-search-input');
+    const catSelect = document.getElementById('modal-table-cat-select');
+    if (!tbody) return;
+
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const catFilter = catSelect ? catSelect.value : 'ALL';
+
+    const data = window.MPTC_ZPTC_DATA || allPslData || [];
+    const filtered = data.filter(item => {
+      // Respect active PS/Route from top bar
+      const itemPS = (item.ps || item.mandal || '').trim();
+      const itemRoute = (item.routeNo || '').toString().trim();
+      if (currentFilterPS !== 'ALL' && itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return false;
+      if (currentFilterRoute !== 'ALL' && itemRoute !== currentFilterRoute) return false;
+
+      // Category filter inside modal
+      const itemSens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
+      if (catFilter !== 'ALL' && itemSens !== catFilter) return false;
+
+      // Text query inside modal
+      if (query) {
+        const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''} ${item.incharge || ''}`.toLowerCase();
+        if (!text.includes(query)) return false;
+      }
+      return true;
+    });
+
+    if (headerCount) headerCount.innerText = filtered.length.toLocaleString();
+    if (footerStatus) footerStatus.innerText = 'Showing ' + filtered.length + ' of ' + data.length + ' Polling Stations';
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" style="padding: 30px; text-align: center; color: #94a3b8;">No matching polling stations found.</td></tr>';
+      return;
+    }
+
+    let rowsHtml = '';
+    const maxRender = Math.min(filtered.length, 400);
+    for (let i = 0; i < maxRender; i++) {
+      const item = filtered[i];
+      const sens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
+      let badgeStyle = 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;';
+      if (sens === 'SENSITIVE') badgeStyle = 'background: #fffbeb; color: #92400e; border: 1px solid #fde68a;';
+      else if (sens === 'HYPER SENSITIVE' || sens === 'CRITICAL') badgeStyle = 'background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3;';
+
+      const inchargeRaw = (item.incharge || '-').replace(/\n/g, '<br/>');
+      const phoneMatch = inchargeRaw.match(/(\d{10})/);
+      const phone = phoneMatch ? phoneMatch[1] : '';
+
+      rowsHtml += '<tr>';
+      rowsHtml += '<td style="text-align: center; font-weight: 700; color: #64748b;">' + (i + 1) + '</td>';
+      rowsHtml += '<td style="font-weight: 700; color: #0f172a;">' + (item.ps || item.mandal) + '</td>';
+      rowsHtml += '<td style="text-align: center; font-weight: 800; color: #2563eb;">' + (item.routeNo || '-') + '</td>';
+      rowsHtml += '<td><b>' + item.mandal + '</b><br/><span style="color: #64748b; font-size: 10.5px;">' + item.mptc + ' MPTC</span></td>';
+      rowsHtml += '<td style="font-weight: 600; color: #1e293b; max-width: 250px;">' + item.pslName + '</td>';
+      rowsHtml += '<td style="text-align: center;"><span style="display: inline-block; padding: 2px 7px; border-radius: 9999px; font-size: 10px; font-weight: 800; ' + badgeStyle + '">' + sens + '</span></td>';
+      rowsHtml += '<td style="text-align: right; font-weight: 700; color: #0f172a;">' + (item.voters || '-') + '</td>';
+      rowsHtml += '<td style="color: #64748b; font-size: 11px;">' + (item.distFromPs || '-') + '</td>';
+      rowsHtml += '<td style="font-size: 11px; line-height: 1.35;">' + inchargeRaw;
+      if (phone) {
+        rowsHtml += '<br/><a href="tel:' + phone + '" style="color: #2563eb; font-weight: 700; text-decoration: none;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ' + phone + '</a>';
+      }
+      rowsHtml += '</td>';
+      rowsHtml += '<td style="text-align: center;"><button type="button" class="btn-table-mapview" onclick="zoomToPslFromTable(\'' + item.id + '\')"><i class="fa-solid fa-location-dot"></i> View Map</button></td>';
+      rowsHtml += '</tr>';
+    }
+
+    tbody.innerHTML = rowsHtml;
+  };
+
+  window.zoomToPslFromTable = function(id) {
+    window.closeLivePslTableModal();
+    window.zoomToPslDirect(id);
+  };
+
+  // Helper to open forces directory modal from Routes button
+  window.openDirectoryModal = function() {
+    const btn = document.getElementById('btn-open-directory');
+    if (btn) btn.click();
+  };
+
+  // Initialize on script ready
+  setTimeout(initLivePslFilterSystem, 250);
+
 </script>
+
+<!-- ================= MODAL: POLLING STATIONS TABLE (FULL DIRECTORY) ================= -->
+<div class="modal-backdrop" id="modal-live-psl-table">
+  <div class="modal-card" style="max-width: 1240px; width: 95vw; background: #ffffff; color: #0f172a;">
+    <div class="modal-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 12px 18px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-table-list" style="color: #4f46e5; font-size: 17px;"></i>
+        <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0;">
+          పోలింగ్ కేంద్రాల వివరాలు (Polling Stations Directory - <span id="modal-table-header-count">1,196</span>)
+        </h3>
+      </div>
+      <button class="btn-close" onclick="closeLivePslTableModal()" style="font-size: 18px; color: #64748b; background: transparent; border: none; cursor: pointer;">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 14px 18px; background: #ffffff;">
+      <!-- Quick Filter Bar in Modal -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <input type="text" id="modal-table-search-input" class="custom-input" placeholder="Search by School, Village, MPTC, or Route..." oninput="renderLivePslTableData()" style="flex: 1; min-width: 220px; max-width: 420px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; color: #475569;">Category:</span>
+          <select id="modal-table-cat-select" class="custom-select" onchange="renderLivePslTableData()" style="font-size: 12px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="ALL">All Categories</option>
+            <option value="NORMAL">Normal</option>
+            <option value="SENSITIVE">Sensitive</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HYPER SENSITIVE">Hyper Sensitive</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Viewport -->
+      <div class="psl-table-wrapper">
+        <table class="psl-data-table">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">S.No</th>
+              <th>Police Station</th>
+              <th style="text-align: center;">Route No</th>
+              <th>Mandal / MPTC</th>
+              <th>Polling Station Location (PSL)</th>
+              <th style="text-align: center;">Category</th>
+              <th style="text-align: right;">Voters</th>
+              <th>Distance (PS)</th>
+              <th>Route Incharge & Mobile</th>
+              <th style="text-align: center; width: 100px;">Quick Action</th>
+            </tr>
+          </thead>
+          <tbody id="modal-psl-table-tbody">
+            <!-- Dynamically Rendered -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content: space-between; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 10px 18px;">
+      <span id="modal-table-footer-status" style="font-size: 12px; color: #64748b; font-weight: 600;">Showing 1,196 Stations</span>
+      <button class="btn-close" onclick="closeLivePslTableModal()" style="background: #e2e8f0; color: #1e293b; padding: 5px 14px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; cursor: pointer;">మూసివేయి (Close)</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
