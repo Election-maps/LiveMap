@@ -191,12 +191,14 @@
       background: #0f172a;
     }
 
-    /* Unified Command Deck (Top Clean Dock) */
+    /* Unified Command Deck (Top Clean Dock - Movable & Collapsible) */
     .unified-command-deck {
       position: absolute;
       top: 56px;
       left: 14px;
-      right: 14px;
+      right: auto;
+      max-width: calc(100vw - 28px);
+      width: fit-content;
       z-index: 999;
       background: linear-gradient(180deg, rgba(9, 16, 30, 0.95) 0%, rgba(5, 10, 20, 0.97) 100%);
       backdrop-filter: blur(14px);
@@ -208,8 +210,45 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: box-shadow 0.2s ease, opacity 0.2s ease;
       pointer-events: auto;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .unified-command-deck.is-dragging {
+      opacity: 0.96;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.45);
+      border-color: #38bdf8;
+      cursor: grabbing !important;
+    }
+
+    .deck-drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      padding: 4px 7px;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .deck-drag-handle:hover {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.18);
+      border-color: #38bdf8;
+    }
+
+    .deck-drag-handle:active,
+    .unified-command-deck.is-dragging .deck-drag-handle {
+      cursor: grabbing;
+      color: #ffffff;
+      background: #0284c7;
     }
 
     .deck-row {
@@ -223,6 +262,16 @@
       justify-content: space-between;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding-bottom: 7px;
+      cursor: grab;
+    }
+
+    .deck-row-top.is-dragging {
+      cursor: grabbing;
+    }
+
+    .deck-row-top button,
+    .deck-row-top .kpi-pill {
+      cursor: pointer;
     }
 
     .deck-row-bottom {
@@ -1265,10 +1314,15 @@
   <!-- Live Map Viewport - 100% Unobstructed Clean View -->
   <div id="map"></div>
 
-  <!-- Unified Command Deck (Clean, Neat & Organized) -->
+  <!-- Unified Command Deck (Clean, Neat, Movable & Organized) -->
   <div class="unified-command-deck" id="unified-command-deck">
-    <!-- Row 1: Real-time Status (KPIs) & Map Layer Toggles -->
-    <div class="deck-row deck-row-top">
+    <!-- Row 1: Real-time Status (KPIs) & Map Layer Toggles (Draggable Bar) -->
+    <div class="deck-row deck-row-top" id="deck-drag-header" title="క్లిక్ చేసి మ్యాప్‌పై ఎక్కడికైనా జరపవచ్చు (Drag to move)">
+      <!-- Drag Grip Handle -->
+      <div class="deck-drag-handle" id="deck-drag-handle" title="డ్రాగ్ చేసి జరపండి / డబుల్ క్లిక్ చేస్తే పాత స్థానానికి వస్తుంది (Drag to move, Double-click to reset)">
+        <i class="fa-solid fa-grip-vertical"></i>
+      </div>
+
       <div class="kpi-group">
         <div class="kpi-pill">
           <span class="dot dot-live"></span>
@@ -1738,6 +1792,149 @@ https://...
     const elPslKpi = document.getElementById('kpi-psl');
     if (elPslKpi) elPslKpi.innerText = count.toLocaleString();
   }
+
+  // -------------------------------------------------------------
+  // Draggable Command Deck (Movable Anywhere on Map + Remembers Position)
+  // -------------------------------------------------------------
+  (function initDraggableDeck() {
+    const deck = document.getElementById('unified-command-deck');
+    const dragHandle = document.getElementById('deck-drag-handle');
+    const dragHeader = document.getElementById('deck-drag-header');
+    if (!deck) return;
+
+    // Prevent Leaflet map panning when clicking / touching the control deck
+    if (typeof L !== 'undefined' && L.DomEvent) {
+      L.DomEvent.disableClickPropagation(deck);
+      L.DomEvent.disableScrollPropagation(deck);
+    }
+
+    // Restore saved position if within viewport
+    try {
+      const savedX = localStorage.getItem('skl_deck_pos_x');
+      const savedY = localStorage.getItem('skl_deck_pos_y');
+      if (savedX !== null && savedY !== null) {
+        const x = parseInt(savedX, 10);
+        const y = parseInt(savedY, 10);
+        if (!isNaN(x) && !isNaN(y)) {
+          const maxX = Math.max(10, window.innerWidth - 100);
+          const maxY = Math.max(50, window.innerHeight - 80);
+          if (x >= 0 && x <= maxX && y >= 45 && y <= maxY) {
+            deck.style.left = x + 'px';
+            deck.style.top = y + 'px';
+            deck.style.right = 'auto';
+          }
+        }
+      }
+    } catch(e) {}
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialDeckX = 0, initialDeckY = 0;
+
+    function onStart(e) {
+      const target = e.target;
+      // Do not drag if clicking interactive elements
+      if (target.closest('button') || target.closest('select') || target.closest('input') || target.closest('a') || target.closest('.kpi-pill')) {
+        return;
+      }
+
+      if (!target.closest('#deck-drag-handle') && !target.closest('#deck-drag-header')) {
+        return;
+      }
+
+      isDragging = true;
+      deck.classList.add('is-dragging');
+      if (dragHeader) dragHeader.classList.add('is-dragging');
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      startX = clientX;
+      startY = clientY;
+
+      const rect = deck.getBoundingClientRect();
+      initialDeckX = rect.left;
+      initialDeckY = rect.top;
+
+      deck.style.right = 'auto';
+      deck.style.left = initialDeckX + 'px';
+      deck.style.top = initialDeckY + 'px';
+
+      document.addEventListener('mousemove', onMove, { passive: false });
+      document.addEventListener('mouseup', onEnd);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onEnd);
+
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      if (e.cancelable) e.preventDefault();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+
+      let newX = initialDeckX + dx;
+      let newY = initialDeckY + dy;
+
+      // Ensure panel stays inside visible viewport
+      const minX = 4;
+      const maxX = Math.max(minX, window.innerWidth - deck.offsetWidth - 4);
+      const minY = 48; // Stay below top header bar
+      const maxY = Math.max(minY, window.innerHeight - deck.offsetHeight - 8);
+
+      newX = Math.min(Math.max(minX, newX), maxX);
+      newY = Math.min(Math.max(minY, newY), maxY);
+
+      deck.style.left = newX + 'px';
+      deck.style.top = newY + 'px';
+    }
+
+    function onEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      deck.classList.remove('is-dragging');
+      if (dragHeader) dragHeader.classList.remove('is-dragging');
+
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+
+      try {
+        localStorage.setItem('skl_deck_pos_x', parseInt(deck.style.left, 10));
+        localStorage.setItem('skl_deck_pos_y', parseInt(deck.style.top, 10));
+      } catch(e) {}
+    }
+
+    if (dragHandle) {
+      dragHandle.addEventListener('mousedown', onStart);
+      dragHandle.addEventListener('touchstart', onStart, { passive: false });
+    }
+    if (dragHeader) {
+      dragHeader.addEventListener('mousedown', onStart);
+      dragHeader.addEventListener('touchstart', onStart, { passive: false });
+    }
+
+    // Double-click grip handle to reset position to default
+    if (dragHandle) {
+      dragHandle.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        deck.style.top = '56px';
+        deck.style.left = '14px';
+        deck.style.right = 'auto';
+        try {
+          localStorage.removeItem('skl_deck_pos_x');
+          localStorage.removeItem('skl_deck_pos_y');
+        } catch(err) {}
+        showToast('📍 కంట్రోల్స్ పాత స్థానానికి రీసెట్ చేయబడ్డాయి');
+      });
+    }
+  })();
 
   // Toggle Command Deck Collapse / Expand
   window.toggleDeckCollapse = function() {
