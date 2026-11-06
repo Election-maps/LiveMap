@@ -2965,27 +2965,6 @@ https://...
     }
   };
 
-    const m = activeMobiles[unitId];
-    if (m && m.marker) {
-      currentlyFollowedOfficerKey = unitId;
-      map.flyTo([m.lat, m.lng], 18, { animate: true, duration: 1.0 });
-      m.marker.openPopup();
-      showToast(`[${m.categoryKey}] ${m.unitName} (${m.mandal}) లైవ్ ఆటో-ఫాలో మోడ్ ఆన్ చేయబడింది`);
-    } else {
-      currentlyFollowedOfficerKey = null;
-      const u = allUnitsData.find(item => (item.id === unitId || item.unitId === unitId));
-      if (u) {
-        const ph = cleanPhoneNumber(u.phone);
-        const contactAction = ph ? `\nఫోన్: ${ph}\nలొకేషన్ షేర్ చేయాలని వాట్సాప్ సందేశం పంపాలా?` : '';
-        if (confirm(`⚠️ ${u.unitName} (${u.mandal} - ${u.officer || 'Officer'}) ఇంకా లైవ్ లొకేషన్ ప్రారంభించలేదు.${contactAction}`)) {
-          if (ph) {
-            shareOfficerLinkToWhatsApp(u);
-          }
-        }
-      }
-    }
-  };
-
   // Clear Single Officer (Permanently deletes and stops tracking on phone)
   window.clearSingleOfficer = function(key) {
     if (!confirm('ఈ లొకేషన్ మార్కర్‌ను మ్యాప్ నుండి పూర్తిగా తొలగించాలా?\nఆఫీసర్ మొబైల్‌లో కూడా లైవ్ ట్రాకింగ్ ఆగిపోతుంది. బ్రౌజర్ రీఫ్రెష్ చేసినా ఈ లొకేషన్ రాదు.\nసిబ్బంది మళ్లీ లొకేషన్ షేర్ చేసుకుంటేనే మ్యాప్‌లో కనిపిస్తుంది.\n(Permanently delete this officer? Remote tracking will stop.)')) return;
