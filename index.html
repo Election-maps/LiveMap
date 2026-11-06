@@ -1966,19 +1966,6 @@
           </select>
         </div>
 
-        <!-- Dedicated Polling Station Dropdown -->
-        <div class="map-dropdown-box psl-dropdown-box">
-          <i class="fa-solid fa-person-booth dropdown-icon" style="color: #60a5fa;"></i>
-          <select id="select-map-psl" class="map-select select-psl" onchange="handleMapPslChange(this.value)" title="పోలింగ్ కేంద్రం ఎంచుకోండి (Select Polling Station)">
-            <option value="">🗳️ పోలింగ్ కేంద్రం (Select PS)</option>
-          </select>
-        </div>
-
-        <!-- Dedicated Polling Station Search Button -->
-        <button class="btn-psl-search" id="btn-search-psl" onclick="openPslSearchModal()" title="పోలింగ్ కేంద్రాల శోధన (Search Polling Stations)">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <span>కేంద్రాల శోధన</span>
-        </button>
       </div>
 
       <div class="deck-divider"></div>
@@ -1995,14 +1982,6 @@
       </div>
     </div>
 
-    <!-- Row 3: Sensitivity Filter Sub-bar for Polling Stations -->
-    <div class="psl-filter-subbar" id="psl-filter-subbar">
-      <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PS రకం:</span>
-      <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
-      <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
-      <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
-      <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
-    </div>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
