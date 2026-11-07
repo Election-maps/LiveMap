@@ -19,6 +19,8 @@
   <script src="routes_geometry.js?v=20261105_v2"></script>
   <!-- Pre-loaded 30 Mandal Boundaries GeoJSON -->
   <script src="mandal_borders.js?v=20261105_v2"></script>
+  <!-- SheetJS for Export to Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -1691,6 +1693,28 @@
     }
     .btn-psl-routes:hover {
       background: #1d4ed8;
+      border-color: #1e40af;
+    }
+    .btn-psl-excel {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
+      border: 1px solid #047857;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-psl-excel:hover {
+      background: linear-gradient(135deg, #10b981, #059669);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(5, 150, 105, 0.35);
     }
 
     /* Modal Table Styling */
@@ -1908,6 +1932,9 @@
         <button type="button" class="btn-psl-routes" onclick="openDirectoryModal()" title="View all routes & villages directory">
           <i class="fa-solid fa-list-ol"></i> Routes
         </button>
+        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" title="Export Online & Offline Status to Excel">
+          <i class="fa-solid fa-file-excel"></i> Export Excel
+        </button>
       </div>
     </div>
   </div>
@@ -1941,6 +1968,9 @@
           <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
           <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
         </div>
+        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" style="padding: 3px 9px; font-size: 10.5px; border-radius: 9999px; margin-left: 2px;" title="Export Online & Offline Status to Excel">
+          <i class="fa-solid fa-file-excel"></i> Excel
+        </button>
       </div>
 
       <button class="btn-deck-collapse" id="btn-deck-collapse" onclick="toggleDeckCollapse()" title="కంట్రోల్స్ దాచు / చూపు">
@@ -2069,6 +2099,9 @@
           <option value="LIVE">🟢 లైవ్ లో ఉన్నవి</option>
           <option value="OFFLINE">⚪ ఆఫ్‌లైన్</option>
         </select>
+        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" style="padding: 6px 12px; font-size: 11.5px; height: 32px;" title="Export 364 Forces Online & Offline Status to Excel">
+          <i class="fa-solid fa-file-excel"></i> Export Excel
+        </button>
       </div>
 
       <!-- Route Cards Container -->
@@ -4091,6 +4124,185 @@ https://...
 
   document.getElementById('btn-close-dir').addEventListener('click', () => {
     modalDirectory.classList.remove('show');
+  });
+
+  // =========================================================================
+  // EXPORT TO EXCEL: FORCES ONLINE & OFFLINE COMPREHENSIVE REPORT
+  // =========================================================================
+  window.exportForcesLiveStatusToExcel = function() {
+    if (typeof XLSX === 'undefined') {
+      alert('Excel library is loading, please try again in a moment...');
+      return;
+    }
+
+    const units = window.ROUTE_MOBILES_DATA || allUnitsData || [];
+    if (!units || units.length === 0) {
+      alert('No forces data available to export.');
+      return;
+    }
+
+    const liveKeys = Object.keys(activeMobiles);
+    const liveCount = liveKeys.length;
+    const totalCount = units.length;
+    const offlineCount = Math.max(0, totalCount - liveCount);
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // 1. Category Breakdown
+    const categories = ['Route Mobiles', 'Striking Forces', 'Special Striking Forces', 'QRTs', 'Reserve Parties'];
+    const catStats = {};
+    categories.forEach(c => catStats[c] = { total: 0, online: 0, offline: 0 });
+
+    units.forEach(u => {
+      const cat = u.category || 'Route Mobiles';
+      if (!catStats[cat]) catStats[cat] = { total: 0, online: 0, offline: 0 };
+      catStats[cat].total++;
+      if (activeMobiles[u.id]) {
+        catStats[cat].online++;
+      } else {
+        catStats[cat].offline++;
+      }
+    });
+
+    const categorySheetData = categories.map(c => {
+      const st = catStats[c] || { total: 0, online: 0, offline: 0 };
+      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
+      return {
+        'Category Name': c,
+        'Total Forces': st.total,
+        'Online (Live GPS Active)': st.online,
+        'Offline (Disconnected)': st.offline,
+        'Online %': pct
+      };
+    });
+    // Add total row
+    categorySheetData.push({
+      'Category Name': 'TOTAL POLICE FORCES',
+      'Total Forces': totalCount,
+      'Online (Live GPS Active)': liveCount,
+      'Offline (Disconnected)': offlineCount,
+      'Online %': ((liveCount / totalCount) * 100).toFixed(1) + '%'
+    });
+
+    // 2. Mandal Breakdown
+    const mandalStats = {};
+    units.forEach(u => {
+      const m = (u.mandal || 'Unknown').trim();
+      if (!mandalStats[m]) mandalStats[m] = { total: 0, online: 0, offline: 0 };
+      mandalStats[m].total++;
+      if (activeMobiles[u.id]) mandalStats[m].online++;
+      else mandalStats[m].offline++;
+    });
+
+    const mandalSheetData = Object.keys(mandalStats).sort().map((m, idx) => {
+      const st = mandalStats[m];
+      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
+      return {
+        'S.No': idx + 1,
+        'Mandal / Police Station': m,
+        'Total Forces': st.total,
+        'Online (Live)': st.online,
+        'Offline': st.offline,
+        'Online %': pct
+      };
+    });
+
+    // 3. Detailed All 364 Forces Sheet
+    const allUnitsSheetData = units.map((u, idx) => {
+      const isLive = !!activeMobiles[u.id];
+      const liveData = activeMobiles[u.id] || {};
+      const speedKmh = isLive && liveData.speed ? Math.round(liveData.speed * 3.6) : 0;
+      let lastUpdatedStr = 'Offline';
+      if (isLive && liveData.lastUpdated) {
+        lastUpdatedStr = new Date(liveData.lastUpdated).toLocaleTimeString('en-IN');
+      }
+
+      return {
+        'S.No': idx + 1,
+        'Category': u.category || 'Route Mobiles',
+        'Mandal / Police Station': u.mandal || '',
+        'Unit Name': u.unitName || '',
+        'Route': u.route || '',
+        'Officer Name': u.officer || '',
+        'Phone Number': u.phone || '',
+        'Status (Online / Offline)': isLive ? 'ONLINE (LIVE)' : 'OFFLINE',
+        'Speed (km/h)': isLive ? speedKmh : 0,
+        'Last Update Time': lastUpdatedStr,
+        'Latitude': isLive ? (liveData.lat || '') : '',
+        'Longitude': isLive ? (liveData.lng || '') : '',
+        'HQ': u.hq || '',
+        'Supporting Staff': u.supporting || '',
+        'Polling Stations In Route': u.pollingStations || ''
+      };
+    });
+
+    // 4. Offline Forces Only (Actionable for Control Room calling)
+    const offlineUnitsData = allUnitsSheetData
+      .filter(u => u['Status (Online / Offline)'] === 'OFFLINE')
+      .map((u, idx) => ({
+        'S.No': idx + 1,
+        'Category': u['Category'],
+        'Mandal / Police Station': u['Mandal / Police Station'],
+        'Unit Name': u['Unit Name'],
+        'Route': u['Route'],
+        'Officer Name': u['Officer Name'],
+        'Phone Number': u['Phone Number'],
+        'HQ': u['HQ'],
+        'Supporting Staff': u['Supporting Staff'],
+        'Action Required': 'Nudge on WhatsApp / Call to Turn ON GPS'
+      }));
+
+    // 5. Online Forces Only (Live)
+    const onlineUnitsData = allUnitsSheetData
+      .filter(u => u['Status (Online / Offline)'] === 'ONLINE (LIVE)')
+      .map((u, idx) => ({
+        'S.No': idx + 1,
+        'Category': u['Category'],
+        'Mandal / Police Station': u['Mandal / Police Station'],
+        'Unit Name': u['Unit Name'],
+        'Route': u['Route'],
+        'Officer Name': u['Officer Name'],
+        'Phone Number': u['Phone Number'],
+        'Current Speed (km/h)': u['Speed (km/h)'],
+        'Last Update Time': u['Last Update Time'],
+        'Latitude': u['Latitude'],
+        'Longitude': u['Longitude']
+      }));
+
+    // Build Excel Workbook
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Category Summary KPI
+    const wsSummary = XLSX.utils.json_to_sheet(categorySheetData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Category KPI');
+
+    // Sheet 2: Mandal Summary
+    const wsMandal = XLSX.utils.json_to_sheet(mandalSheetData);
+    XLSX.utils.book_append_sheet(wb, wsMandal, 'Mandal Wise Status');
+
+    // Sheet 3: All 364 Units Status
+    const wsAll = XLSX.utils.json_to_sheet(allUnitsSheetData);
+    XLSX.utils.book_append_sheet(wb, wsAll, 'All 364 Forces');
+
+    // Sheet 4: Offline Units (To Call)
+    const wsOffline = XLSX.utils.json_to_sheet(offlineUnitsData);
+    XLSX.utils.book_append_sheet(wb, wsOffline, 'Offline Units (' + offlineCount + ')');
+
+    // Sheet 5: Online Units (Live)
+    const wsOnline = XLSX.utils.json_to_sheet(onlineUnitsData);
+    XLSX.utils.book_append_sheet(wb, wsOnline, 'Online Units (' + liveCount + ')');
+
+    // File Download
+    const dateStr = now.toISOString().slice(0, 10);
+    const fileName = `Srikakulam_Police_Online_Offline_Status_${dateStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  // Listen for iframe export requests from parent portal
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'TRIGGER_EXCEL_EXPORT') {
+      exportForcesLiveStatusToExcel();
+    }
   });
 
   document.getElementById('btn-close-dir-footer').addEventListener('click', () => {
