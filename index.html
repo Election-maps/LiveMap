@@ -19,8 +19,6 @@
   <script src="routes_geometry.js?v=20261105_v2"></script>
   <!-- Pre-loaded 30 Mandal Boundaries GeoJSON -->
   <script src="mandal_borders.js?v=20261105_v2"></script>
-  <!-- SheetJS for Export to Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -61,47 +59,45 @@
       position: relative;
     }
 
-    /* Top Police Header - High-Tech Command Styling */
+    /* Top Police Header */
     header {
-      background: linear-gradient(135deg, #071224 0%, #0d1e38 50%, #102a4e 100%);
+      background: linear-gradient(135deg, #0a1128 0%, #102a43 100%);
       color: #fff;
-      padding: 9px 16px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 1000;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
-      border-bottom: 2px solid #f59e0b;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+      border-bottom: 2px solid var(--police-gold);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-badge {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #fbbf24 0%, #d97706 70%, #92400e 100%);
+      background: linear-gradient(135deg, var(--police-gold) 0%, #d97706 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #0b1a2e;
-      font-size: 19px;
-      box-shadow: 0 0 14px rgba(245, 158, 11, 0.55), 0 2px 8px rgba(0,0,0,0.4);
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
       flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .brand-title {
-      font-size: 15.5px;
-      font-weight: 800;
-      line-height: 1.25;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
       color: #ffffff;
-      letter-spacing: 0.35px;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      letter-spacing: 0.3px;
     }
 
     .brand-subtitle {
@@ -110,57 +106,47 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 2px;
     }
 
     .brand-subtitle .dist-tag {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%);
-      color: #fde047;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-weight: 700;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--police-gold);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
       font-size: 10px;
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      letter-spacing: 0.4px;
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn-header {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
+      padding: 6px 10px;
+      border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
       font-weight: 600;
-      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      transition: all 0.2s;
     }
 
     .btn-header:hover {
-      background: rgba(255, 255, 255, 0.18);
-      border-color: rgba(255, 255, 255, 0.35);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .btn-header.btn-track-action {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: #ffffff;
-      border-color: #34d399;
+      background: #10b981;
+      color: #0a1128;
+      border-color: #10b981;
       font-weight: 700;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
     }
 
     .btn-header.btn-clear-action {
@@ -170,18 +156,13 @@
     }
 
     .btn-header.btn-clear-action:hover {
-      background: rgba(225, 29, 72, 0.38);
-      box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+      background: rgba(225, 29, 72, 0.4);
     }
 
     .btn-header.btn-wa-action {
-      background: linear-gradient(135deg, rgba(37, 211, 102, 0.25) 0%, rgba(18, 140, 126, 0.25) 100%);
+      background: rgba(37, 211, 102, 0.2);
       color: #34d399;
-      border-color: rgba(37, 211, 102, 0.45);
-    }
-    .btn-header.btn-wa-action:hover {
-      background: linear-gradient(135deg, rgba(37, 211, 102, 0.45) 0%, rgba(18, 140, 126, 0.45) 100%);
-      box-shadow: 0 0 12px rgba(37, 211, 102, 0.45);
+      border-color: rgba(37, 211, 102, 0.4);
     }
 
     /* 100% Full Screen Map Canvas */
@@ -193,122 +174,31 @@
       background: #0f172a;
     }
 
-    /* Unified Command Deck (Pure White Theme - Clean, Movable & Crisp) */
-    .unified-command-deck {
+    /* Floating KPI Stats Bar (Top Left) */
+    .kpi-bar {
       position: absolute;
-      top: 150px;
-      left: 14px;
-      right: auto;
-      max-width: calc(100vw - 28px);
-      width: fit-content;
+      top: 58px;
+      left: 12px;
       z-index: 999;
-      background: rgba(255, 255, 255, 0.97);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(203, 213, 225, 0.85);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
-      padding: 8px 14px;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: box-shadow 0.2s ease, opacity 0.2s ease;
-      pointer-events: auto;
-      user-select: none;
-      -webkit-user-select: none;
-      color: #0f172a;
-    }
-
-    .unified-command-deck.is-dragging {
-      opacity: 0.98;
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25), 0 0 20px rgba(59, 130, 246, 0.3);
-      border-color: #3b82f6;
-      cursor: grabbing !important;
-    }
-
-    .deck-drag-handle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: grab;
-      padding: 4px 7px;
-      border-radius: 8px;
-      color: #64748b;
-      font-size: 13px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-
-    .deck-drag-handle:hover {
-      color: #0284c7;
-      background: #e0f2fe;
-      border-color: #38bdf8;
-    }
-
-    .deck-drag-handle:active,
-    .unified-command-deck.is-dragging .deck-drag-handle {
-      cursor: grabbing;
-      color: #ffffff;
-      background: #0284c7;
-    }
-
-    .deck-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .deck-row-top {
-      justify-content: space-between;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 7px;
-      cursor: grab;
-    }
-
-    .deck-row-top.is-dragging {
-      cursor: grabbing;
-    }
-
-    .deck-row-top button,
-    .deck-row-top .kpi-pill {
-      cursor: pointer;
-    }
-
-    .deck-row-bottom {
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .kpi-group {
-      display: flex;
-      align-items: center;
       gap: 6px;
+      pointer-events: none;
       flex-wrap: wrap;
     }
 
     .kpi-pill {
-      background: #f8fafc;
+      pointer-events: auto;
+      background: rgba(14, 23, 38, 0.94);
+      backdrop-filter: blur(8px);
       padding: 5px 11px;
-      border-radius: 18px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e2e8f0;
-      font-size: 11.5px;
+      gap: 7px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 11px;
       font-weight: 600;
-      color: #1e293b;
-      transition: all 0.2s ease;
-    }
-
-    .kpi-pill:hover {
-      border-color: #94a3b8;
-      background: #ffffff;
-      transform: translateY(-1px);
     }
 
     .kpi-pill .dot {
@@ -318,13 +208,13 @@
     }
 
     .kpi-pill .dot-live {
-      background: #10b981;
-      box-shadow: 0 0 6px #10b981;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
       animation: pulse-dot 1.5s infinite;
     }
 
     .kpi-pill .dot-offline {
-      background: #94a3b8;
+      background: var(--text-muted);
     }
 
     @keyframes pulse-dot {
@@ -333,193 +223,19 @@
       100% { transform: scale(0.9); opacity: 0.7; }
     }
 
-    .deck-divider {
-      width: 1px;
-      height: 20px;
-      background: #cbd5e1;
-      margin: 0 2px;
-      flex-shrink: 0;
-    }
-
-    .deck-section-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #475569;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-
-    .layers-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .layer-toggle-btn {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      padding: 5px 12px;
-      border-radius: 16px;
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .layer-toggle-btn:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-      border-color: #94a3b8;
-      transform: translateY(-1px);
-    }
-
-    .layer-toggle-btn.active {
-      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-      color: #ffffff;
-      border-color: #0284c7;
-      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
-    }
-
-    .btn-deck-collapse {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #475569;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 11px;
-      transition: all 0.2s;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
-    .btn-deck-collapse:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-      border-color: #94a3b8;
-    }
-
-    .dropdowns-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .map-dropdown-box {
-      display: flex;
-      align-items: center;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 20px;
-      padding: 3px 10px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-    }
-
-    .map-dropdown-box:hover {
-      border-color: #94a3b8;
-      background: #ffffff;
-      transform: translateY(-1px);
-    }
-
-    .map-dropdown-box:focus-within {
-      border-color: #2563eb;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-
-    .map-dropdown-box .dropdown-icon {
-      color: #2563eb;
-      font-size: 12.5px;
-      margin-right: 6px;
-    }
-
-    .map-select {
-      background: transparent;
-      border: none;
-      color: #0f172a;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 4px;
-      outline: none;
-      cursor: pointer;
-      min-width: 170px;
-      max-width: 260px;
-    }
-
-    .map-select.select-team {
-      min-width: 230px;
-      max-width: 380px;
-      color: #0369a1;
-      font-weight: 700;
-    }
-
-    .map-select.select-psl {
-      min-width: 190px;
-      max-width: 290px;
-      color: #4338ca;
-      font-weight: 700;
-    }
-
-    .btn-psl-search {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      border: 1px solid #93c5fd;
-      color: #1d4ed8;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.15);
-      flex-shrink: 0;
-    }
-
-    .btn-psl-search:hover {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #1e40af;
-      border-color: #60a5fa;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
-    }
-
-    .map-select option {
-      background: #ffffff;
-      color: #0f172a;
-      font-size: 12.5px;
-      padding: 8px;
-    }
-
-    .map-select optgroup {
-      background: #f1f5f9;
-      color: #334155;
-      font-weight: 700;
-    }
-
-    /* Category Filter Pills */
+    /* Category Filter Pills Bar on Map */
     .category-filter-bar {
+      position: absolute;
+      top: 96px;
+      left: 12px;
+      z-index: 999;
       display: flex;
-      align-items: center;
       gap: 6px;
       overflow-x: auto;
       white-space: nowrap;
+      max-width: calc(100vw - 24px);
+      padding: 2px 2px 6px 2px;
+      pointer-events: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -529,16 +245,17 @@
     }
 
     .cat-btn {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      padding: 5px 11px;
-      border-radius: 16px;
-      font-size: 11.5px;
+      background: rgba(14, 23, 38, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 18px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -546,125 +263,158 @@
     }
 
     .cat-btn:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-      border-color: #94a3b8;
-      transform: translateY(-1px);
+      background: rgba(30, 58, 138, 0.85);
+      color: white;
+      border-color: #38bdf8;
     }
 
     .cat-btn.active {
-      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-      color: #ffffff;
-      border-color: #1d4ed8;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+      background: #1e3a8a;
+      color: #38bdf8;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
     }
 
-    /* Sensitivity Sub-bar for Polling Stations */
-    .psl-filter-subbar {
+    /* Floating Map Filter Dropdowns on Map */
+    .map-dropdown-container {
+      position: absolute;
+      top: 136px;
+      left: 12px;
+      z-index: 999;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: auto;
+      max-width: calc(100vw - 24px);
+    }
+
+    .map-dropdown-box {
       display: flex;
       align-items: center;
-      gap: 6px;
+      background: rgba(11, 20, 26, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      padding: 2px 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+      transition: all 0.2s;
+    }
+
+    .map-dropdown-box:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+    }
+
+    .map-dropdown-box .dropdown-icon {
+      color: #38bdf8;
+      font-size: 13px;
+      margin-right: 6px;
+    }
+
+    .map-select {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 4px;
+      outline: none;
+      cursor: pointer;
+      max-width: 220px;
+    }
+
+    .map-select.select-team {
+      max-width: 290px;
+      color: #7dd3fc;
+    }
+
+    .map-select option {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .category-filter-bar {
+        top: 92px;
+        left: 8px;
+        max-width: calc(100vw - 16px);
+      }
+      .map-dropdown-container {
+        top: 132px;
+        left: 8px;
+        gap: 6px;
+        max-width: calc(100vw - 16px);
+      }
+      .map-select {
+        font-size: 11.5px;
+        max-width: 140px;
+        padding: 5px 2px;
+      }
+      .map-select.select-team {
+        max-width: 175px;
+      }
+      .map-dropdown-box {
+        padding: 1px 7px;
+      }
+      .psl-filter-subbar {
+        top: 172px;
+        left: 8px;
+        max-width: calc(100vw - 16px);
+      }
+    }
+
+    /* Polling Stations (PSL) UI & Marker Styling */
+    .psl-filter-subbar {
+      position: absolute;
+      top: 180px;
+      left: 12px;
+      z-index: 998;
+      display: flex;
+      gap: 5px;
       overflow-x: auto;
       white-space: nowrap;
-      padding-top: 6px;
-      border-top: 1px dashed #cbd5e1;
+      max-width: calc(100vw - 24px);
+      padding: 3px 8px;
+      background: rgba(11, 20, 26, 0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      align-items: center;
       scrollbar-width: none;
     }
     .psl-filter-subbar::-webkit-scrollbar { display: none; }
-
-    @media (max-width: 768px) {
-      header {
-        padding: 7px 10px;
-      }
-      .brand-badge {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-      }
-      .brand-title {
-        font-size: 13.5px;
-      }
-      .btn-header span {
-        display: none;
-      }
-      .btn-header {
-        padding: 6px 9px;
-      }
-      .unified-command-deck {
-        left: 8px;
-        right: 8px;
-        top: 165px;
-        padding: 6px 10px;
-        gap: 6px;
-      }
-      .deck-row-top {
-        padding-bottom: 6px;
-      }
-      .deck-divider {
-        display: none;
-      }
-      .kpi-pill {
-        padding: 4px 8px;
-        font-size: 10.5px;
-      }
-      .map-select {
-        min-width: 130px;
-        max-width: 160px;
-        font-size: 11px;
-      }
-      .map-select.select-team {
-        min-width: 170px;
-        max-width: 220px;
-      }
-      .map-select.select-psl {
-        min-width: 150px;
-        max-width: 200px;
-      }
-      .btn-psl-search {
-        padding: 4px 9px;
-        font-size: 10.5px;
-      }
-      .layer-toggle-btn {
-        padding: 4px 9px;
-        font-size: 10.5px;
-      }
-      .cat-btn {
-        padding: 4px 9px;
-        font-size: 10.5px;
-      }
-    }
     .psl-subbar-title {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
-      color: #334155;
+      color: #93c5fd;
       margin-right: 4px;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
     .psl-sens-btn {
-      padding: 4px 11px;
+      padding: 3px 9px;
       font-size: 11px;
-      font-weight: 700;
-      border-radius: 16px;
-      border: 1px solid #cbd5e1;
-      background: #f8fafc;
-      color: #334155;
+      font-weight: 600;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s;
     }
     .psl-sens-btn:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-      border-color: #94a3b8;
-      transform: translateY(-1px);
+      background: rgba(59, 130, 246, 0.4);
+      color: #fff;
     }
     .psl-sens-btn.active {
-      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-      color: #ffffff;
-      border-color: #1d4ed8;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+      background: #2563eb;
+      color: #fff;
+      border-color: #60a5fa;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
     }
     .psl-btn-badge {
       display: inline-flex;
@@ -754,22 +504,16 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      background: #1e293b;
       color: white;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
-      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .fab:hover {
-      transform: translateY(-2px) scale(1.06);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.45);
-      border-color: #38bdf8;
+      transition: transform 0.2s, background 0.2s;
     }
 
     .fab:active {
@@ -777,46 +521,9 @@
     }
 
     .fab-whatsapp {
-      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-      color: #032011;
-      font-size: 19px;
-      border-color: #4ade80;
-      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-
-    .fab-whatsapp:hover {
-      box-shadow: 0 8px 26px rgba(37, 211, 102, 0.6), 0 0 16px rgba(37, 211, 102, 0.5);
-    }
-
-    /* Dark Luxury Glass Leaflet Popups */
-    .leaflet-popup-content-wrapper {
-      background: rgba(11, 20, 36, 0.97) !important;
-      backdrop-filter: blur(14px) !important;
-      -webkit-backdrop-filter: blur(14px) !important;
-      border: 1px solid rgba(56, 189, 248, 0.4) !important;
-      border-radius: 14px !important;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-      color: #f8fafc !important;
-      padding: 3px !important;
-    }
-
-    .leaflet-popup-tip {
-      background: rgba(11, 20, 36, 0.97) !important;
-      border: 1px solid rgba(56, 189, 248, 0.4) !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-    }
-
-    .leaflet-popup-close-button {
-      color: #cbd5e1 !important;
-      font-size: 18px !important;
-      top: 10px !important;
-      right: 12px !important;
-      transition: color 0.15s, transform 0.15s !important;
-    }
-
-    .leaflet-popup-close-button:hover {
-      color: #f87171 !important;
-      transform: scale(1.15) !important;
+      background: var(--wa-green);
+      color: #082f1b;
+      font-size: 18px;
     }
 
     /* Floating Pill only shown WHEN actively tracking */
@@ -992,47 +699,45 @@
     }
 
     .modal-card {
-      background: linear-gradient(180deg, #0e1728 0%, #080e1b 100%);
-      border-radius: 18px;
+      background: var(--card-bg);
+      border-radius: 16px;
       width: 100%;
       max-width: 720px;
       max-height: 88vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 24px rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
       overflow: hidden;
     }
 
     .modal-header {
-      padding: 14px 20px;
-      background: linear-gradient(135deg, rgba(16, 27, 46, 0.95) 0%, rgba(9, 16, 29, 0.98) 100%);
-      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 12px 18px;
+      background: rgba(0,0,0,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
     .modal-header h3 {
-      font-size: 15.5px;
-      font-weight: 800;
+      font-size: 15px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: #f59e0b;
-      letter-spacing: 0.3px;
+      gap: 8px;
+      color: var(--police-gold);
     }
 
     .modal-body {
-      padding: 16px 18px;
+      padding: 14px 16px;
       overflow-y: auto;
       flex: 1;
     }
 
     .modal-footer {
-      padding: 12px 18px;
-      background: rgba(7, 13, 24, 0.8);
-      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 16px;
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid rgba(255,255,255,0.1);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
@@ -1041,17 +746,11 @@
     .btn-close {
       background: rgba(255,255,255,0.1);
       color: white;
-      border: 1px solid rgba(255,255,255,0.15);
-      padding: 7px 16px;
-      border-radius: 10px;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    .btn-close:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
     }
 
     .search-filter-box {
@@ -1082,31 +781,24 @@
     }
 
     .route-card {
-      background: rgba(16, 27, 46, 0.65);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 11px 15px;
+      border-radius: 10px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      gap: 10px;
+      transition: background 0.2s;
     }
 
     .route-card:hover {
-      background: rgba(23, 38, 64, 0.85);
-      border-color: rgba(56, 189, 248, 0.4);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .route-card.is-live {
-      border-color: rgba(16, 185, 129, 0.55);
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.06);
     }
 
     .route-info {
@@ -1158,64 +850,44 @@
     }
 
     .btn-action-wa {
-      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-      color: #032011;
-      border: 1px solid #4ade80;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 11.5px;
+      background: var(--wa-green);
+      color: #0b141a;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       text-decoration: none;
-      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35);
-      transition: all 0.2s;
-    }
-    .btn-action-wa:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.5);
     }
 
     .btn-action-call {
-      background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(59, 130, 246, 0.35) 100%);
-      color: #93c5fd;
-      border: 1px solid rgba(59, 130, 246, 0.5);
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 11.5px;
-      font-weight: 700;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       text-decoration: none;
-      transition: all 0.2s;
-    }
-    .btn-action-call:hover {
-      background: linear-gradient(135deg, rgba(37, 99, 235, 0.45) 0%, rgba(59, 130, 246, 0.55) 100%);
-      color: #ffffff;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
     }
 
     .btn-action-map {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%);
-      color: #fde047;
-      border: 1px solid rgba(245, 158, 11, 0.5);
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 11.5px;
-      font-weight: 700;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--police-gold);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-action-map:hover {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.45) 100%);
-      color: #ffffff;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
     }
 
     .status-tag {
@@ -1261,512 +933,7 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
-    /* ================= CRISP WHITE THEME FOR MODALS ================= */
-    .modal-card {
-      background: #ffffff !important;
-      color: #0f172a !important;
-      border: 1px solid #cbd5e1 !important;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    .modal-header {
-      background: #f8fafc !important;
-      border-bottom: 1px solid #e2e8f0 !important;
-    }
-
-    .modal-header h3 {
-      color: #1e3a8a !important;
-      font-weight: 800 !important;
-    }
-
-    .modal-body {
-      background: #f8fafc !important;
-      color: #0f172a !important;
-    }
-
-    .modal-footer {
-      background: #f8fafc !important;
-      border-top: 1px solid #e2e8f0 !important;
-    }
-
-    .btn-close {
-      background: #e2e8f0 !important;
-      color: #1e293b !important;
-      border: 1px solid #cbd5e1 !important;
-      font-weight: 700 !important;
-    }
-
-    .btn-close:hover {
-      background: #cbd5e1 !important;
-      color: #0f172a !important;
-    }
-
-    .custom-select, .custom-input {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
-    }
-
-    .custom-select:focus, .custom-input:focus {
-      border-color: #2563eb !important;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
-    }
-
-    .custom-select option {
-      background: #ffffff !important;
-      color: #0f172a !important;
-    }
-
-    .route-card {
-      background: #ffffff !important;
-      border: 1px solid #e2e8f0 !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-    }
-
-    .route-card:hover {
-      background: #f1f5f9 !important;
-      border-color: #3b82f6 !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-    }
-
-    .route-card.is-live {
-      border-color: #10b981 !important;
-      background: #f0fdf4 !important;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
-    }
-
-    .route-title {
-      color: #0f172a !important;
-    }
-
-    .route-title span:first-child {
-      color: #0f172a !important;
-      font-weight: 700 !important;
-    }
-
-    .route-officer {
-      color: #475569 !important;
-    }
-
-    .route-officer span strong {
-      color: #0f172a !important;
-    }
-
-    .route-officer span:nth-child(2) strong {
-      color: #1d4ed8 !important;
-    }
-
-    .route-phone {
-      color: #64748b !important;
-    }
-
-    .btn-action-map {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
-      color: #92400e !important;
-      border: 1px solid #d97706 !important;
-      font-weight: 700 !important;
-      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.2) !important;
-    }
-
-    .btn-action-map:hover {
-      background: #f59e0b !important;
-      color: #ffffff !important;
-    }
-
-    #psl-results-count {
-      color: #475569 !important;
-      font-weight: 600 !important;
-    }
-  
-    /* ================= POLLING CENTER FILTERS & TABLE STYLES (MATCHING ROUTE MAP) ================= */
-    .psl-filter-header-panel {
-      background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 8px 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      z-index: 990;
-      position: relative;
-      flex-shrink: 0;
-      color: #0f172a;
-    }
-
-    .psl-filter-row-1 {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .cat-pill-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      font-size: 11.5px;
-    }
-
-    .cat-pill-label {
-      font-weight: 700;
-      color: #334155;
-      margin-right: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .psl-pill-btn {
-      padding: 3px 11px;
-      font-size: 11px;
-      font-weight: 700;
-      border-radius: 9999px;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    .psl-pill-btn.pill-all {
-      background: #2563eb;
-      color: #ffffff;
-      border: 1px solid #1d4ed8;
-    }
-    .psl-pill-btn.pill-all:hover {
-      background: #1d4ed8;
-    }
-
-    .psl-pill-btn.pill-normal {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
-    .psl-pill-btn.pill-normal:hover, .psl-pill-btn.pill-normal.active {
-      background: #10b981;
-      color: #ffffff;
-      border-color: #059669;
-    }
-
-    .psl-pill-btn.pill-sensitive {
-      background: #fffbeb;
-      color: #92400e;
-      border: 1px solid #fde68a;
-    }
-    .psl-pill-btn.pill-sensitive:hover, .psl-pill-btn.pill-sensitive.active {
-      background: #f59e0b;
-      color: #ffffff;
-      border-color: #d97706;
-    }
-
-    .psl-pill-btn.pill-critical {
-      background: #fff7ed;
-      color: #9a3412;
-      border: 1px solid #fed7aa;
-    }
-    .psl-pill-btn.pill-critical:hover, .psl-pill-btn.pill-critical.active {
-      background: #f97316;
-      color: #ffffff;
-      border-color: #ea580c;
-    }
-
-    .psl-pill-btn.pill-hyper {
-      background: #fff1f2;
-      color: #9f1239;
-      border: 1px solid #fecdd3;
-    }
-    .psl-pill-btn.pill-hyper:hover, .psl-pill-btn.pill-hyper.active {
-      background: #e11d48;
-      color: #ffffff;
-      border-color: #be123c;
-    }
-
-    .btn-psl-table-toggle {
-      background: #eef2ff;
-      color: #3730a3;
-      border: 1px solid #c7d2fe;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 4px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(55, 48, 163, 0.1);
-    }
-    .btn-psl-table-toggle:hover {
-      background: #e0e7ff;
-      border-color: #a5b4fc;
-      transform: translateY(-1px);
-    }
-
-    .psl-filter-row-2 {
-      display: flex;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .psl-filter-col {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .psl-filter-col label {
-      font-size: 9.5px;
-      font-weight: 800;
-      color: #64748b;
-      text-transform: uppercase;
-      margin-bottom: 3px;
-      letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .psl-filter-select {
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 11.5px;
-      background: #ffffff;
-      color: #0f172a;
-      font-weight: 600;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .psl-filter-select:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    .psl-search-box {
-      position: relative;
-      flex: 1;
-      min-width: 170px;
-      max-width: 280px;
-    }
-
-    .psl-search-input {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 5px 24px 5px 8px;
-      font-size: 11.5px;
-      background: #ffffff;
-      color: #0f172a;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .psl-search-input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    .btn-psl-search-clear {
-      position: absolute;
-      right: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      font-size: 11px;
-      padding: 2px;
-    }
-    .btn-psl-search-clear:hover {
-      color: #334155;
-    }
-
-    .psl-autocomplete-dropdown {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 100%;
-      margin-top: 4px;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
-      z-index: 2500;
-      max-height: 260px;
-      overflow-y: auto;
-      display: none;
-    }
-    .psl-autocomplete-item {
-      padding: 7px 10px;
-      font-size: 11.5px;
-      border-bottom: 1px solid #f1f5f9;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .psl-autocomplete-item:hover {
-      background: #f8fafc;
-    }
-    .psl-autocomplete-title {
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .psl-autocomplete-meta {
-      font-size: 10px;
-      color: #64748b;
-    }
-
-    .toggle-badge-routes {
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      color: #9f1239;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 5px 9px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .toggle-badge-routes:hover {
-      background: #ffe4e6;
-    }
-
-    .toggle-badge-borders {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      font-weight: 600;
-      font-size: 11px;
-      padding: 5px 9px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .toggle-badge-borders:hover {
-      background: #f1f5f9;
-    }
-
-    .btn-psl-reset {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
-    }
-    .btn-psl-reset:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-
-    .btn-psl-routes {
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      box-shadow: 0 1px 3px rgba(37,99,235,0.3);
-      transition: all 0.2s;
-    }
-    .btn-psl-routes:hover {
-      background: #1d4ed8;
-      border-color: #1e40af;
-    }
-    .btn-psl-excel {
-      background: linear-gradient(135deg, #059669, #047857);
-      color: #ffffff;
-      border: 1px solid #047857;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
-      transition: all 0.15s ease;
-      white-space: nowrap;
-    }
-    .btn-psl-excel:hover {
-      background: linear-gradient(135deg, #10b981, #059669);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 6px rgba(5, 150, 105, 0.35);
-    }
-
-    /* Modal Table Styling */
-    .psl-table-wrapper {
-      max-height: 480px;
-      overflow-y: auto;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-    .psl-data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11.5px;
-      text-align: left;
-    }
-    .psl-data-table th {
-      background: #0f172a;
-      color: #ffffff;
-      padding: 8px 10px;
-      font-weight: 700;
-      font-size: 11px;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    .psl-data-table td {
-      padding: 7px 10px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #1e293b;
-    }
-    .psl-data-table tr:hover {
-      background: #f8fafc;
-    }
-    .btn-table-mapview {
-      background: #2563eb;
-      color: #fff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 10.5px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-    }
-    .btn-table-mapview:hover {
-      background: #1d4ed8;
-    }
-
-</style>
+  </style>
 </head>
 <body>
 
@@ -1829,189 +996,71 @@
   </header>
 
   <!-- Live Map Viewport - 100% Unobstructed Clean View -->
-    <!-- ================= TOP POLLING CENTER FILTER PANEL (EXACT MATCHING ROUTE MAP) ================= -->
-  <div class="psl-filter-header-panel" id="live-psl-filter-panel">
-    <!-- Row 1: Category Filter Pills & Polling Stations Table Button -->
-    <div class="psl-filter-row-1">
-      <div class="cat-pill-group">
-        <span class="cat-pill-label">
-          <i class="fa-solid fa-filter" style="color: #2563eb;"></i> Category Filter:
-        </span>
-        <button type="button" class="psl-pill-btn pill-all active" id="pill-sens-all" onclick="setLivePslQuickCategory('ALL')">
-          All (<span id="count-sens-all">1,196</span>)
-        </button>
-        <button type="button" class="psl-pill-btn pill-normal" id="pill-sens-normal" onclick="setLivePslQuickCategory('NORMAL')">
-          Normal (<span id="count-sens-normal">832</span>)
-        </button>
-        <button type="button" class="psl-pill-btn pill-sensitive" id="pill-sens-sensitive" onclick="setLivePslQuickCategory('SENSITIVE')">
-          Sensitive (<span id="count-sens-sensitive">223</span>)
-        </button>
-        <button type="button" class="psl-pill-btn pill-critical" id="pill-sens-critical" onclick="setLivePslQuickCategory('CRITICAL')">
-          Critical (<span id="count-sens-critical">0</span>)
-        </button>
-        <button type="button" class="psl-pill-btn pill-hyper" id="pill-sens-hyper" onclick="setLivePslQuickCategory('HYPER SENSITIVE')">
-          Hyper Sensitive (<span id="count-sens-hyper">141</span>)
-        </button>
-      </div>
+  <div id="map"></div>
 
-      <div>
-        <button type="button" class="btn-psl-table-toggle" onclick="openLivePslTableModal()" id="btn-toggle-live-psl-table" title="View matching polling stations table">
-          <i class="fa-solid fa-table-list" style="color: #4f46e5;"></i> Polling Stations Table ( <span id="table-btn-psl-count">1196</span> )
-        </button>
-      </div>
+  <!-- Top Floating KPI Stats Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-pill">
+      <span class="dot dot-live"></span>
+      <span>లైవ్ (Live): <strong id="kpi-live" style="color: #34d399;">0</strong></span>
     </div>
-
-    <!-- Row 2: Comprehensive Dropdowns & Filters -->
-    <div class="psl-filter-row-2">
-      <!-- Police Station Filter -->
-      <div class="psl-filter-col" style="flex: 1; min-width: 140px; max-width: 220px;">
-        <label>POLICE STATION</label>
-        <select id="live-filter-ps" class="psl-filter-select" onchange="onLivePSChange(this.value)">
-          <option value="ALL">-- All Police Stations --</option>
-        </select>
-      </div>
-
-      <!-- Route No Filter -->
-      <div class="psl-filter-col" style="width: 120px; min-width: 100px;">
-        <label>ROUTE NO</label>
-        <select id="live-filter-route" class="psl-filter-select" onchange="applyAllLivePslFilters(true)">
-          <option value="ALL">-- All Routes --</option>
-        </select>
-      </div>
-
-      <!-- Category Filter -->
-      <div class="psl-filter-col" style="width: 130px; min-width: 100px;">
-        <label>CATEGORY</label>
-        <select id="live-filter-cat" class="psl-filter-select" onchange="onLiveCategoryDropdownChange(this.value)">
-          <option value="ALL">-- All Categories --</option>
-          <option value="NORMAL">Normal</option>
-          <option value="SENSITIVE">Sensitive</option>
-          <option value="CRITICAL">Critical</option>
-          <option value="HYPER SENSITIVE">Hyper Sensitive</option>
-        </select>
-      </div>
-
-      <!-- Distance Filter -->
-      <div class="psl-filter-col" style="width: 125px; min-width: 100px;">
-        <label>DISTANCE (PS)</label>
-        <select id="live-filter-distance" class="psl-filter-select" onchange="applyAllLivePslFilters(false)">
-          <option value="ALL">-- All Distances --</option>
-          <option value="near">&le; 5 KM (Near)</option>
-          <option value="medium">5 - 12 KM</option>
-          <option value="far">&gt; 12 KM (Far)</option>
-        </select>
-      </div>
-
-      <!-- Search Village / School -->
-      <div class="psl-filter-col psl-search-box">
-        <label><i class="fa-solid fa-magnifying-glass" style="color: #2563eb;"></i> SEARCH VILLAGE / SCHOOL</label>
-        <div style="position: relative;">
-          <input type="text" id="live-filter-search" class="psl-search-input" placeholder="Type PSL (e.g. MPP School)..." oninput="onLivePslSearchInput(this.value)" autocomplete="off">
-          <button type="button" class="btn-psl-search-clear" onclick="clearLivePslSearch()" title="Clear">✕</button>
-          <div id="live-psl-autocomplete" class="psl-autocomplete-dropdown"></div>
-        </div>
-      </div>
-
-      <!-- Road Routes & Borders Checkbox Toggles -->
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <label class="toggle-badge-routes">
-          <input type="checkbox" id="live-toggle-routes-chk" checked onchange="toggleRoadRoutesFromFilter(this.checked)" style="accent-color: #e11d48; cursor: pointer;">
-          <span><i class="fa-solid fa-route" style="color: #e11d48;"></i> Road Routes</span>
-        </label>
-        <label class="toggle-badge-borders">
-          <input type="checkbox" id="live-toggle-borders-chk" checked onchange="toggleBordersFromFilter(this.checked)" style="accent-color: #2563eb; cursor: pointer;">
-          <span>Borders</span>
-        </label>
-      </div>
-
-      <!-- Action Buttons: Reset & Routes Directory -->
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button type="button" class="btn-psl-reset" onclick="resetAllLivePslFilters()" title="Reset all filters">
-          <i class="fa-solid fa-arrows-rotate"></i> Reset
-        </button>
-        <button type="button" class="btn-psl-routes" onclick="openDirectoryModal()" title="View all routes & villages directory">
-          <i class="fa-solid fa-list-ol"></i> Routes
-        </button>
-        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" title="Export Online & Offline Status to Excel">
-          <i class="fa-solid fa-file-excel"></i> Export Excel
-        </button>
-      </div>
+    <div class="kpi-pill">
+      <span class="dot dot-offline"></span>
+      <span>ఆఫ్‌లైన్ (Offline): <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
+    </div>
+    <div class="kpi-pill">
+      <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
+      <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
+    </div>
+    <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
+      <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
     </div>
   </div>
 
+  <!-- Category Filter Pills Bar on Map (Routes, SF, SSF, QRTs, Reserve Parties) -->
+  <div class="category-filter-bar">
+    <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
+    <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
+    <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
+    <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
+    <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
+    <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
+    <button class="cat-btn active" id="btn-toggle-routes" onclick="toggleRoadRoutesLayer()" style="border-color: #ef4444; background: rgba(220, 38, 38, 0.45);" title="పోలీస్ రోడ్ రూట్లను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-route" style="color: #fca5a5;"></i> 🛣️ రూట్లు (Routes)
+    </button>
+    <button class="cat-btn active" id="btn-toggle-borders" onclick="toggleMandalBordersLayer()" style="border-color: #3b82f6; background: rgba(37, 99, 235, 0.45);" title="మండల సరిహద్దులను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-draw-polygon" style="color: #93c5fd;"></i> 🗺️ సరిహద్దులు (Borders)
+    </button>
+    <button class="cat-btn active" id="btn-toggle-psl" onclick="togglePslLayer()" style="border-color: #3b82f6; background: rgba(30, 58, 138, 0.55);" title="పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
+      <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i> 🗳️ పోలింగ్ కేంద్రాలు (1,196)
+    </button>
+  </div>
 
-  <div id="map"></div>
-
-  <!-- Unified Command Deck (Clean, Neat, Movable & Organized) -->
-  <div class="unified-command-deck" id="unified-command-deck">
-    <!-- Row 1: Real-time Status (KPIs) & Map Layer Toggles (Draggable Bar) -->
-    <div class="deck-row deck-row-top" id="deck-drag-header" title="క్లిక్ చేసి మ్యాప్‌పై ఎక్కడికైనా జరపవచ్చు (Drag to move)">
-      <!-- Drag Grip Handle -->
-      <div class="deck-drag-handle" id="deck-drag-handle" title="డ్రాగ్ చేసి జరపండి / డబుల్ క్లిక్ చేస్తే పాత స్థానానికి వస్తుంది (Drag to move, Double-click to reset)">
-        <i class="fa-solid fa-grip-vertical"></i>
-      </div>
-
-      <div class="kpi-group">
-        <div class="kpi-pill">
-          <span class="dot dot-live"></span>
-          <span>లైవ్: <strong id="kpi-live" style="color: #34d399;">0</strong></span>
-        </div>
-        <div class="kpi-pill">
-          <span class="dot dot-offline"></span>
-          <span>ఆఫ్‌లైన్: <strong id="kpi-offline" style="color: #94a3b8;">364</strong></span>
-        </div>
-        <div class="kpi-pill">
-          <i class="fa-solid fa-shield-halved" style="color: var(--police-gold); font-size: 11px;"></i>
-          <span>మొత్తం టీమ్స్: <strong id="kpi-total">364</strong></span>
-        </div>
-        <div class="kpi-pill" style="cursor: pointer;" onclick="togglePslLayer()" title="క్లిక్ చేసి పోలింగ్ కేంద్రాలను ఆన్/ఆఫ్ చేయండి">
-          <i class="fa-solid fa-person-booth" style="color: #60a5fa; font-size: 11px;"></i>
-          <span>పోలింగ్ కేంద్రాలు: <strong id="kpi-psl" style="color: #60a5fa;">1,196</strong></span>
-        </div>
-        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" style="padding: 3px 9px; font-size: 10.5px; border-radius: 9999px; margin-left: 2px;" title="Export Online & Offline Status to Excel">
-          <i class="fa-solid fa-file-excel"></i> Excel
-        </button>
-      </div>
-
-      <button class="btn-deck-collapse" id="btn-deck-collapse" onclick="toggleDeckCollapse()" title="కంట్రోల్స్ దాచు / చూపు">
-        <i class="fa-solid fa-chevron-up" id="icon-deck-collapse"></i>
-      </button>
+  <!-- Floating Map Filter Dropdowns: Mandal & Route/Party Selector -->
+  <div class="map-dropdown-container">
+    <div class="map-dropdown-box">
+      <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
+      <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
+        <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
+      </select>
     </div>
 
-    <!-- Row 2: Search Dropdowns & Police Force Categories -->
-    <div class="deck-row deck-row-bottom" id="deck-row-filters">
-      <!-- Search Dropdowns -->
-      <div class="dropdowns-group">
-        <div class="map-dropdown-box">
-          <i class="fa-solid fa-map-location-dot dropdown-icon"></i>
-          <select id="select-map-mandal" class="map-select" onchange="handleMapMandalChange(this.value)" title="మండలం ఎంచుకోండి (Select Mandal)">
-            <option value="ALL">📍 అన్ని మండలాలు (All Mandals)</option>
-          </select>
-        </div>
-
-        <div class="map-dropdown-box">
-          <i class="fa-solid fa-shield dropdown-icon"></i>
-          <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
-            <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
-          </select>
-        </div>
-
-      </div>
-
-      <div class="deck-divider"></div>
-
-      <!-- Police Force Category Pills -->
-      <div class="category-filter-bar">
-        <span class="deck-section-label" style="font-size: 11px;"><i class="fa-solid fa-filter"></i> టీమ్స్:</span>
-        <button class="cat-btn active" data-cat="ALL" onclick="filterMapCategory('ALL')">🛡️ అన్నీ (364)</button>
-        <button class="cat-btn" data-cat="RM" onclick="filterMapCategory('RM')">🚗 Routes (264)</button>
-        <button class="cat-btn" data-cat="SF" onclick="filterMapCategory('SF')">🚔 SF (59)</button>
-        <button class="cat-btn" data-cat="SSF" onclick="filterMapCategory('SSF')">🛡️ SSF (30)</button>
-        <button class="cat-btn" data-cat="QRT" onclick="filterMapCategory('QRT')">⚡ QRTs (6)</button>
-        <button class="cat-btn" data-cat="RESERVE" onclick="filterMapCategory('RESERVE')">🏛️ Reserve (5)</button>
-      </div>
+    <div class="map-dropdown-box">
+      <i class="fa-solid fa-magnifying-glass dropdown-icon"></i>
+      <select id="select-map-team" class="map-select select-team" onchange="handleMapTeamChange(this.value)" title="రూట్ / పార్టీ డ్రాప్‌డౌన్ లిస్ట్ (Select Team / Route)">
+        <option value="">🔍 రూట్ / పార్టీని ఎంచుకోండి (Select Team / Route)</option>
+      </select>
     </div>
+  </div>
 
+  <!-- Sensitivity Filter Sub-bar for Polling Stations -->
+  <div class="psl-filter-subbar" id="psl-filter-subbar">
+    <span class="psl-subbar-title"><i class="fa-solid fa-person-booth"></i> PSLs:</span>
+    <button class="psl-sens-btn active" data-sens="ALL" onclick="filterPslSensitivity('ALL')">⚪ అన్నీ (1,196)</button>
+    <button class="psl-sens-btn" data-sens="NORMAL" onclick="filterPslSensitivity('NORMAL')"><span class="psl-btn-badge badge-n">N</span> Normal (832)</button>
+    <button class="psl-sens-btn" data-sens="SENSITIVE" onclick="filterPslSensitivity('SENSITIVE')"><span class="psl-btn-badge badge-s">S</span> Sensitive (223)</button>
+    <button class="psl-sens-btn" data-sens="HYPER SENSITIVE" onclick="filterPslSensitivity('HYPER SENSITIVE')"><span class="psl-btn-badge badge-h">H</span> Hyper Sensitive (141)</button>
   </div>
 
   <!-- Quick Floating Action Buttons on Map -->
@@ -2028,44 +1077,6 @@
     <button class="fab" id="fab-dist-center" title="శ్రీకాకుళం జిల్లా మధ్యలోకి వెళ్లు">
       <i class="fa-solid fa-crosshairs"></i>
     </button>
-  </div>
-</div>
-
-<!-- Dedicated Polling Stations Finder & Quick Jump Modal -->
-<div class="modal-backdrop" id="modal-psl-search">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3>
-        <i class="fa-solid fa-person-booth" style="color: #60a5fa;"></i>
-        <span>పోలింగ్ కేంద్రాల శోధన (Polling Stations Finder - 1,196)</span>
-      </h3>
-      <button class="btn-close" id="btn-close-psl-search" onclick="closePslSearchModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Search & Filters -->
-      <div class="search-filter-box">
-        <input type="text" class="custom-input" style="flex: 2; min-width: 200px;" id="psl-modal-search" 
-               placeholder="పోలింగ్ కేంద్రం పేరు, MPTC, కోడ్ లేదా గ్రామం ద్వారా వెతకండి..." oninput="renderPslSearchResults()"/>
-        <select class="custom-select" style="flex: 1.2; min-width: 140px;" id="psl-modal-filter-mandal" onchange="renderPslSearchResults()">
-          <option value="ALL">అన్ని మండలాలు (All Mandals)</option>
-        </select>
-        <select class="custom-select" style="flex: 1; min-width: 130px;" id="psl-modal-filter-sens" onchange="renderPslSearchResults()">
-          <option value="ALL">అన్ని రకాలు (All)</option>
-          <option value="NORMAL">Normal</option>
-          <option value="SENSITIVE">Sensitive</option>
-          <option value="HYPER SENSITIVE">Hyper Sensitive</option>
-        </select>
-      </div>
-
-      <!-- Route Cards Container -->
-      <div class="routes-grid" id="psl-search-results-container">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-    <div class="modal-footer" style="justify-content: space-between;">
-      <span id="psl-results-count" style="font-size: 12px; color: #94a3b8; align-self: center;"></span>
-      <button class="btn-close" onclick="closePslSearchModal()">మూసివేయి (Close)</button>
-    </div>
   </div>
 </div>
 
@@ -2099,9 +1110,6 @@
           <option value="LIVE">🟢 లైవ్ లో ఉన్నవి</option>
           <option value="OFFLINE">⚪ ఆఫ్‌లైన్</option>
         </select>
-        <button type="button" class="btn-psl-excel" onclick="exportForcesLiveStatusToExcel()" style="padding: 6px 12px; font-size: 11.5px; height: 32px;" title="Export 364 Forces Online & Offline Status to Excel">
-          <i class="fa-solid fa-file-excel"></i> Export Excel
-        </button>
       </div>
 
       <!-- Route Cards Container -->
@@ -2240,7 +1248,6 @@ https://...
         drawMandalBorders();
         populateMapMandalDropdown();
         populateMapTeamDropdown();
-        populateMapPslDropdown();
       })
       .catch(err => console.error("Error loading mptc_zptc_locations.json:", err));
   } else {
@@ -2248,7 +1255,6 @@ https://...
       applyPslFilters();
       applyRoadRoutes();
       drawMandalBorders();
-      populateMapPslDropdown();
     }, 100);
   }
 
@@ -2390,181 +1396,13 @@ https://...
     if (elPslKpi) elPslKpi.innerText = count.toLocaleString();
   }
 
-  // -------------------------------------------------------------
-  // Draggable Command Deck (Movable Anywhere on Map + Remembers Position)
-  // -------------------------------------------------------------
-  (function initDraggableDeck() {
-    const deck = document.getElementById('unified-command-deck');
-    const dragHandle = document.getElementById('deck-drag-handle');
-    const dragHeader = document.getElementById('deck-drag-header');
-    if (!deck) return;
-
-    // Prevent Leaflet map panning when clicking / touching the control deck
-    if (typeof L !== 'undefined' && L.DomEvent) {
-      L.DomEvent.disableClickPropagation(deck);
-      L.DomEvent.disableScrollPropagation(deck);
-    }
-
-    // Restore saved position if within viewport
-    try {
-      const savedX = localStorage.getItem('skl_deck_pos_x');
-      const savedY = localStorage.getItem('skl_deck_pos_y');
-      if (savedX !== null && savedY !== null) {
-        const x = parseInt(savedX, 10);
-        const y = parseInt(savedY, 10);
-        if (!isNaN(x) && !isNaN(y)) {
-          const maxX = Math.max(10, window.innerWidth - 100);
-          const maxY = Math.max(50, window.innerHeight - 80);
-          if (x >= 0 && x <= maxX && y >= 140 && y <= maxY) {
-            deck.style.left = x + 'px';
-            deck.style.top = y + 'px';
-            deck.style.right = 'auto';
-          }
-        }
-      }
-    } catch(e) {}
-
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let initialDeckX = 0, initialDeckY = 0;
-
-    function onStart(e) {
-      const target = e.target;
-      // Do not drag if clicking interactive elements
-      if (target.closest('button') || target.closest('select') || target.closest('input') || target.closest('a') || target.closest('.kpi-pill')) {
-        return;
-      }
-
-      if (!target.closest('#deck-drag-handle') && !target.closest('#deck-drag-header')) {
-        return;
-      }
-
-      isDragging = true;
-      deck.classList.add('is-dragging');
-      if (dragHeader) dragHeader.classList.add('is-dragging');
-
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      startX = clientX;
-      startY = clientY;
-
-      const rect = deck.getBoundingClientRect();
-      initialDeckX = rect.left;
-      initialDeckY = rect.top;
-
-      deck.style.right = 'auto';
-      deck.style.left = initialDeckX + 'px';
-      deck.style.top = initialDeckY + 'px';
-
-      document.addEventListener('mousemove', onMove, { passive: false });
-      document.addEventListener('mouseup', onEnd);
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend', onEnd);
-
-      if (e.cancelable) e.preventDefault();
-    }
-
-    function onMove(e) {
-      if (!isDragging) return;
-      if (e.cancelable) e.preventDefault();
-
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      const dx = clientX - startX;
-      const dy = clientY - startY;
-
-      let newX = initialDeckX + dx;
-      let newY = initialDeckY + dy;
-
-      // Ensure panel stays inside visible viewport
-      const minX = 4;
-      const maxX = Math.max(minX, window.innerWidth - deck.offsetWidth - 4);
-      const minY = 140; // Stay below top header bar
-      const maxY = Math.max(minY, window.innerHeight - deck.offsetHeight - 8);
-
-      newX = Math.min(Math.max(minX, newX), maxX);
-      newY = Math.min(Math.max(minY, newY), maxY);
-
-      deck.style.left = newX + 'px';
-      deck.style.top = newY + 'px';
-    }
-
-    function onEnd() {
-      if (!isDragging) return;
-      isDragging = false;
-      deck.classList.remove('is-dragging');
-      if (dragHeader) dragHeader.classList.remove('is-dragging');
-
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onEnd);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-
-      try {
-        localStorage.setItem('skl_deck_pos_x', parseInt(deck.style.left, 10));
-        localStorage.setItem('skl_deck_pos_y', parseInt(deck.style.top, 10));
-      } catch(e) {}
-    }
-
-    if (dragHandle) {
-      dragHandle.addEventListener('mousedown', onStart);
-      dragHandle.addEventListener('touchstart', onStart, { passive: false });
-    }
-    if (dragHeader) {
-      dragHeader.addEventListener('mousedown', onStart);
-      dragHeader.addEventListener('touchstart', onStart, { passive: false });
-    }
-
-    // Double-click grip handle to reset position to default
-    if (dragHandle) {
-      dragHandle.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        deck.style.top = '56px';
-        deck.style.left = '14px';
-        deck.style.right = 'auto';
-        try {
-          localStorage.removeItem('skl_deck_pos_x');
-          localStorage.removeItem('skl_deck_pos_y');
-        } catch(err) {}
-        showToast('📍 కంట్రోల్స్ పాత స్థానానికి రీసెట్ చేయబడ్డాయి');
-      });
-    }
-  })();
-
-  // Toggle Command Deck Collapse / Expand
-  window.toggleDeckCollapse = function() {
-    const deck = document.getElementById('unified-command-deck');
-    const rowFilters = document.getElementById('deck-row-filters');
-    const pslBar = document.getElementById('psl-filter-subbar');
-    const icon = document.getElementById('icon-deck-collapse');
-    if (!deck) return;
-    const isCollapsed = deck.classList.toggle('collapsed');
-    if (isCollapsed) {
-      if (rowFilters) rowFilters.style.display = 'none';
-      if (pslBar) pslBar.style.display = 'none';
-      if (icon) {
-        icon.className = 'fa-solid fa-chevron-down';
-      }
-    } else {
-      if (rowFilters) rowFilters.style.display = 'flex';
-      if (pslBar && isPslLayerActive) pslBar.style.display = 'flex';
-      if (icon) {
-        icon.className = 'fa-solid fa-chevron-up';
-      }
-    }
-  };
-
   window.togglePslLayer = function() {
     isPslLayerActive = !isPslLayerActive;
     const btn = document.getElementById('btn-toggle-psl');
     const subbar = document.getElementById('psl-filter-subbar');
-    const deck = document.getElementById('unified-command-deck');
-    const isCollapsed = deck && deck.classList.contains('collapsed');
     if (isPslLayerActive) {
       if (btn) btn.classList.add('active');
-      if (subbar && !isCollapsed) subbar.style.display = 'flex';
+      if (subbar) subbar.style.display = 'flex';
       if (!map.hasLayer(pslLayerGroup)) map.addLayer(pslLayerGroup);
       applyPslFilters();
       showToast('🗳️ పోలింగ్ కేంద్రాలు (1,196) మ్యాప్‌పై ఆన్ చేయబడ్డాయి');
@@ -3427,7 +2265,6 @@ https://...
   window.handleMapMandalChange = function(mandalName) {
     currentMapMandalFilter = mandalName;
     populateMapTeamDropdown();
-    populateMapPslDropdown();
     applyMapFilters();
     applyPslFilters();
     applyRoadRoutes();
@@ -3474,7 +2311,7 @@ https://...
     }
   }
 
-  // Populate Specific Route / Party Dropdown List (POLICE TEAMS ONLY)
+  // Populate Specific Route / Party Dropdown List
   function populateMapTeamDropdown() {
     const sel = document.getElementById('select-map-team');
     if (!sel) return;
@@ -3528,14 +2365,59 @@ https://...
     });
     sel.appendChild(grpOther);
 
-    if (currentVal && filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal))) {
+    // 3. Polling Stations (PSLs) matching Mandal
+    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+    const matchedPsls = pslData.filter(p => {
+      return currentMapMandalFilter === 'ALL' || (p.mandal && p.mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase());
+    });
+
+    if (matchedPsls.length > 0) {
+      const grpPsl = document.createElement('optgroup');
+      grpPsl.label = `🗳️ పోలింగ్ కేంద్రాలు (${matchedPsls.length} PSLs)`;
+      const limit = Math.min(120, matchedPsls.length);
+      for (let i = 0; i < limit; i++) {
+        const p = matchedPsls[i];
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = `🏫 [${p.mptc}] ${p.pslName} (${p.sensitivity})`;
+        grpPsl.appendChild(opt);
+      }
+      if (matchedPsls.length > 120) {
+        const moreOpt = document.createElement('option');
+        moreOpt.disabled = true;
+        moreOpt.innerText = `... ఇంకా ${matchedPsls.length - 120} కేంద్రాలు ఉన్నాయి (మండలం ఎంచుకోండి)`;
+        grpPsl.appendChild(moreOpt);
+      }
+      sel.appendChild(grpPsl);
+    }
+
+    if (currentVal && (filteredUnits.some(u => (u.id === currentVal || u.unitId === currentVal)) || matchedPsls.some(p => p.id === currentVal))) {
       sel.value = currentVal;
     }
   }
 
-  // Handle Team Selection: Zooms directly to officer on map
+  // Handle Team Selection: Zooms directly to officer or PSL on map
   window.handleMapTeamChange = function(unitId) {
     if (!unitId) return;
+
+    // Check if it's a Polling Station ID (PSL_...)
+    if (unitId.startsWith('PSL_')) {
+      const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
+      const item = pslData.find(p => p.id === unitId);
+      if (item) {
+        if (!isPslLayerActive) {
+          window.togglePslLayer();
+        }
+        map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
+        pslLayerGroup.eachLayer(layer => {
+          if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
+            setTimeout(() => layer.openPopup(), 400);
+          }
+        });
+        showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
+      }
+      return;
+    }
 
     const m = activeMobiles[unitId];
     if (m && m.marker) {
@@ -3555,207 +2437,6 @@ https://...
           }
         }
       }
-    }
-  };
-
-  // Dedicated Polling Stations Dropdown Populate
-  function populateMapPslDropdown() {
-    const sel = document.getElementById('select-map-psl');
-    if (!sel) return;
-    const currentVal = sel.value;
-    sel.innerHTML = '<option value="">🗳️ పోలింగ్ కేంద్రం (Select PS)</option>';
-
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const matchedPsls = pslData.filter(p => {
-      return currentMapMandalFilter === 'ALL' || (p.mandal && p.mandal.trim().toLowerCase() === currentMapMandalFilter.toLowerCase());
-    });
-
-    if (matchedPsls.length === 0) {
-      const opt = document.createElement('option');
-      opt.disabled = true;
-      opt.innerText = 'కేంద్రాలు లేవు';
-      sel.appendChild(opt);
-      return;
-    }
-
-    // Sort by MPTC and Name
-    const sorted = [...matchedPsls].sort((a, b) => {
-      const mComp = (a.mptc || '').localeCompare(b.mptc || '');
-      if (mComp !== 0) return mComp;
-      return (a.pslName || '').localeCompare(b.pslName || '');
-    });
-
-    // Group by MPTC for structured, neat navigation
-    let currentMptc = null;
-    let currentOptGroup = null;
-
-    sorted.forEach(p => {
-      if (p.mptc !== currentMptc) {
-        currentMptc = p.mptc;
-        currentOptGroup = document.createElement('optgroup');
-        currentOptGroup.label = `🏛️ ${p.mptc || 'General'} MPTC (${p.mandal})`;
-        sel.appendChild(currentOptGroup);
-      }
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      const sensBadge = p.sensitivity === 'HYPER SENSITIVE' ? '🔴' : p.sensitivity === 'SENSITIVE' ? '🟠' : '🟢';
-      opt.innerText = `${sensBadge} ${p.pslName}`;
-      if (currentOptGroup) {
-        currentOptGroup.appendChild(opt);
-      } else {
-        sel.appendChild(opt);
-      }
-    });
-
-    if (currentVal && matchedPsls.some(p => p.id === currentVal)) {
-      sel.value = currentVal;
-    }
-  }
-
-  // Handle Polling Station Dropdown Change
-  window.handleMapPslChange = function(pslId) {
-    if (!pslId) return;
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const item = pslData.find(p => p.id === pslId);
-    if (item) {
-      if (!isPslLayerActive) {
-        window.togglePslLayer();
-      }
-      map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
-      pslLayerGroup.eachLayer(layer => {
-        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
-          setTimeout(() => layer.openPopup(), 400);
-        }
-      });
-      showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
-    }
-  };
-
-  // Dedicated Polling Station Finder Modal Functions
-  window.openPslSearchModal = function() {
-    const modal = document.getElementById('modal-psl-search');
-    const mandalSelect = document.getElementById('psl-modal-filter-mandal');
-    const searchInput = document.getElementById('psl-modal-search');
-    
-    // Populate modal mandal dropdown from available mandals
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const mandalsSet = new Set();
-    pslData.forEach(p => { if (p.mandal) mandalsSet.add(p.mandal.trim()); });
-    const sortedMandals = Array.from(mandalsSet).sort();
-
-    mandalSelect.innerHTML = '<option value="ALL">అన్ని మండలాలు (All Mandals)</option>';
-    sortedMandals.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m;
-      opt.innerText = m;
-      if (currentMapMandalFilter !== 'ALL' && m.toLowerCase() === currentMapMandalFilter.toLowerCase()) {
-        opt.selected = true;
-      }
-      mandalSelect.appendChild(opt);
-    });
-
-    if (searchInput) searchInput.value = '';
-    renderPslSearchResults();
-    if (modal) modal.classList.add('show');
-    if (searchInput) setTimeout(() => searchInput.focus(), 150);
-  };
-
-  window.closePslSearchModal = function() {
-    const modal = document.getElementById('modal-psl-search');
-    if (modal) modal.classList.remove('show');
-  };
-
-  window.renderPslSearchResults = function() {
-    const query = (document.getElementById('psl-modal-search').value || '').trim().toLowerCase();
-    const filterMandal = document.getElementById('psl-modal-filter-mandal').value;
-    const filterSens = document.getElementById('psl-modal-filter-sens').value;
-    const container = document.getElementById('psl-search-results-container');
-    const countEl = document.getElementById('psl-results-count');
-
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const filtered = pslData.filter(p => {
-      if (filterMandal !== 'ALL' && p.mandal && p.mandal.trim().toLowerCase() !== filterMandal.toLowerCase()) return false;
-      if (filterSens !== 'ALL' && p.sensitivity !== filterSens) return false;
-      if (query) {
-        const text = `${p.mandal} ${p.mptc} ${p.pslName} ${p.code || ''} ${p.sensitivity} ${p.routeNo || ''}`.toLowerCase();
-        if (!text.includes(query)) return false;
-      }
-      return true;
-    });
-
-    if (countEl) countEl.innerText = `మొత్తం: ${filtered.length} కేంద్రాలు కనుగొనబడ్డాయి`;
-
-    if (filtered.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px;">
-          ఎటువంటి పోలింగ్ కేంద్రం కనుగొనబడలేదు (No matching Polling Station found).
-        </div>
-      `;
-      return;
-    }
-
-    const limit = Math.min(150, filtered.length);
-    let html = '';
-    for (let i = 0; i < limit; i++) {
-      const item = filtered[i];
-      let badgeColor = '#10b981';
-      let badgeBg = 'rgba(16, 185, 129, 0.2)';
-      if (item.sensitivity === 'HYPER SENSITIVE') {
-        badgeColor = '#f87171';
-        badgeBg = 'rgba(239, 68, 68, 0.25)';
-      } else if (item.sensitivity === 'SENSITIVE') {
-        badgeColor = '#fbbf24';
-        badgeBg = 'rgba(245, 158, 11, 0.25)';
-      }
-
-      html += `
-        <div class="route-card" style="cursor: pointer;" onclick="zoomToPslFromSearch('${item.id}')">
-          <div class="route-info">
-            <div class="route-title">
-              <span>🏫 ${item.pslName}</span>
-              <span style="font-size: 10px; padding: 2px 7px; border-radius: 12px; font-weight: 800; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeColor};">${item.sensitivity}</span>
-            </div>
-            <div class="route-officer" style="font-size: 11.5px; color: #94a3b8; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
-              <span>📍 మండలం: <strong style="color: #f1f5f9;">${item.mandal}</strong></span>
-              <span>🏛️ MPTC: <strong style="color: #60a5fa;">${item.mptc}</strong></span>
-              ${item.routeNo ? `<span>🛣️ రూట్: <strong>${item.routeNo}</strong></span>` : ''}
-              <span>🗳️ కేంద్రాలు: <strong>${item.psCount || 1}</strong></span>
-            </div>
-          </div>
-          <div class="route-actions">
-            <button class="btn-action-map" style="padding: 6px 12px; font-size: 11.5px;" onclick="event.stopPropagation(); zoomToPslFromSearch('${item.id}')">
-              <i class="fa-solid fa-location-crosshairs"></i> మ్యాప్‌లో చూపు
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    if (filtered.length > 150) {
-      html += `<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 10px;">... ఇంకా ${filtered.length - 150} కేంద్రాలు ఉన్నాయి. మరింత ఖచ్చితంగా వెతకడానికి పేరు నమోదు చేయండి.</div>`;
-    }
-
-    container.innerHTML = html;
-  };
-
-  window.zoomToPslFromSearch = function(id) {
-    closePslSearchModal();
-    const pslData = window.MPTC_ZPTC_DATA || allPslData || [];
-    const item = pslData.find(p => p.id === id);
-    if (item) {
-      if (!isPslLayerActive) {
-        window.togglePslLayer();
-      }
-      const pslSelect = document.getElementById('select-map-psl');
-      if (pslSelect) pslSelect.value = id;
-
-      map.flyTo([item.lat, item.lng], 18, { animate: true, duration: 1.0 });
-      pslLayerGroup.eachLayer(layer => {
-        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
-          setTimeout(() => layer.openPopup(), 400);
-        }
-      });
-      showToast(`🏫 [${item.mptc}] ${item.pslName} పోలింగ్ కేంద్రానికి జూమ్ చేయబడింది`);
     }
   };
 
@@ -4023,7 +2704,6 @@ https://...
 
     populateMapMandalDropdown();
     populateMapTeamDropdown();
-    populateMapPslDropdown();
     applyPslFilters();
     updateKPIs();
   }
@@ -4126,195 +2806,9 @@ https://...
     modalDirectory.classList.remove('show');
   });
 
-  // =========================================================================
-  // EXPORT TO EXCEL: FORCES ONLINE & OFFLINE COMPREHENSIVE REPORT
-  // =========================================================================
-  window.exportForcesLiveStatusToExcel = function() {
-    if (typeof XLSX === 'undefined') {
-      alert('Excel library is loading, please try again in a moment...');
-      return;
-    }
-
-    const units = window.ROUTE_MOBILES_DATA || allUnitsData || [];
-    if (!units || units.length === 0) {
-      alert('No forces data available to export.');
-      return;
-    }
-
-    const liveKeys = Object.keys(activeMobiles);
-    const liveCount = liveKeys.length;
-    const totalCount = units.length;
-    const offlineCount = Math.max(0, totalCount - liveCount);
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    // 1. Category Breakdown
-    const categories = ['Route Mobiles', 'Striking Forces', 'Special Striking Forces', 'QRTs', 'Reserve Parties'];
-    const catStats = {};
-    categories.forEach(c => catStats[c] = { total: 0, online: 0, offline: 0 });
-
-    units.forEach(u => {
-      const cat = u.category || 'Route Mobiles';
-      if (!catStats[cat]) catStats[cat] = { total: 0, online: 0, offline: 0 };
-      catStats[cat].total++;
-      if (activeMobiles[u.id]) {
-        catStats[cat].online++;
-      } else {
-        catStats[cat].offline++;
-      }
-    });
-
-    const categorySheetData = categories.map(c => {
-      const st = catStats[c] || { total: 0, online: 0, offline: 0 };
-      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
-      return {
-        'Category Name': c,
-        'Total Forces': st.total,
-        'Online (Live GPS Active)': st.online,
-        'Offline (Disconnected)': st.offline,
-        'Online %': pct
-      };
-    });
-    // Add total row
-    categorySheetData.push({
-      'Category Name': 'TOTAL POLICE FORCES',
-      'Total Forces': totalCount,
-      'Online (Live GPS Active)': liveCount,
-      'Offline (Disconnected)': offlineCount,
-      'Online %': ((liveCount / totalCount) * 100).toFixed(1) + '%'
-    });
-
-    // 2. Mandal Breakdown
-    const mandalStats = {};
-    units.forEach(u => {
-      const m = (u.mandal || 'Unknown').trim();
-      if (!mandalStats[m]) mandalStats[m] = { total: 0, online: 0, offline: 0 };
-      mandalStats[m].total++;
-      if (activeMobiles[u.id]) mandalStats[m].online++;
-      else mandalStats[m].offline++;
-    });
-
-    const mandalSheetData = Object.keys(mandalStats).sort().map((m, idx) => {
-      const st = mandalStats[m];
-      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
-      return {
-        'S.No': idx + 1,
-        'Mandal / Police Station': m,
-        'Total Forces': st.total,
-        'Online (Live)': st.online,
-        'Offline': st.offline,
-        'Online %': pct
-      };
-    });
-
-    // 3. Detailed All 364 Forces Sheet
-    const allUnitsSheetData = units.map((u, idx) => {
-      const isLive = !!activeMobiles[u.id];
-      const liveData = activeMobiles[u.id] || {};
-      const speedKmh = isLive && liveData.speed ? Math.round(liveData.speed * 3.6) : 0;
-      let lastUpdatedStr = 'Offline';
-      if (isLive && liveData.lastUpdated) {
-        lastUpdatedStr = new Date(liveData.lastUpdated).toLocaleTimeString('en-IN');
-      }
-
-      return {
-        'S.No': idx + 1,
-        'Category': u.category || 'Route Mobiles',
-        'Mandal / Police Station': u.mandal || '',
-        'Unit Name': u.unitName || '',
-        'Route': u.route || '',
-        'Officer Name': u.officer || '',
-        'Phone Number': u.phone || '',
-        'Status (Online / Offline)': isLive ? 'ONLINE (LIVE)' : 'OFFLINE',
-        'Speed (km/h)': isLive ? speedKmh : 0,
-        'Last Update Time': lastUpdatedStr,
-        'Latitude': isLive ? (liveData.lat || '') : '',
-        'Longitude': isLive ? (liveData.lng || '') : '',
-        'HQ': u.hq || '',
-        'Supporting Staff': u.supporting || '',
-        'Polling Stations In Route': u.pollingStations || ''
-      };
-    });
-
-    // 4. Offline Forces Only (Actionable for Control Room calling)
-    const offlineUnitsData = allUnitsSheetData
-      .filter(u => u['Status (Online / Offline)'] === 'OFFLINE')
-      .map((u, idx) => ({
-        'S.No': idx + 1,
-        'Category': u['Category'],
-        'Mandal / Police Station': u['Mandal / Police Station'],
-        'Unit Name': u['Unit Name'],
-        'Route': u['Route'],
-        'Officer Name': u['Officer Name'],
-        'Phone Number': u['Phone Number'],
-        'HQ': u['HQ'],
-        'Supporting Staff': u['Supporting Staff'],
-        'Action Required': 'Nudge on WhatsApp / Call to Turn ON GPS'
-      }));
-
-    // 5. Online Forces Only (Live)
-    const onlineUnitsData = allUnitsSheetData
-      .filter(u => u['Status (Online / Offline)'] === 'ONLINE (LIVE)')
-      .map((u, idx) => ({
-        'S.No': idx + 1,
-        'Category': u['Category'],
-        'Mandal / Police Station': u['Mandal / Police Station'],
-        'Unit Name': u['Unit Name'],
-        'Route': u['Route'],
-        'Officer Name': u['Officer Name'],
-        'Phone Number': u['Phone Number'],
-        'Current Speed (km/h)': u['Speed (km/h)'],
-        'Last Update Time': u['Last Update Time'],
-        'Latitude': u['Latitude'],
-        'Longitude': u['Longitude']
-      }));
-
-    // Build Excel Workbook
-    const wb = XLSX.utils.book_new();
-
-    // Sheet 1: Category Summary KPI
-    const wsSummary = XLSX.utils.json_to_sheet(categorySheetData);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Category KPI');
-
-    // Sheet 2: Mandal Summary
-    const wsMandal = XLSX.utils.json_to_sheet(mandalSheetData);
-    XLSX.utils.book_append_sheet(wb, wsMandal, 'Mandal Wise Status');
-
-    // Sheet 3: All 364 Units Status
-    const wsAll = XLSX.utils.json_to_sheet(allUnitsSheetData);
-    XLSX.utils.book_append_sheet(wb, wsAll, 'All 364 Forces');
-
-    // Sheet 4: Offline Units (To Call)
-    const wsOffline = XLSX.utils.json_to_sheet(offlineUnitsData);
-    XLSX.utils.book_append_sheet(wb, wsOffline, 'Offline Units (' + offlineCount + ')');
-
-    // Sheet 5: Online Units (Live)
-    const wsOnline = XLSX.utils.json_to_sheet(onlineUnitsData);
-    XLSX.utils.book_append_sheet(wb, wsOnline, 'Online Units (' + liveCount + ')');
-
-    // File Download
-    const dateStr = now.toISOString().slice(0, 10);
-    const fileName = `Srikakulam_Police_Online_Offline_Status_${dateStr}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-  };
-
-  // Listen for iframe export requests from parent portal
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'TRIGGER_EXCEL_EXPORT') {
-      exportForcesLiveStatusToExcel();
-    }
-  });
-
   document.getElementById('btn-close-dir-footer').addEventListener('click', () => {
     modalDirectory.classList.remove('show');
   });
-
-  const modalPslSearch = document.getElementById('modal-psl-search');
-  if (modalPslSearch) {
-    modalPslSearch.addEventListener('click', (e) => {
-      if (e.target === modalPslSearch) closePslSearchModal();
-    });
-  }
 
   dirSearch.addEventListener('input', renderDirectory);
   dirFilterCat.addEventListener('change', renderDirectory);
@@ -4375,486 +2869,7 @@ https://...
   if (allUnitsData && allUnitsData.length > 0) {
     initControlRoomUI();
   }
-
-  // =========================================================================
-  // LIVE POLLING CENTER FILTERING & TABLE LOGIC (MATCHING ROUTE MAP)
-  // =========================================================================
-  let currentFilterPS = 'ALL';
-  let currentFilterRoute = 'ALL';
-  let currentFilterCategory = 'ALL';
-  let currentFilterDistance = 'ALL';
-  let currentFilterSearchText = '';
-
-  function initLivePslFilterSystem() {
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    if (!data || data.length === 0) {
-      setTimeout(initLivePslFilterSystem, 250);
-      return;
-    }
-
-    populateLivePSDropdown();
-    applyAllLivePslFilters(false);
-  }
-
-  // Populate 30 Police Stations
-  function populateLivePSDropdown() {
-    const sel = document.getElementById('live-filter-ps');
-    if (!sel) return;
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-
-    const psSet = new Set();
-    data.forEach(item => {
-      const psName = (item.ps || item.mandal || '').trim();
-      if (psName) psSet.add(psName);
-    });
-
-    const sortedPS = Array.from(psSet).sort();
-    let opts = '<option value="ALL">-- All Police Stations --</option>';
-    sortedPS.forEach(ps => {
-      opts += '<option value="' + ps + '">' + ps + '</option>';
-    });
-    sel.innerHTML = opts;
-  }
-
-  // When Police Station changes: populate Route dropdown and apply filters
-  window.onLivePSChange = function(psVal) {
-    currentFilterPS = psVal || 'ALL';
-    currentFilterRoute = 'ALL';
-
-    // Populate Routes for this PS
-    const routeSel = document.getElementById('live-filter-route');
-    if (routeSel) {
-      const data = window.MPTC_ZPTC_DATA || allPslData || [];
-      const routesSet = new Set();
-
-      data.forEach(item => {
-        const itemPS = (item.ps || item.mandal || '').trim();
-        if (currentFilterPS === 'ALL' || itemPS.toLowerCase() === currentFilterPS.toLowerCase()) {
-          if (item.routeNo) routesSet.add(item.routeNo.toString().trim());
-        }
-      });
-
-      const sortedRoutes = Array.from(routesSet).sort((a,b) => (parseInt(a)||0) - (parseInt(b)||0));
-      let rOpts = '<option value="ALL">-- All Routes --</option>';
-      sortedRoutes.forEach(r => {
-        rOpts += '<option value="' + r + '">Route ' + r + '</option>';
-      });
-      routeSel.innerHTML = rOpts;
-    }
-
-    applyAllLivePslFilters(true);
-  };
-
-  // When Category Pill button is clicked
-  window.setLivePslQuickCategory = function(cat) {
-    currentFilterCategory = cat || 'ALL';
-
-    // Update Pill active states
-    const pills = {
-      'ALL': 'pill-sens-all',
-      'NORMAL': 'pill-sens-normal',
-      'SENSITIVE': 'pill-sens-sensitive',
-      'CRITICAL': 'pill-sens-critical',
-      'HYPER SENSITIVE': 'pill-sens-hyper'
-    };
-    for (const k in pills) {
-      const el = document.getElementById(pills[k]);
-      if (el) el.classList.toggle('active', k === currentFilterCategory);
-    }
-
-    // Sync Category Dropdown
-    const catSel = document.getElementById('live-filter-cat');
-    if (catSel) catSel.value = currentFilterCategory;
-
-    applyAllLivePslFilters(false);
-  };
-
-  // When Category Dropdown changes
-  window.onLiveCategoryDropdownChange = function(catVal) {
-    window.setLivePslQuickCategory(catVal);
-  };
-
-  // Search input typing handler with autocomplete
-  window.onLivePslSearchInput = function(val) {
-    currentFilterSearchText = (val || '').trim().toLowerCase();
-    const drop = document.getElementById('live-psl-autocomplete');
-    if (!drop) return;
-
-    if (!currentFilterSearchText || currentFilterSearchText.length < 2) {
-      drop.style.display = 'none';
-      drop.innerHTML = '';
-      applyAllLivePslFilters(false);
-      return;
-    }
-
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    const matches = data.filter(item => {
-      const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
-      return text.includes(currentFilterSearchText);
-    }).slice(0, 8);
-
-    if (matches.length > 0) {
-      drop.style.display = 'block';
-      let html = '';
-      matches.forEach(item => {
-        html += '<div class="psl-autocomplete-item" onclick="zoomToPslDirect(\'' + item.id + '\')">';
-        html += '<div class="psl-autocomplete-title">🏫 ' + item.pslName + '</div>';
-        html += '<div class="psl-autocomplete-meta">📍 ' + (item.ps || item.mandal) + ' PS • Route ' + (item.routeNo || '-') + ' • ' + item.mptc + ' MPTC (' + item.sensitivity + ')</div>';
-        html += '</div>';
-      });
-      drop.innerHTML = html;
-    } else {
-      drop.style.display = 'none';
-      drop.innerHTML = '';
-    }
-
-    applyAllLivePslFilters(false);
-  };
-
-  window.clearLivePslSearch = function() {
-    const input = document.getElementById('live-filter-search');
-    if (input) input.value = '';
-    const drop = document.getElementById('live-psl-autocomplete');
-    if (drop) {
-      drop.style.display = 'none';
-      drop.innerHTML = '';
-    }
-    currentFilterSearchText = '';
-    applyAllLivePslFilters(false);
-  };
-
-  // Zoom to direct station from suggestion or table
-  window.zoomToPslDirect = function(id) {
-    window.clearLivePslSearch();
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    const item = data.find(p => p.id === id);
-    if (!item) return;
-
-    if (!isPslLayerActive) {
-      window.togglePslLayer();
-    }
-
-    map.flyTo([item.lat, item.lng], 17, { animate: true, duration: 1.2 });
-    setTimeout(() => {
-      pslLayerGroup.eachLayer(layer => {
-        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
-          layer.openPopup();
-        }
-      });
-    }, 600);
-  };
-
-  // Road Routes & Borders checkbox handlers
-  window.toggleRoadRoutesFromFilter = function(checked) {
-    if (checked) {
-      if (!map.hasLayer(routesLayerGroup)) map.addLayer(routesLayerGroup);
-      isRoutesLayerActive = true;
-    } else {
-      if (map.hasLayer(routesLayerGroup)) map.removeLayer(routesLayerGroup);
-      isRoutesLayerActive = false;
-    }
-    const btnOld = document.getElementById('btn-toggle-routes');
-    if (btnOld) btnOld.classList.toggle('active', checked);
-  };
-
-  window.toggleBordersFromFilter = function(checked) {
-    if (checked) {
-      if (!map.hasLayer(mandalBordersLayerGroup)) map.addLayer(mandalBordersLayerGroup);
-      isBordersLayerActive = true;
-    } else {
-      if (map.hasLayer(mandalBordersLayerGroup)) map.removeLayer(mandalBordersLayerGroup);
-      isBordersLayerActive = false;
-    }
-    const btnOld = document.getElementById('btn-toggle-borders');
-    if (btnOld) btnOld.classList.toggle('active', checked);
-  };
-
-  // Reset all filters
-  window.resetAllLivePslFilters = function() {
-    currentFilterPS = 'ALL';
-    currentFilterRoute = 'ALL';
-    currentFilterCategory = 'ALL';
-    currentFilterDistance = 'ALL';
-    currentFilterSearchText = '';
-
-    const psSel = document.getElementById('live-filter-ps');
-    if (psSel) psSel.value = 'ALL';
-
-    const rSel = document.getElementById('live-filter-route');
-    if (rSel) rSel.innerHTML = '<option value="ALL">-- All Routes --</option>';
-
-    const catSel = document.getElementById('live-filter-cat');
-    if (catSel) catSel.value = 'ALL';
-
-    const distSel = document.getElementById('live-filter-distance');
-    if (distSel) distSel.value = 'ALL';
-
-    window.clearLivePslSearch();
-    window.setLivePslQuickCategory('ALL');
-
-    const chkRoutes = document.getElementById('live-toggle-routes-chk');
-    if (chkRoutes) { chkRoutes.checked = true; window.toggleRoadRoutesFromFilter(true); }
-
-    const chkBorders = document.getElementById('live-toggle-borders-chk');
-    if (chkBorders) { chkBorders.checked = true; window.toggleBordersFromFilter(true); }
-
-    map.setView(SRIKAKULAM_CENTER, 10);
-    applyAllLivePslFilters(false);
-  };
-
-  // Main Filtering Engine: Updates Map, Category Counts, and Bounds
-  function applyAllLivePslFilters(shouldFitBounds) {
-    pslLayerGroup.clearLayers();
-    if (!isPslLayerActive) return;
-
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    let countTotal = 0;
-    let countNormal = 0;
-    let countSensitive = 0;
-    let countCritical = 0;
-    let countHyper = 0;
-    const bounds = [];
-
-    const distSel = document.getElementById('live-filter-distance');
-    currentFilterDistance = distSel ? distSel.value : 'ALL';
-
-    const routeSel = document.getElementById('live-filter-route');
-    currentFilterRoute = routeSel ? routeSel.value : 'ALL';
-
-    data.forEach(item => {
-      const itemPS = (item.ps || item.mandal || '').trim();
-      const itemRoute = (item.routeNo || '').toString().trim();
-      const itemSens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
-
-      // Police Station Filter
-      if (currentFilterPS !== 'ALL') {
-        if (itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return;
-      }
-
-      // Route No Filter
-      if (currentFilterRoute !== 'ALL') {
-        if (itemRoute !== currentFilterRoute) return;
-      }
-
-      // Distance Filter
-      if (currentFilterDistance !== 'ALL') {
-        const dStr = (item.distFromPs || '').replace(/[^0-9.]/g, '');
-        const dNum = parseFloat(dStr) || 0;
-        if (currentFilterDistance === 'near' && dNum > 5) return;
-        if (currentFilterDistance === 'medium' && (dNum <= 5 || dNum > 12)) return;
-        if (currentFilterDistance === 'far' && dNum <= 12) return;
-      }
-
-      // Search Query
-      if (currentFilterSearchText) {
-        const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
-        if (!text.includes(currentFilterSearchText)) return;
-      }
-
-      // Counts tally for categories matching current PS/Route/Distance
-      countTotal++;
-      if (itemSens === 'NORMAL') countNormal++;
-      else if (itemSens === 'SENSITIVE') countSensitive++;
-      else if (itemSens === 'CRITICAL') countCritical++;
-      else if (itemSens === 'HYPER SENSITIVE') countHyper++;
-
-      // Sensitivity Filter
-      if (currentFilterCategory !== 'ALL') {
-        if (itemSens !== currentFilterCategory) return;
-      }
-
-      // Render marker on map
-      const m = createPslMarker(item);
-      pslLayerGroup.addLayer(m);
-      if (item.lat && item.lng) {
-        bounds.push([item.lat, item.lng]);
-      }
-    });
-
-    // Update Counts in UI
-    const elAll = document.getElementById('count-sens-all');
-    if (elAll) elAll.innerText = countTotal.toLocaleString();
-    const elNormal = document.getElementById('count-sens-normal');
-    if (elNormal) elNormal.innerText = countNormal.toLocaleString();
-    const elSens = document.getElementById('count-sens-sensitive');
-    if (elSens) elSens.innerText = countSensitive.toLocaleString();
-    const elCrit = document.getElementById('count-sens-critical');
-    if (elCrit) elCrit.innerText = countCritical.toLocaleString();
-    const elHyper = document.getElementById('count-sens-hyper');
-    if (elHyper) elHyper.innerText = countHyper.toLocaleString();
-
-    const elTableCount = document.getElementById('table-btn-psl-count');
-    if (elTableCount) elTableCount.innerText = countTotal.toLocaleString();
-
-    const elKpi = document.getElementById('kpi-psl');
-    if (elKpi) elKpi.innerText = countTotal.toLocaleString();
-
-    // Fit Bounds if needed
-    if (shouldFitBounds && bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
-    }
-  }
-
-  // =========================================================================
-  // POLLING STATIONS TABLE MODAL LOGIC
-  // =========================================================================
-  window.openLivePslTableModal = function() {
-    const modal = document.getElementById('modal-live-psl-table');
-    if (modal) modal.classList.add('show');
-    renderLivePslTableData();
-  };
-
-  window.closeLivePslTableModal = function() {
-    const modal = document.getElementById('modal-live-psl-table');
-    if (modal) modal.classList.remove('show');
-  };
-
-  window.renderLivePslTableData = function() {
-    const tbody = document.getElementById('modal-psl-table-tbody');
-    const headerCount = document.getElementById('modal-table-header-count');
-    const footerStatus = document.getElementById('modal-table-footer-status');
-    const searchInput = document.getElementById('modal-table-search-input');
-    const catSelect = document.getElementById('modal-table-cat-select');
-    if (!tbody) return;
-
-    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-    const catFilter = catSelect ? catSelect.value : 'ALL';
-
-    const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    const filtered = data.filter(item => {
-      // Respect active PS/Route from top bar
-      const itemPS = (item.ps || item.mandal || '').trim();
-      const itemRoute = (item.routeNo || '').toString().trim();
-      if (currentFilterPS !== 'ALL' && itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return false;
-      if (currentFilterRoute !== 'ALL' && itemRoute !== currentFilterRoute) return false;
-
-      // Category filter inside modal
-      const itemSens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
-      if (catFilter !== 'ALL' && itemSens !== catFilter) return false;
-
-      // Text query inside modal
-      if (query) {
-        const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''} ${item.incharge || ''}`.toLowerCase();
-        if (!text.includes(query)) return false;
-      }
-      return true;
-    });
-
-    if (headerCount) headerCount.innerText = filtered.length.toLocaleString();
-    if (footerStatus) footerStatus.innerText = 'Showing ' + filtered.length + ' of ' + data.length + ' Polling Stations';
-
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="padding: 30px; text-align: center; color: #94a3b8;">No matching polling stations found.</td></tr>';
-      return;
-    }
-
-    let rowsHtml = '';
-    const maxRender = Math.min(filtered.length, 400);
-    for (let i = 0; i < maxRender; i++) {
-      const item = filtered[i];
-      const sens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
-      let badgeStyle = 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;';
-      if (sens === 'SENSITIVE') badgeStyle = 'background: #fffbeb; color: #92400e; border: 1px solid #fde68a;';
-      else if (sens === 'HYPER SENSITIVE' || sens === 'CRITICAL') badgeStyle = 'background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3;';
-
-      const inchargeRaw = (item.incharge || '-').replace(/\n/g, '<br/>');
-      const phoneMatch = inchargeRaw.match(/(\d{10})/);
-      const phone = phoneMatch ? phoneMatch[1] : '';
-
-      rowsHtml += '<tr>';
-      rowsHtml += '<td style="text-align: center; font-weight: 700; color: #64748b;">' + (i + 1) + '</td>';
-      rowsHtml += '<td style="font-weight: 700; color: #0f172a;">' + (item.ps || item.mandal) + '</td>';
-      rowsHtml += '<td style="text-align: center; font-weight: 800; color: #2563eb;">' + (item.routeNo || '-') + '</td>';
-      rowsHtml += '<td><b>' + item.mandal + '</b><br/><span style="color: #64748b; font-size: 10.5px;">' + item.mptc + ' MPTC</span></td>';
-      rowsHtml += '<td style="font-weight: 600; color: #1e293b; max-width: 250px;">' + item.pslName + '</td>';
-      rowsHtml += '<td style="text-align: center;"><span style="display: inline-block; padding: 2px 7px; border-radius: 9999px; font-size: 10px; font-weight: 800; ' + badgeStyle + '">' + sens + '</span></td>';
-      rowsHtml += '<td style="text-align: right; font-weight: 700; color: #0f172a;">' + (item.voters || '-') + '</td>';
-      rowsHtml += '<td style="color: #64748b; font-size: 11px;">' + (item.distFromPs || '-') + '</td>';
-      rowsHtml += '<td style="font-size: 11px; line-height: 1.35;">' + inchargeRaw;
-      if (phone) {
-        rowsHtml += '<br/><a href="tel:' + phone + '" style="color: #2563eb; font-weight: 700; text-decoration: none;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ' + phone + '</a>';
-      }
-      rowsHtml += '</td>';
-      rowsHtml += '<td style="text-align: center;"><button type="button" class="btn-table-mapview" onclick="zoomToPslFromTable(\'' + item.id + '\')"><i class="fa-solid fa-location-dot"></i> View Map</button></td>';
-      rowsHtml += '</tr>';
-    }
-
-    tbody.innerHTML = rowsHtml;
-  };
-
-  window.zoomToPslFromTable = function(id) {
-    window.closeLivePslTableModal();
-    window.zoomToPslDirect(id);
-  };
-
-  // Helper to open forces directory modal from Routes button
-  window.openDirectoryModal = function() {
-    const btn = document.getElementById('btn-open-directory');
-    if (btn) btn.click();
-  };
-
-  // Initialize on script ready
-  setTimeout(initLivePslFilterSystem, 250);
-
 </script>
-
-<!-- ================= MODAL: POLLING STATIONS TABLE (FULL DIRECTORY) ================= -->
-<div class="modal-backdrop" id="modal-live-psl-table">
-  <div class="modal-card" style="max-width: 1240px; width: 95vw; background: #ffffff; color: #0f172a;">
-    <div class="modal-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 12px 18px;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <i class="fa-solid fa-table-list" style="color: #4f46e5; font-size: 17px;"></i>
-        <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0;">
-          పోలింగ్ కేంద్రాల వివరాలు (Polling Stations Directory - <span id="modal-table-header-count">1,196</span>)
-        </h3>
-      </div>
-      <button class="btn-close" onclick="closeLivePslTableModal()" style="font-size: 18px; color: #64748b; background: transparent; border: none; cursor: pointer;">✕</button>
-    </div>
-    <div class="modal-body" style="padding: 14px 18px; background: #ffffff;">
-      <!-- Quick Filter Bar in Modal -->
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-        <input type="text" id="modal-table-search-input" class="custom-input" placeholder="Search by School, Village, MPTC, or Route..." oninput="renderLivePslTableData()" style="flex: 1; min-width: 220px; max-width: 420px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 12px; font-weight: 700; color: #475569;">Category:</span>
-          <select id="modal-table-cat-select" class="custom-select" onchange="renderLivePslTableData()" style="font-size: 12px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
-            <option value="ALL">All Categories</option>
-            <option value="NORMAL">Normal</option>
-            <option value="SENSITIVE">Sensitive</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="HYPER SENSITIVE">Hyper Sensitive</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Table Viewport -->
-      <div class="psl-table-wrapper">
-        <table class="psl-data-table">
-          <thead>
-            <tr>
-              <th style="width: 45px; text-align: center;">S.No</th>
-              <th>Police Station</th>
-              <th style="text-align: center;">Route No</th>
-              <th>Mandal / MPTC</th>
-              <th>Polling Station Location (PSL)</th>
-              <th style="text-align: center;">Category</th>
-              <th style="text-align: right;">Voters</th>
-              <th>Distance (PS)</th>
-              <th>Route Incharge & Mobile</th>
-              <th style="text-align: center; width: 100px;">Quick Action</th>
-            </tr>
-          </thead>
-          <tbody id="modal-psl-table-tbody">
-            <!-- Dynamically Rendered -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="modal-footer" style="justify-content: space-between; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 10px 18px;">
-      <span id="modal-table-footer-status" style="font-size: 12px; color: #64748b; font-weight: 600;">Showing 1,196 Stations</span>
-      <button class="btn-close" onclick="closeLivePslTableModal()" style="background: #e2e8f0; color: #1e293b; padding: 5px 14px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; cursor: pointer;">మూసివేయి (Close)</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
