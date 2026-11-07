@@ -4127,56 +4127,8 @@ https://...
   });
 
   // =========================================================================
-  // EXPORT TO EXCEL: OFFICER-WISE ONLINE & OFFLINE COMPREHENSIVE REPORT
+  // EXPORT TO EXCEL: FORCES ONLINE & OFFLINE COMPREHENSIVE REPORT
   // =========================================================================
-  function parseOfficerInfo(rawStr, defaultPhone, defaultMandal) {
-    let name = 'Unassigned';
-    let rank = 'Police Officer';
-    let phone = defaultPhone || '';
-    let station = defaultMandal || '';
-
-    if (!rawStr) return { name, rank, phone, station };
-
-    const clean = rawStr.replace(/\r?\n/g, ' ').trim();
-    const phoneMatch = clean.match(/(\d{10})/);
-    if (phoneMatch) phone = phoneMatch[1];
-
-    const parts = clean.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length > 0) {
-      name = parts[0];
-    }
-
-    const upper = clean.toUpperCase();
-    if (upper.includes('SDPO') || upper.includes('DSP')) rank = 'DSP / SDPO';
-    else if (/\bCI\b/.test(upper) || upper.includes('INSPECTOR')) rank = 'Circle Inspector (CI)';
-    else if (/\bSI\b/.test(upper) || upper.includes('SUB-INSPECTOR')) {
-      const m = clean.match(/\b(SI-\d|SI\s*\d+|SI|Sub-Inspector)\b/i);
-      rank = m ? m[0].toUpperCase() : 'Sub-Inspector (SI)';
-    }
-    else if (/\bASI\b/.test(upper) || upper.includes('ARSI')) {
-      const m = clean.match(/\b(ASI\s*\d+|ARSI\s*\d+|ASI|ARSI)\b/i);
-      rank = m ? m[0].toUpperCase() : 'Assistant Sub-Inspector (ASI)';
-    }
-    else if (/\bHC\b/.test(upper) || upper.includes('HEAD CONSTABLE')) {
-      const m = clean.match(/\b(HC\s*\d+|HC|AR\s*HC\s*\d+)\b/i);
-      rank = m ? m[0].toUpperCase() : 'Head Constable (HC)';
-    }
-    else if (/\bPC\b/.test(upper) || upper.includes('CONSTABLE')) {
-      const m = clean.match(/\b(PC\s*\d+|PC)\b/i);
-      rank = m ? m[0].toUpperCase() : 'Police Constable (PC)';
-    }
-    else if (parts.length > 1 && !/\d{10}/.test(parts[1])) {
-      rank = parts[1];
-    }
-
-    if (parts.length >= 3) {
-      const candidate = parts[2];
-      if (!/\d{10}/.test(candidate)) station = candidate;
-    }
-
-    return { name, rank, phone, station };
-  }
-
   window.exportForcesLiveStatusToExcel = function() {
     if (typeof XLSX === 'undefined') {
       alert('Excel library is loading, please try again in a moment...');
@@ -4196,8 +4148,67 @@ https://...
     const now = new Date();
     const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    // 1. OFFICER-WISE FULL DATA (PRIMARY SHEET)
-    const officerWiseList = units.map((u, idx) => {
+    // 1. Category Breakdown
+    const categories = ['Route Mobiles', 'Striking Forces', 'Special Striking Forces', 'QRTs', 'Reserve Parties'];
+    const catStats = {};
+    categories.forEach(c => catStats[c] = { total: 0, online: 0, offline: 0 });
+
+    units.forEach(u => {
+      const cat = u.category || 'Route Mobiles';
+      if (!catStats[cat]) catStats[cat] = { total: 0, online: 0, offline: 0 };
+      catStats[cat].total++;
+      if (activeMobiles[u.id]) {
+        catStats[cat].online++;
+      } else {
+        catStats[cat].offline++;
+      }
+    });
+
+    const categorySheetData = categories.map(c => {
+      const st = catStats[c] || { total: 0, online: 0, offline: 0 };
+      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
+      return {
+        'Category Name': c,
+        'Total Forces': st.total,
+        'Online (Live GPS Active)': st.online,
+        'Offline (Disconnected)': st.offline,
+        'Online %': pct
+      };
+    });
+    // Add total row
+    categorySheetData.push({
+      'Category Name': 'TOTAL POLICE FORCES',
+      'Total Forces': totalCount,
+      'Online (Live GPS Active)': liveCount,
+      'Offline (Disconnected)': offlineCount,
+      'Online %': ((liveCount / totalCount) * 100).toFixed(1) + '%'
+    });
+
+    // 2. Mandal Breakdown
+    const mandalStats = {};
+    units.forEach(u => {
+      const m = (u.mandal || 'Unknown').trim();
+      if (!mandalStats[m]) mandalStats[m] = { total: 0, online: 0, offline: 0 };
+      mandalStats[m].total++;
+      if (activeMobiles[u.id]) mandalStats[m].online++;
+      else mandalStats[m].offline++;
+    });
+
+    const mandalSheetData = Object.keys(mandalStats).sort().map((m, idx) => {
+      const st = mandalStats[m];
+      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
+      return {
+        'S.No': idx + 1,
+        'Mandal / Police Station': m,
+        'Total Forces': st.total,
+        'Online (Live)': st.online,
+        'Offline': st.offline,
+        'Online %': pct
+      };
+    });
+
+    // 3. Detailed All 364 Forces Sheet
+    const allUnitsSheetData = units.map((u, idx) => {
       const isLive = !!activeMobiles[u.id];
       const liveData = activeMobiles[u.id] || {};
       const speedKmh = isLive && liveData.speed ? Math.round(liveData.speed * 3.6) : 0;
@@ -4206,163 +4217,89 @@ https://...
         lastUpdatedStr = new Date(liveData.lastUpdated).toLocaleTimeString('en-IN');
       }
 
-      const off = parseOfficerInfo(u.officer, u.phone, u.mandal);
-
       return {
         'S.No': idx + 1,
-        'Officer Name': off.name,
-        'Designation / Rank': off.rank,
-        'Mobile Number': off.phone,
-        'Police Station / Mandal': u.mandal || off.station,
-        'Assigned Duty / Role': u.category || 'Route Mobiles',
-        'Assigned Unit / Route': u.unitName || u.route || '',
-        'GPS Status': isLive ? 'ONLINE (LIVE)' : 'OFFLINE',
+        'Category': u.category || 'Route Mobiles',
+        'Mandal / Police Station': u.mandal || '',
+        'Unit Name': u.unitName || '',
+        'Route': u.route || '',
+        'Officer Name': u.officer || '',
+        'Phone Number': u.phone || '',
+        'Status (Online / Offline)': isLive ? 'ONLINE (LIVE)' : 'OFFLINE',
         'Speed (km/h)': isLive ? speedKmh : 0,
         'Last Update Time': lastUpdatedStr,
-        'Live Latitude': isLive ? (liveData.lat || '') : '',
-        'Live Longitude': isLive ? (liveData.lng || '') : '',
-        'Headquarter (HQ)': u.hq || '',
-        'Supporting Staff (HG/PC)': u.supporting || '',
+        'Latitude': isLive ? (liveData.lat || '') : '',
+        'Longitude': isLive ? (liveData.lng || '') : '',
+        'HQ': u.hq || '',
+        'Supporting Staff': u.supporting || '',
         'Polling Stations In Route': u.pollingStations || ''
       };
     });
 
-    // Sort Officer-Wise list by Mandal and Officer Name
-    officerWiseList.sort((a, b) => {
-      const mComp = (a['Police Station / Mandal'] || '').localeCompare(b['Police Station / Mandal'] || '');
-      if (mComp !== 0) return mComp;
-      return (a['Officer Name'] || '').localeCompare(b['Officer Name'] || '');
-    });
-    // Re-index S.No
-    officerWiseList.forEach((r, i) => r['S.No'] = i + 1);
-
-    // 2. RANK / DESIGNATION KPI BREAKDOWN
-    const rankGroups = {
-      'DSP / SDPO': { total: 0, online: 0, offline: 0 },
-      'Circle Inspector (CI)': { total: 0, online: 0, offline: 0 },
-      'Sub-Inspector (SI)': { total: 0, online: 0, offline: 0 },
-      'Assistant Sub-Inspector (ASI)': { total: 0, online: 0, offline: 0 },
-      'Head Constable (HC)': { total: 0, online: 0, offline: 0 },
-      'Police Constable (PC)': { total: 0, online: 0, offline: 0 },
-      'Others / Officers': { total: 0, online: 0, offline: 0 }
-    };
-
-    officerWiseList.forEach(item => {
-      const r = item['Designation / Rank'];
-      let targetKey = 'Others / Officers';
-      for (const k in rankGroups) {
-        if (r.startsWith(k.split(' ')[0]) || r.includes(k.split(' ')[0])) {
-          targetKey = k;
-          break;
-        }
-      }
-      rankGroups[targetKey].total++;
-      if (item['GPS Status'] === 'ONLINE (LIVE)') rankGroups[targetKey].online++;
-      else rankGroups[targetKey].offline++;
-    });
-
-    const rankSummarySheetData = Object.keys(rankGroups).map(k => {
-      const st = rankGroups[k];
-      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
-      return {
-        'Officer Designation / Rank': k,
-        'Total Officers': st.total,
-        'Online Officers (Live)': st.online,
-        'Offline Officers': st.offline,
-        'Online %': pct
-      };
-    });
-    rankSummarySheetData.push({
-      'Officer Designation / Rank': 'TOTAL OFFICERS',
-      'Total Officers': totalCount,
-      'Online Officers (Live)': liveCount,
-      'Offline Officers': offlineCount,
-      'Online %': ((liveCount / totalCount) * 100).toFixed(1) + '%'
-    });
-
-    // 3. POLICE STATION / MANDAL WISE OFFICERS BREAKDOWN
-    const psStats = {};
-    officerWiseList.forEach(item => {
-      const ps = item['Police Station / Mandal'] || 'Unknown';
-      if (!psStats[ps]) psStats[ps] = { total: 0, online: 0, offline: 0 };
-      psStats[ps].total++;
-      if (item['GPS Status'] === 'ONLINE (LIVE)') psStats[ps].online++;
-      else psStats[ps].offline++;
-    });
-
-    const mandalSummarySheetData = Object.keys(psStats).sort().map((ps, idx) => {
-      const st = psStats[ps];
-      const pct = st.total > 0 ? ((st.online / st.total) * 100).toFixed(1) + '%' : '0.0%';
-      return {
+    // 4. Offline Forces Only (Actionable for Control Room calling)
+    const offlineUnitsData = allUnitsSheetData
+      .filter(u => u['Status (Online / Offline)'] === 'OFFLINE')
+      .map((u, idx) => ({
         'S.No': idx + 1,
-        'Police Station / Mandal': ps,
-        'Total Officers': st.total,
-        'Online (Live)': st.online,
-        'Offline': st.offline,
-        'Online %': pct
-      };
-    });
-
-    // 4. OFFLINE OFFICERS ONLY (ACTIONABLE CALL LIST)
-    const offlineOfficersList = officerWiseList
-      .filter(item => item['GPS Status'] === 'OFFLINE')
-      .map((item, idx) => ({
-        'S.No': idx + 1,
-        'Officer Name': item['Officer Name'],
-        'Designation / Rank': item['Designation / Rank'],
-        'Mobile Number': item['Mobile Number'],
-        'Police Station / Mandal': item['Police Station / Mandal'],
-        'Assigned Duty / Unit': item['Assigned Unit / Route'],
-        'Headquarter (HQ)': item['Headquarter (HQ)'],
-        'Action Required': 'Call Immediately / WhatsApp Nudge to Turn ON GPS'
+        'Category': u['Category'],
+        'Mandal / Police Station': u['Mandal / Police Station'],
+        'Unit Name': u['Unit Name'],
+        'Route': u['Route'],
+        'Officer Name': u['Officer Name'],
+        'Phone Number': u['Phone Number'],
+        'HQ': u['HQ'],
+        'Supporting Staff': u['Supporting Staff'],
+        'Action Required': 'Nudge on WhatsApp / Call to Turn ON GPS'
       }));
 
-    // 5. ONLINE OFFICERS ONLY (LIVE TRANSMITTING)
-    const onlineOfficersList = officerWiseList
-      .filter(item => item['GPS Status'] === 'ONLINE (LIVE)')
-      .map((item, idx) => ({
+    // 5. Online Forces Only (Live)
+    const onlineUnitsData = allUnitsSheetData
+      .filter(u => u['Status (Online / Offline)'] === 'ONLINE (LIVE)')
+      .map((u, idx) => ({
         'S.No': idx + 1,
-        'Officer Name': item['Officer Name'],
-        'Designation / Rank': item['Designation / Rank'],
-        'Mobile Number': item['Mobile Number'],
-        'Police Station / Mandal': item['Police Station / Mandal'],
-        'Assigned Duty / Unit': item['Assigned Unit / Route'],
-        'Current Speed (km/h)': item['Speed (km/h)'],
-        'Last Update Time': item['Last Update Time'],
-        'Latitude': item['Live Latitude'],
-        'Longitude': item['Live Longitude']
+        'Category': u['Category'],
+        'Mandal / Police Station': u['Mandal / Police Station'],
+        'Unit Name': u['Unit Name'],
+        'Route': u['Route'],
+        'Officer Name': u['Officer Name'],
+        'Phone Number': u['Phone Number'],
+        'Current Speed (km/h)': u['Speed (km/h)'],
+        'Last Update Time': u['Last Update Time'],
+        'Latitude': u['Latitude'],
+        'Longitude': u['Longitude']
       }));
 
-    // BUILD WORKBOOK
+    // Build Excel Workbook
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Officers Wise Full List (All 364 Officers)
-    const wsOfficers = XLSX.utils.json_to_sheet(officerWiseList);
-    XLSX.utils.book_append_sheet(wb, wsOfficers, 'Officers Wise (All 364)');
+    // Sheet 1: Category Summary KPI
+    const wsSummary = XLSX.utils.json_to_sheet(categorySheetData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Category KPI');
 
-    // Sheet 2: Officers Rank KPI Summary
-    const wsRank = XLSX.utils.json_to_sheet(rankSummarySheetData);
-    XLSX.utils.book_append_sheet(wb, wsRank, 'Rank Wise KPI');
+    // Sheet 2: Mandal Summary
+    const wsMandal = XLSX.utils.json_to_sheet(mandalSheetData);
+    XLSX.utils.book_append_sheet(wb, wsMandal, 'Mandal Wise Status');
 
-    // Sheet 3: Offline Officers (Call List)
-    const wsOffline = XLSX.utils.json_to_sheet(offlineOfficersList);
-    XLSX.utils.book_append_sheet(wb, wsOffline, 'Offline Officers (' + offlineCount + ')');
+    // Sheet 3: All 364 Units Status
+    const wsAll = XLSX.utils.json_to_sheet(allUnitsSheetData);
+    XLSX.utils.book_append_sheet(wb, wsAll, 'All 364 Forces');
 
-    // Sheet 4: Online Officers (Live Tracking)
-    const wsOnline = XLSX.utils.json_to_sheet(onlineOfficersList);
-    XLSX.utils.book_append_sheet(wb, wsOnline, 'Online Officers (' + liveCount + ')');
+    // Sheet 4: Offline Units (To Call)
+    const wsOffline = XLSX.utils.json_to_sheet(offlineUnitsData);
+    XLSX.utils.book_append_sheet(wb, wsOffline, 'Offline Units (' + offlineCount + ')');
 
-    // Sheet 5: Police Station / Mandal Wise
-    const wsMandal = XLSX.utils.json_to_sheet(mandalSummarySheetData);
-    XLSX.utils.book_append_sheet(wb, wsMandal, 'PS Wise Officers');
+    // Sheet 5: Online Units (Live)
+    const wsOnline = XLSX.utils.json_to_sheet(onlineUnitsData);
+    XLSX.utils.book_append_sheet(wb, wsOnline, 'Online Units (' + liveCount + ')');
 
-    // Export File
+    // File Download
     const dateStr = now.toISOString().slice(0, 10);
-    const fileName = `Srikakulam_Police_Officers_Live_Status_${dateStr}.xlsx`;
+    const fileName = `Srikakulam_Police_Online_Offline_Status_${dateStr}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
 
-  // Listen for iframe export requests from parent portalwindow.addEventListener('message', function(e) {
+  // Listen for iframe export requests from parent portal
+  window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'TRIGGER_EXCEL_EXPORT') {
       exportForcesLiveStatusToExcel();
     }
