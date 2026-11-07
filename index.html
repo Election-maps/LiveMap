@@ -1882,8 +1882,8 @@
       <div class="psl-filter-col psl-search-box">
         <label><i class="fa-solid fa-magnifying-glass" style="color: #2563eb;"></i> SEARCH VILLAGE / SCHOOL</label>
         <div style="position: relative;">
-          <input type="text" id="live-filter-search" class="psl-search-input" placeholder="Type PSL (e.g. MPP School)..." oninput="onLivePslSearchInput(this.value)" autocomplete="off">
-          <button type="button" class="btn-psl-search-clear" onclick="clearLivePslSearch()" title="Clear">✕</button>
+          <input type="text" id="live-filter-search" class="psl-search-input" placeholder="Type PSL (e.g. MPP School)..." oninput="onLivePslSearchInput(this.value)" onkeydown="onLivePslSearchKeyDown(event)" autocomplete="off">
+          <button type="button" class="btn-psl-search-clear" onclick="clearLivePslSearch()" title="Clear search"><i class="fa-solid fa-xmark"></i></button>
           <div id="live-psl-autocomplete" class="psl-autocomplete-dropdown"></div>
         </div>
       </div>
@@ -2314,6 +2314,7 @@ https://...
     });
 
     const marker = L.marker([item.lat, item.lng], { icon: icon });
+    marker.pslId = item.id;
     marker.bindPopup(buildPslPopupHtml(item));
     marker.bindTooltip(`<b>${item.pslName}</b><br/><span style="color:#fde047;">${item.mptc} MPTC</span> (${item.sensitivity})`, {
       direction: 'top',
@@ -2325,36 +2326,17 @@ https://...
   }
 
   function applyPslFilters() {
+    if (typeof applyAllLivePslFilters === 'function') {
+      applyAllLivePslFilters(false);
+      return;
+    }
     pslLayerGroup.clearLayers();
     if (!isPslLayerActive) return;
-
     const data = window.MPTC_ZPTC_DATA || allPslData || [];
-    let count = 0;
-    let bounds = [];
-
     data.forEach(item => {
-      // Mandal filter
-      if (currentMapMandalFilter !== 'ALL') {
-        if (!item.mandal || item.mandal.trim().toLowerCase() !== currentMapMandalFilter.toLowerCase()) {
-          return;
-        }
-      }
-
-      // Sensitivity filter
-      if (currentPslSensitivityFilter !== 'ALL') {
-        if (item.sensitivity !== currentPslSensitivityFilter) {
-          return;
-        }
-      }
-
       const m = createPslMarker(item);
       pslLayerGroup.addLayer(m);
-      bounds.push([item.lat, item.lng]);
-      count++;
     });
-
-    const elPslKpi = document.getElementById('kpi-psl');
-    if (elPslKpi) elPslKpi.innerText = count.toLocaleString();
   }
 
   // -------------------------------------------------------------
@@ -4172,6 +4154,7 @@ https://...
   let currentFilterCategory = 'ALL';
   let currentFilterDistance = 'ALL';
   let currentFilterSearchText = '';
+  let currentSelectedPslId = null; // Locked single station id when chosen
 
   function initLivePslFilterSystem() {
     const data = window.MPTC_ZPTC_DATA || allPslData || [];
@@ -4206,6 +4189,7 @@ https://...
 
   // When Police Station changes: populate Route dropdown and apply filters
   window.onLivePSChange = function(psVal) {
+    currentSelectedPslId = null;
     currentFilterPS = psVal || 'ALL';
     currentFilterRoute = 'ALL';
 
@@ -4233,8 +4217,16 @@ https://...
     applyAllLivePslFilters(true);
   };
 
+  // When Route dropdown changes
+  window.onLiveRouteDropdownChange = function(routeVal) {
+    currentSelectedPslId = null;
+    currentFilterRoute = routeVal || 'ALL';
+    applyAllLivePslFilters(true);
+  };
+
   // When Category Pill button is clicked
   window.setLivePslQuickCategory = function(cat) {
+    currentSelectedPslId = null;
     currentFilterCategory = cat || 'ALL';
 
     // Update Pill active states
@@ -4262,44 +4254,84 @@ https://...
     window.setLivePslQuickCategory(catVal);
   };
 
-  // Search input typing handler with autocomplete
+  // Search input typing handler with autocomplete & immediate map filter
   window.onLivePslSearchInput = function(val) {
+    currentSelectedPslId = null; // Clear single-station lock on text edit
     currentFilterSearchText = (val || '').trim().toLowerCase();
     const drop = document.getElementById('live-psl-autocomplete');
-    if (!drop) return;
 
-    if (!currentFilterSearchText || currentFilterSearchText.length < 2) {
-      drop.style.display = 'none';
-      drop.innerHTML = '';
+    if (!currentFilterSearchText) {
+      if (drop) {
+        drop.style.display = 'none';
+        drop.innerHTML = '';
+      }
       applyAllLivePslFilters(false);
       return;
     }
 
     const data = window.MPTC_ZPTC_DATA || allPslData || [];
     const matches = data.filter(item => {
-      const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
+      const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''} ${item.village || ''} ${item.hq || ''}`.toLowerCase();
       return text.includes(currentFilterSearchText);
-    }).slice(0, 8);
+    });
 
-    if (matches.length > 0) {
-      drop.style.display = 'block';
-      let html = '';
-      matches.forEach(item => {
-        html += '<div class="psl-autocomplete-item" onclick="zoomToPslDirect(\'' + item.id + '\')">';
-        html += '<div class="psl-autocomplete-title">🏫 ' + item.pslName + '</div>';
-        html += '<div class="psl-autocomplete-meta">📍 ' + (item.ps || item.mandal) + ' PS • Route ' + (item.routeNo || '-') + ' • ' + item.mptc + ' MPTC (' + item.sensitivity + ')</div>';
-        html += '</div>';
-      });
-      drop.innerHTML = html;
-    } else {
-      drop.style.display = 'none';
-      drop.innerHTML = '';
+    if (drop) {
+      if (matches.length > 0) {
+        drop.style.display = 'block';
+        let html = '';
+        matches.slice(0, 10).forEach(item => {
+          let badgeColor = '#10b981';
+          let sensLabel = item.sensitivity || 'NORMAL';
+          if (sensLabel === 'SENSITIVE') badgeColor = '#f59e0b';
+          else if (sensLabel === 'HYPER SENSITIVE' || sensLabel === 'CRITICAL') badgeColor = '#ef4444';
+
+          html += '<div class="psl-autocomplete-item" onclick="zoomToPslDirect(\'' + item.id + '\')">';
+          html += '<div class="psl-autocomplete-title"><i class="fa-solid fa-school" style="color: #2563eb; margin-right: 6px;"></i>' + item.pslName + ' <span style="font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 9999px; background: ' + badgeColor + '18; color: ' + badgeColor + '; border: 1px solid ' + badgeColor + '40; margin-left: 6px;">' + sensLabel + '</span></div>';
+          html += '<div class="psl-autocomplete-meta"><i class="fa-solid fa-shield-halved" style="color: #64748b;"></i> ' + (item.ps || item.mandal) + ' PS &nbsp;|&nbsp; Route ' + (item.routeNo || '-') + ' &nbsp;|&nbsp; ' + item.mptc + ' MPTC</div>';
+          html += '</div>';
+        });
+        drop.innerHTML = html;
+      } else {
+        drop.style.display = 'block';
+        drop.innerHTML = '<div style="padding: 10px 14px; font-size: 12px; color: #ef4444; font-weight: 600;">No matching polling stations found.</div>';
+      }
     }
 
-    applyAllLivePslFilters(false);
+    // Filter map immediately so ONLY matching polling stations are visible!
+    applyAllLivePslFilters(true);
   };
 
+  // Keyboard navigation for search input (Enter to pick first match)
+  window.onLivePslSearchKeyDown = function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const drop = document.getElementById('live-psl-autocomplete');
+      if (drop && drop.style.display !== 'none') {
+        const first = drop.querySelector('.psl-autocomplete-item');
+        if (first) {
+          first.click();
+          return;
+        }
+      }
+      applyAllLivePslFilters(true);
+    } else if (e.key === 'Escape') {
+      window.clearLivePslSearch();
+    }
+  };
+
+  // Close autocomplete on click outside
+  document.addEventListener('click', function(e) {
+    const box = document.querySelector('.psl-search-box');
+    const drop = document.getElementById('live-psl-autocomplete');
+    if (drop && box && !box.contains(e.target)) {
+      drop.style.display = 'none';
+    }
+  });
+
+  // Clear Search
   window.clearLivePslSearch = function() {
+    currentSelectedPslId = null;
+    currentFilterSearchText = '';
     const input = document.getElementById('live-filter-search');
     if (input) input.value = '';
     const drop = document.getElementById('live-psl-autocomplete');
@@ -4307,29 +4339,44 @@ https://...
       drop.style.display = 'none';
       drop.innerHTML = '';
     }
-    currentFilterSearchText = '';
     applyAllLivePslFilters(false);
+    map.setView(SRIKAKULAM_CENTER, 10);
   };
 
-  // Zoom to direct station from suggestion or table
+  // Zoom to direct station from suggestion or table (SHOW ONLY THIS STATION)
   window.zoomToPslDirect = function(id) {
-    window.clearLivePslSearch();
     const data = window.MPTC_ZPTC_DATA || allPslData || [];
     const item = data.find(p => p.id === id);
     if (!item) return;
+
+    // Lock to this single polling station ONLY!
+    currentSelectedPslId = id;
+    currentFilterSearchText = '';
+
+    const input = document.getElementById('live-filter-search');
+    if (input) input.value = item.pslName;
+
+    const drop = document.getElementById('live-psl-autocomplete');
+    if (drop) {
+      drop.style.display = 'none';
+      drop.innerHTML = '';
+    }
 
     if (!isPslLayerActive) {
       window.togglePslLayer();
     }
 
-    map.flyTo([item.lat, item.lng], 17, { animate: true, duration: 1.2 });
+    // Render ONLY this single station on map and zoom to it
+    applyAllLivePslFilters(false);
+
+    map.flyTo([item.lat, item.lng], 17, { animate: true, duration: 1.0 });
     setTimeout(() => {
       pslLayerGroup.eachLayer(layer => {
-        if (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001) {
+        if (layer.pslId === item.id || (layer.getLatLng && Math.abs(layer.getLatLng().lat - item.lat) < 0.0001 && Math.abs(layer.getLatLng().lng - item.lng) < 0.0001)) {
           layer.openPopup();
         }
       });
-    }, 600);
+    }, 450);
   };
 
   // Road Routes & Borders checkbox handlers
@@ -4359,6 +4406,7 @@ https://...
 
   // Reset all filters
   window.resetAllLivePslFilters = function() {
+    currentSelectedPslId = null;
     currentFilterPS = 'ALL';
     currentFilterRoute = 'ALL';
     currentFilterCategory = 'ALL';
@@ -4377,7 +4425,15 @@ https://...
     const distSel = document.getElementById('live-filter-distance');
     if (distSel) distSel.value = 'ALL';
 
-    window.clearLivePslSearch();
+    const input = document.getElementById('live-filter-search');
+    if (input) input.value = '';
+
+    const drop = document.getElementById('live-psl-autocomplete');
+    if (drop) {
+      drop.style.display = 'none';
+      drop.innerHTML = '';
+    }
+
     window.setLivePslQuickCategory('ALL');
 
     const chkRoutes = document.getElementById('live-toggle-routes-chk');
@@ -4414,45 +4470,51 @@ https://...
       const itemRoute = (item.routeNo || '').toString().trim();
       const itemSens = (item.sensitivity || 'NORMAL').trim().toUpperCase();
 
-      // Police Station Filter
-      if (currentFilterPS !== 'ALL') {
-        if (itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return;
+      // If a single polling station is selected (via suggestion or table), ONLY show that 1 station!
+      if (currentSelectedPslId) {
+        if (item.id !== currentSelectedPslId) return;
+      } else {
+        // Police Station Filter
+        if (currentFilterPS !== 'ALL') {
+          if (itemPS.toLowerCase() !== currentFilterPS.toLowerCase()) return;
+        }
+
+        // Route No Filter
+        if (currentFilterRoute !== 'ALL') {
+          if (itemRoute !== currentFilterRoute) return;
+        }
+
+        // Distance Filter
+        if (currentFilterDistance !== 'ALL') {
+          const dStr = (item.distFromPs || '').replace(/[^0-9.]/g, '');
+          const dNum = parseFloat(dStr) || 0;
+          if (currentFilterDistance === 'near' && dNum > 5) return;
+          if (currentFilterDistance === 'medium' && (dNum <= 5 || dNum > 12)) return;
+          if (currentFilterDistance === 'far' && dNum <= 12) return;
+        }
+
+        // Search Query (Village / School / Name / MPTC / Mandal / PS)
+        if (currentFilterSearchText) {
+          const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''} ${item.village || ''} ${item.hq || ''}`.toLowerCase();
+          if (!text.includes(currentFilterSearchText)) return;
+        }
+
+        // Category Filter
+        if (currentFilterCategory !== 'ALL') {
+          if (itemSens !== currentFilterCategory) return;
+        }
       }
 
-      // Route No Filter
-      if (currentFilterRoute !== 'ALL') {
-        if (itemRoute !== currentFilterRoute) return;
-      }
-
-      // Distance Filter
-      if (currentFilterDistance !== 'ALL') {
-        const dStr = (item.distFromPs || '').replace(/[^0-9.]/g, '');
-        const dNum = parseFloat(dStr) || 0;
-        if (currentFilterDistance === 'near' && dNum > 5) return;
-        if (currentFilterDistance === 'medium' && (dNum <= 5 || dNum > 12)) return;
-        if (currentFilterDistance === 'far' && dNum <= 12) return;
-      }
-
-      // Search Query
-      if (currentFilterSearchText) {
-        const text = `${item.pslName || ''} ${item.mptc || ''} ${item.mandal || ''} ${item.ps || ''} ${item.routeNo || ''}`.toLowerCase();
-        if (!text.includes(currentFilterSearchText)) return;
-      }
-
-      // Counts tally for categories matching current PS/Route/Distance
+      // Counts tally for categories matching current active filters
       countTotal++;
       if (itemSens === 'NORMAL') countNormal++;
       else if (itemSens === 'SENSITIVE') countSensitive++;
       else if (itemSens === 'CRITICAL') countCritical++;
       else if (itemSens === 'HYPER SENSITIVE') countHyper++;
 
-      // Sensitivity Filter
-      if (currentFilterCategory !== 'ALL') {
-        if (itemSens !== currentFilterCategory) return;
-      }
-
       // Render marker on map
       const m = createPslMarker(item);
+      m.pslId = item.id;
       pslLayerGroup.addLayer(m);
       if (item.lat && item.lng) {
         bounds.push([item.lat, item.lng]);
@@ -4477,9 +4539,18 @@ https://...
     const elKpi = document.getElementById('kpi-psl');
     if (elKpi) elKpi.innerText = countTotal.toLocaleString();
 
-    // Fit Bounds if needed
+    // Fit Bounds if requested and matching points exist
     if (shouldFitBounds && bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
+      if (bounds.length === 1) {
+        map.flyTo(bounds[0], 17, { animate: true, duration: 1.0 });
+        setTimeout(() => {
+          pslLayerGroup.eachLayer(layer => {
+            if (layer.openPopup) layer.openPopup();
+          });
+        }, 500);
+      } else {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
     }
   }
 
