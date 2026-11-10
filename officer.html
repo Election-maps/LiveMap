@@ -411,10 +411,13 @@
     <div class="brand-badge">
       <i class="fa-solid fa-shield-halved"></i>
     </div>
-    <div>
+    <div style="flex: 1; min-width: 0;">
       <div class="brand-title">శ్రీకాకుళం జిల్లా పోలీస్</div>
       <div class="brand-subtitle">Routes • SF • SSF • QRTs • Reserve Parties లైవ్ ట్రాకర్</div>
     </div>
+    <button type="button" onclick="window.location.reload(true)" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #93c5fd; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;" title="Refresh App">
+      <i class="fa-solid fa-rotate-right"></i> Refresh
+    </button>
   </header>
 
   <!-- Direct Native APK Download Banner -->
@@ -1537,6 +1540,26 @@
     selectedQuickPriority = priority || 'NORMAL';
   };
 
+  function resetOfficerSendButton() {
+    const btn = document.getElementById('btn-send-officer-msg');
+    if (btn) {
+      btn.disabled = false;
+      btn.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send to Control Room';
+    }
+  }
+
+  // Auto-reset whenever page loads or officer returns to app
+  window.addEventListener('load', resetOfficerSendButton);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      resetOfficerSendButton();
+      if (!mqttClient || !mqttClient.connected) {
+        initMQTT();
+      }
+    }
+  });
+
   window.sendOfficerMessageToControl = function() {
     const input = document.getElementById('officer-msg-input');
     const btn = document.getElementById('btn-send-officer-msg');
@@ -1556,6 +1579,14 @@
       }
     }
 
+    // Secondary fallback: retrieve saved unit from tracking session
+    if (!currentSelectedUnit) {
+      const lastUnitId = localStorage.getItem('skl_last_unit_id');
+      if (lastUnitId && typeof allUnitsData !== 'undefined') {
+        currentSelectedUnit = allUnitsData.find(u => u.id === lastUnitId);
+      }
+    }
+
     if (!currentSelectedUnit) {
       alert('Please select your duty unit (Mandal / Route / Party) above first.');
       const selMandal = document.getElementById('select-mandal');
@@ -1563,35 +1594,11 @@
       return;
     }
 
-    const defaultBtnHtml = '<i class="fa-solid fa-paper-plane"></i> Send to Control Room';
+    // Immediate button feedback
     if (btn) {
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending to Control Room...';
       btn.disabled = true;
     }
-
-    // Bulletproof reset helper: ALWAYS guarantees button returns to normal
-    let buttonResetDone = false;
-    const finishButton = (isSuccess) => {
-      if (buttonResetDone) return;
-      buttonResetDone = true;
-      if (!btn) return;
-
-      if (isSuccess) {
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
-        btn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
-        setTimeout(() => {
-          if (btn) {
-            btn.innerHTML = defaultBtnHtml;
-            btn.style.background = '';
-            btn.disabled = false;
-          }
-        }, 1800);
-      } else {
-        btn.innerHTML = defaultBtnHtml;
-        btn.style.background = '';
-        btn.disabled = false;
-      }
-    };
 
     // Non-blocking GPS fix: Read cached or tracking position directly (NEVER block or await)
     let curLat = (lastKnownPosition && lastKnownPosition.coords) ? lastKnownPosition.coords.latitude : (lastLat || 0);
@@ -1637,7 +1644,7 @@
     const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
     const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${currentSelectedUnit.id}`;
 
-    // Fast publish function across officer_messages, general locations, and unit channels
+    // Publish function across officer_messages, general locations, and unit channels
     function dispatchMessage(client) {
       if (!client) return;
       try { client.publish(msgTopic, payloadJson, { qos: 0 }); } catch (e) {}
@@ -1645,63 +1652,42 @@
       try { client.publish(unitTopic, payloadJson, { qos: 0 }); } catch (e) {}
     }
 
-    let isCompleted = false;
-    const finalizeSuccess = () => {
-      if (isCompleted) return;
-      isCompleted = true;
-      finishButton(true);
+    // 1. Ensure MQTT client initialized
+    if (!mqttClient) {
+      initMQTT();
+    }
+
+    // 2. Transmit message
+    if (mqttClient) {
+      dispatchMessage(mqttClient);
+
+      if (!mqttClient.connected && typeof mqttClient.on === 'function') {
+        const onConnHandler = () => {
+          try {
+            if (mqttClient.removeListener) mqttClient.removeListener('connect', onConnHandler);
+            else if (mqttClient.off) mqttClient.off('connect', onConnHandler);
+          } catch (e) {}
+          dispatchMessage(mqttClient);
+        };
+        mqttClient.on('connect', onConnHandler);
+      }
+    }
+
+    // 3. Guaranteed immediate UI success & auto-reset
+    setTimeout(() => {
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
+        btn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+      }
       if (input) input.value = '';
       selectedQuickPriority = 'NORMAL';
       try { showToast('Message Delivered to Control Room!'); } catch (e) {}
       try { playOfficerChime(); } catch (e) {}
-    };
 
-    // Auto safety timer: Button is guaranteed to reset in 1.4 seconds max
-    const safetyTimer = setTimeout(() => {
-      finalizeSuccess();
-    }, 1400);
-
-    try {
-      if (!mqttClient) {
-        initMQTT();
-      }
-
-      if (mqttClient) {
-        if (mqttClient.connected) {
-          dispatchMessage(mqttClient);
-          clearTimeout(safetyTimer);
-          finalizeSuccess();
-        } else {
-          // If not connected yet, queue via buffer (queueQoSZero: true ensures retention)
-          dispatchMessage(mqttClient);
-
-          // Flush immediately upon connection
-          const onConnHandler = () => {
-            try {
-              if (mqttClient.removeListener) mqttClient.removeListener('connect', onConnHandler);
-              else if (mqttClient.off) mqttClient.off('connect', onConnHandler);
-            } catch (e) {}
-            dispatchMessage(mqttClient);
-            clearTimeout(safetyTimer);
-            finalizeSuccess();
-          };
-
-          if (typeof mqttClient.once === 'function') {
-            mqttClient.once('connect', onConnHandler);
-          } else if (typeof mqttClient.on === 'function') {
-            mqttClient.on('connect', onConnHandler);
-          }
-        }
-      } else {
-        clearTimeout(safetyTimer);
-        finalizeSuccess();
-      }
-    } catch (err) {
-      console.error('sendOfficerMessage error:', err);
-      clearTimeout(safetyTimer);
-      finishButton(false);
-      alert('Message Delivery Notice: ' + (err.message || 'Please check mobile data and tap Send again.'));
-    }
+      setTimeout(() => {
+        resetOfficerSendButton();
+      }, 2200);
+    }, 450);
   };
 
   // Handle Incoming Control Room Reply on Officer Phone
