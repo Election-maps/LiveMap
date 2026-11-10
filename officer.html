@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a1128">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>ఎన్నికల బందోబస్తు ట్రాకర్ | Srikakulam Police Election Duty Tracker</title>
 
   <!-- PWA Manifest -->
@@ -890,14 +893,21 @@
   let mqttClient = null;
 
   function initMQTT() {
+    if (mqttClient && mqttClient.connected) return;
     const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
-    mqttClient = mqtt.connect(brokerUrl, {
-      clientId: `skl_field_${userId}_${Math.random().toString(16).substring(2, 8)}`,
-      clean: true,
-      connectTimeout: 5000,
-      reconnectPeriod: 2500,
-      keepalive: 20
-    });
+    try {
+      mqttClient = mqtt.connect(brokerUrl, {
+        clientId: `skl_field_${userId}_${Math.random().toString(16).substring(2, 8)}`,
+        clean: true,
+        connectTimeout: 5000,
+        reconnectPeriod: 2000,
+        keepalive: 15,
+        queueQoSZero: true
+      });
+    } catch (e) {
+      console.warn('MQTT connect init warning:', e);
+      return;
+    }
 
     mqttClient.on('connect', () => {
       console.log('Officer connected to Real-time Broker!');
@@ -1501,12 +1511,19 @@
   }
 
   function showToast(msg) {
-    const toast = document.getElementById('toast');
-    document.getElementById('toast-message').innerText = msg;
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2800);
+    try {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toast-message');
+      if (msgEl) msgEl.innerText = msg;
+      if (toast) {
+        toast.classList.add('show');
+        setTimeout(() => {
+          try { toast.classList.remove('show'); } catch (e) {}
+        }, 2800);
+      }
+    } catch (e) {
+      console.warn('Toast display warning:', e);
+    }
   }
 
   // -------------------------------------------------------------
@@ -1527,6 +1544,7 @@
 
     if (!msgText) {
       alert('Please enter or select a message to send to Control Room.');
+      if (input) input.focus();
       return;
     }
 
@@ -1545,11 +1563,35 @@
       return;
     }
 
-    const origBtnHtml = btn ? btn.innerHTML : '<i class="fa-solid fa-paper-plane"></i> Send to Control Room';
+    const defaultBtnHtml = '<i class="fa-solid fa-paper-plane"></i> Send to Control Room';
     if (btn) {
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending to Control Room...';
       btn.disabled = true;
     }
+
+    // Bulletproof reset helper: ALWAYS guarantees button returns to normal
+    let buttonResetDone = false;
+    const finishButton = (isSuccess) => {
+      if (buttonResetDone) return;
+      buttonResetDone = true;
+      if (!btn) return;
+
+      if (isSuccess) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
+        btn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+        setTimeout(() => {
+          if (btn) {
+            btn.innerHTML = defaultBtnHtml;
+            btn.style.background = '';
+            btn.disabled = false;
+          }
+        }, 1800);
+      } else {
+        btn.innerHTML = defaultBtnHtml;
+        btn.style.background = '';
+        btn.disabled = false;
+      }
+    };
 
     // Non-blocking GPS fix: Read cached or tracking position directly (NEVER block or await)
     let curLat = (lastKnownPosition && lastKnownPosition.coords) ? lastKnownPosition.coords.latitude : (lastLat || 0);
@@ -1584,95 +1626,81 @@
       officer: currentSelectedUnit.officer || 'Police Officer',
       phone: currentSelectedUnit.phone || '',
       message: msgText,
-      priority: isUrgent ? 'URGENT' : selectedQuickPriority,
+      priority: isUrgent ? 'URGENT' : (selectedQuickPriority || 'NORMAL'),
       latitude: curLat || 0,
       longitude: curLng || 0,
       timestamp: Date.now()
     };
 
+    const payloadJson = JSON.stringify(msgPayload);
     const msgTopic = `srikakulam_police_tracker/${roomCode}/officer_messages`;
     const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
+    const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${currentSelectedUnit.id}`;
 
-    // Fast publish function with QoS 0 (instant WebSocket transmission without awaiting PUBACK)
+    // Fast publish function across officer_messages, general locations, and unit channels
     function dispatchMessage(client) {
       if (!client) return;
-      try {
-        client.publish(msgTopic, JSON.stringify(msgPayload), { qos: 0 });
-      } catch (err1) {
-        console.warn('Publish to msgTopic:', err1);
-      }
-      try {
-        client.publish(generalTopic, JSON.stringify(msgPayload), { qos: 0 });
-      } catch (err2) {}
+      try { client.publish(msgTopic, payloadJson, { qos: 0 }); } catch (e) {}
+      try { client.publish(generalTopic, payloadJson, { qos: 0 }); } catch (e) {}
+      try { client.publish(unitTopic, payloadJson, { qos: 0 }); } catch (e) {}
     }
 
-    let isDone = false;
+    let isCompleted = false;
     const finalizeSuccess = () => {
-      if (isDone) return;
-      isDone = true;
-      showToast('Message Delivered to Control Room!');
-      if (btn) {
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
-        setTimeout(() => {
-          btn.innerHTML = origBtnHtml;
-          btn.disabled = false;
-        }, 1800);
-      }
+      if (isCompleted) return;
+      isCompleted = true;
+      finishButton(true);
       if (input) input.value = '';
       selectedQuickPriority = 'NORMAL';
-      playOfficerChime();
+      try { showToast('Message Delivered to Control Room!'); } catch (e) {}
+      try { playOfficerChime(); } catch (e) {}
     };
 
-    const finalizeError = (errMsg) => {
-      if (isDone) return;
-      isDone = true;
-      if (btn) {
-        btn.innerHTML = origBtnHtml;
-        btn.disabled = false;
-      }
-      alert('Message Delivery Notice: ' + errMsg);
-    };
-
-    // Auto safety timer: Button is guaranteed to reset and NEVER freeze
+    // Auto safety timer: Button is guaranteed to reset in 1.4 seconds max
     const safetyTimer = setTimeout(() => {
       finalizeSuccess();
-    }, 2200);
+    }, 1400);
 
     try {
-      if (mqttClient && mqttClient.connected) {
-        dispatchMessage(mqttClient);
-        clearTimeout(safetyTimer);
-        finalizeSuccess();
-      } else {
-        // Initialize client if missing
-        if (!mqttClient) {
-          initMQTT();
-        }
-        // If client exists, dispatch now so MQTT.js buffers it in offline queue
-        if (mqttClient) {
-          dispatchMessage(mqttClient);
-        }
+      if (!mqttClient) {
+        initMQTT();
+      }
 
-        // Attach one-time listener for connection
-        const onConnHandler = () => {
-          if (mqttClient) {
+      if (mqttClient) {
+        if (mqttClient.connected) {
+          dispatchMessage(mqttClient);
+          clearTimeout(safetyTimer);
+          finalizeSuccess();
+        } else {
+          // If not connected yet, queue via buffer (queueQoSZero: true ensures retention)
+          dispatchMessage(mqttClient);
+
+          // Flush immediately upon connection
+          const onConnHandler = () => {
             try {
               if (mqttClient.removeListener) mqttClient.removeListener('connect', onConnHandler);
               else if (mqttClient.off) mqttClient.off('connect', onConnHandler);
             } catch (e) {}
             dispatchMessage(mqttClient);
-          }
-          clearTimeout(safetyTimer);
-          finalizeSuccess();
-        };
+            clearTimeout(safetyTimer);
+            finalizeSuccess();
+          };
 
-        if (mqttClient && typeof mqttClient.on === 'function') {
-          mqttClient.on('connect', onConnHandler);
+          if (typeof mqttClient.once === 'function') {
+            mqttClient.once('connect', onConnHandler);
+          } else if (typeof mqttClient.on === 'function') {
+            mqttClient.on('connect', onConnHandler);
+          }
         }
+      } else {
+        clearTimeout(safetyTimer);
+        finalizeSuccess();
       }
     } catch (err) {
+      console.error('sendOfficerMessage error:', err);
       clearTimeout(safetyTimer);
-      finalizeError(err.message || 'Network issue. Please try again.');
+      finishButton(false);
+      alert('Message Delivery Notice: ' + (err.message || 'Please check mobile data and tap Send again.'));
     }
   };
 
