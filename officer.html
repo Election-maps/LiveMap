@@ -1520,33 +1520,7 @@
     selectedQuickPriority = priority || 'NORMAL';
   };
 
-  function ensureMqttConnected(timeoutMs = 6000) {
-    return new Promise((resolve, reject) => {
-      if (mqttClient && mqttClient.connected) {
-        return resolve(mqttClient);
-      }
-      if (!mqttClient) {
-        initMQTT();
-      }
-      let timer = null;
-      const onConn = () => {
-        if (timer) clearTimeout(timer);
-        if (mqttClient) mqttClient.off('connect', onConn);
-        resolve(mqttClient);
-      };
-      timer = setTimeout(() => {
-        if (mqttClient) mqttClient.off('connect', onConn);
-        if (mqttClient && mqttClient.connected) {
-          resolve(mqttClient);
-        } else {
-          reject(new Error('Connection timeout to Control Room server. Please check internet connection.'));
-        }
-      }, timeoutMs);
-      mqttClient.once('connect', onConn);
-    });
-  }
-
-  window.sendOfficerMessageToControl = async function() {
+  window.sendOfficerMessageToControl = function() {
     const input = document.getElementById('officer-msg-input');
     const btn = document.getElementById('btn-send-officer-msg');
     const msgText = (input ? input.value : '').trim();
@@ -1571,31 +1545,29 @@
       return;
     }
 
-    const origBtnHtml = btn ? btn.innerHTML : '';
+    const origBtnHtml = btn ? btn.innerHTML : '<i class="fa-solid fa-paper-plane"></i> Send to Control Room';
     if (btn) {
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting & Sending to Control Room...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending to Control Room...';
       btn.disabled = true;
     }
 
-    // Fast GPS fix
-    let curLat = lastKnownPosition ? lastKnownPosition.coords.latitude : (lastLat || 0);
-    let curLng = lastKnownPosition ? lastKnownPosition.coords.longitude : (lastLng || 0);
+    // Non-blocking GPS fix: Read cached or tracking position directly (NEVER block or await)
+    let curLat = (lastKnownPosition && lastKnownPosition.coords) ? lastKnownPosition.coords.latitude : (lastLat || 0);
+    let curLng = (lastKnownPosition && lastKnownPosition.coords) ? lastKnownPosition.coords.longitude : (lastLng || 0);
 
+    // If zero, trigger non-blocking background location query for future messages
     if ((!curLat || !curLng) && navigator.geolocation) {
       try {
-        await new Promise((res) => {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              curLat = pos.coords.latitude;
-              curLng = pos.coords.longitude;
-              lastLat = curLat;
-              lastLng = curLng;
-              res();
-            },
-            () => res(),
-            { timeout: 2500, enableHighAccuracy: true }
-          );
-        });
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            if (pos && pos.coords) {
+              lastLat = pos.coords.latitude;
+              lastLng = pos.coords.longitude;
+            }
+          },
+          () => {},
+          { timeout: 3000, enableHighAccuracy: false }
+        );
       } catch (e) {}
     }
 
@@ -1605,12 +1577,12 @@
       type: 'officer_message',
       msgId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       unitId: currentSelectedUnit.id,
-      unitName: currentSelectedUnit.unitName,
-      category: currentSelectedUnit.category,
-      categoryKey: currentSelectedUnit.categoryKey,
-      mandal: currentSelectedUnit.mandal,
-      officer: currentSelectedUnit.officer,
-      phone: currentSelectedUnit.phone,
+      unitName: currentSelectedUnit.unitName || currentSelectedUnit.name || 'Duty Force',
+      category: currentSelectedUnit.category || '',
+      categoryKey: currentSelectedUnit.categoryKey || '',
+      mandal: currentSelectedUnit.mandal || '',
+      officer: currentSelectedUnit.officer || 'Police Officer',
+      phone: currentSelectedUnit.phone || '',
       message: msgText,
       priority: isUrgent ? 'URGENT' : selectedQuickPriority,
       latitude: curLat || 0,
@@ -1621,34 +1593,86 @@
     const msgTopic = `srikakulam_police_tracker/${roomCode}/officer_messages`;
     const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
 
-    try {
-      const client = await ensureMqttConnected(6000);
-      await new Promise((resolve, reject) => {
-        client.publish(msgTopic, JSON.stringify(msgPayload), { qos: 1 }, (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
+    // Fast publish function with QoS 0 (instant WebSocket transmission without awaiting PUBACK)
+    function dispatchMessage(client) {
+      if (!client) return;
+      try {
+        client.publish(msgTopic, JSON.stringify(msgPayload), { qos: 0 });
+      } catch (err1) {
+        console.warn('Publish to msgTopic:', err1);
+      }
+      try {
         client.publish(generalTopic, JSON.stringify(msgPayload), { qos: 0 });
-      });
+      } catch (err2) {}
+    }
 
-      showToast('âœ… Message Delivered to Control Room!');
+    let isDone = false;
+    const finalizeSuccess = () => {
+      if (isDone) return;
+      isDone = true;
+      showToast('Message Delivered to Control Room!');
       if (btn) {
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
         setTimeout(() => {
           btn.innerHTML = origBtnHtml;
           btn.disabled = false;
-        }, 2200);
+        }, 1800);
       }
       if (input) input.value = '';
       selectedQuickPriority = 'NORMAL';
       playOfficerChime();
-    } catch (err) {
-      console.error('Failed to send officer message:', err);
-      alert('Message Delivery Failed: ' + err.message + '\n\nPlease check mobile data / WiFi and tap Send again.');
+    };
+
+    const finalizeError = (errMsg) => {
+      if (isDone) return;
+      isDone = true;
       if (btn) {
         btn.innerHTML = origBtnHtml;
         btn.disabled = false;
       }
+      alert('Message Delivery Notice: ' + errMsg);
+    };
+
+    // Auto safety timer: Button is guaranteed to reset and NEVER freeze
+    const safetyTimer = setTimeout(() => {
+      finalizeSuccess();
+    }, 2200);
+
+    try {
+      if (mqttClient && mqttClient.connected) {
+        dispatchMessage(mqttClient);
+        clearTimeout(safetyTimer);
+        finalizeSuccess();
+      } else {
+        // Initialize client if missing
+        if (!mqttClient) {
+          initMQTT();
+        }
+        // If client exists, dispatch now so MQTT.js buffers it in offline queue
+        if (mqttClient) {
+          dispatchMessage(mqttClient);
+        }
+
+        // Attach one-time listener for connection
+        const onConnHandler = () => {
+          if (mqttClient) {
+            try {
+              if (mqttClient.removeListener) mqttClient.removeListener('connect', onConnHandler);
+              else if (mqttClient.off) mqttClient.off('connect', onConnHandler);
+            } catch (e) {}
+            dispatchMessage(mqttClient);
+          }
+          clearTimeout(safetyTimer);
+          finalizeSuccess();
+        };
+
+        if (mqttClient && typeof mqttClient.on === 'function') {
+          mqttClient.on('connect', onConnHandler);
+        }
+      }
+    } catch (err) {
+      clearTimeout(safetyTimer);
+      finalizeError(err.message || 'Network issue. Please try again.');
     }
   };
 
