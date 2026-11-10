@@ -553,6 +553,49 @@
     </button>
   </div>
 
+  <!-- Officer Message / SOS to Control Room Card -->
+  <div class="card" id="message-control-card" style="border: 1.5px solid rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 58, 138, 0.25) 100%); margin-bottom: 12px; padding: 14px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span style="display: flex; align-items: center; gap: 8px; color: #38bdf8; font-weight: 700; font-size: 14px;">
+        <i class="fa-solid fa-tower-broadcast" style="color: #38bdf8;"></i>
+        <span>Message / Alert to Control Room</span>
+      </span>
+      <span style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 600;">
+        Live Alert
+      </span>
+    </div>
+
+    <div style="font-size: 11.5px; color: #cbd5e1; margin-bottom: 10px; line-height: 1.4;">
+      Send field situation update or emergency alert to Control Room instantly:
+    </div>
+
+    <!-- Quick Situation Preset Buttons -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+      <button type="button" onclick="setQuickOfficerMsg('🚨 EMERGENCY / SOS: Immediate Police Assistance Required', 'URGENT')" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 6px; border-radius: 8px; font-size: 11px; font-weight: bold; text-align: left; cursor: pointer;">
+        🚨 Emergency / SOS
+      </button>
+      <button type="button" onclick="setQuickOfficerMsg('⚠️ Disturbance / Dispute reported at Polling Station', 'HIGH')" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fde68a; padding: 8px 6px; border-radius: 8px; font-size: 11px; font-weight: bold; text-align: left; cursor: pointer;">
+        ⚠️ Disturbance / Dispute
+      </button>
+      <button type="button" onclick="setQuickOfficerMsg('🗳️ Polling Peaceful: Proceeding smoothly', 'NORMAL')" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #a7f3d0; padding: 8px 6px; border-radius: 8px; font-size: 11px; font-weight: bold; text-align: left; cursor: pointer;">
+        🗳️ Polling Peaceful
+      </button>
+      <button type="button" onclick="setQuickOfficerMsg('🛑 Vehicle Breakdown / Under Repair', 'HIGH')" style="background: rgba(234, 88, 12, 0.2); border: 1px solid #ea580c; color: #fdba74; padding: 8px 6px; border-radius: 8px; font-size: 11px; font-weight: bold; text-align: left; cursor: pointer;">
+        🛑 Vehicle Breakdown
+      </button>
+    </div>
+
+    <!-- Custom Message Input -->
+    <div style="margin-bottom: 10px;">
+      <textarea id="officer-msg-input" rows="2" placeholder="Type your message to Control Room here..." style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 12px; resize: none; font-family: inherit;"></textarea>
+    </div>
+
+    <!-- Send Button -->
+    <button type="button" onclick="sendOfficerMessageToControl()" id="btn-send-officer-msg" style="width: 100%; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+      <i class="fa-solid fa-paper-plane"></i> Send to Control Room
+    </button>
+  </div>
+
   <!-- Personal Mini Map (Only shows THIS officer's location, NO other officers) -->
   <div class="card" style="padding: 12px; margin-bottom: 8px;">
     <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
@@ -1447,6 +1490,65 @@
       toast.classList.remove('show');
     }, 2800);
   }
+
+  // -------------------------------------------------------------
+  // Send Officer Messages to Control Room
+  // -------------------------------------------------------------
+  let selectedQuickPriority = 'NORMAL';
+
+  window.setQuickOfficerMsg = function(text, priority) {
+    const input = document.getElementById('officer-msg-input');
+    if (input) input.value = text;
+    selectedQuickPriority = priority || 'NORMAL';
+  };
+
+  window.sendOfficerMessageToControl = function() {
+    const input = document.getElementById('officer-msg-input');
+    const msgText = (input ? input.value : '').trim();
+    if (!msgText) {
+      alert('Please enter or select a message to send to Control Room.');
+      return;
+    }
+
+    if (!currentSelectedUnit) {
+      alert('Please select your duty unit / mandal first.');
+      return;
+    }
+
+    if (!mqttClient || !mqttClient.connected) {
+      initMQTT();
+    }
+
+    const isUrgent = selectedQuickPriority === 'URGENT' || msgText.toLowerCase().includes('emergency') || msgText.toLowerCase().includes('sos');
+
+    const msgPayload = {
+      type: 'officer_message',
+      unitId: currentSelectedUnit.id,
+      unitName: currentSelectedUnit.unitName,
+      category: currentSelectedUnit.category,
+      categoryKey: currentSelectedUnit.categoryKey,
+      mandal: currentSelectedUnit.mandal,
+      officer: currentSelectedUnit.officer,
+      phone: currentSelectedUnit.phone,
+      message: msgText,
+      priority: isUrgent ? 'URGENT' : selectedQuickPriority,
+      latitude: lastKnownPosition ? lastKnownPosition.coords.latitude : 0,
+      longitude: lastKnownPosition ? lastKnownPosition.coords.longitude : 0,
+      timestamp: Date.now()
+    };
+
+    const msgTopic = `srikakulam_police_tracker/${roomCode}/officer_messages`;
+    const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
+
+    if (mqttClient && mqttClient.connected) {
+      mqttClient.publish(msgTopic, JSON.stringify(msgPayload), { qos: 1 });
+      mqttClient.publish(generalTopic, JSON.stringify(msgPayload), { qos: 0 });
+    }
+
+    showToast('✅ Message sent to Control Room!');
+    if (input) input.value = '';
+    selectedQuickPriority = 'NORMAL';
+  };
 
   // Prevent back button exit when tracking
   window.history.pushState({ page: 'officer' }, '', window.location.href);
