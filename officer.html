@@ -594,6 +594,16 @@
     <button type="button" onclick="sendOfficerMessageToControl()" id="btn-send-officer-msg" style="width: 100%; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
       <i class="fa-solid fa-paper-plane"></i> Send to Control Room
     </button>
+
+    <!-- Control Room Incoming Replies Container inside Message Card -->
+    <div id="control-replies-box" style="display: none; margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(59, 130, 246, 0.4);">
+      <div style="font-size: 11px; font-weight: bold; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+        <span><i class="fa-solid fa-reply-all" style="color: #38bdf8;"></i> Control Room Replies</span>
+      </div>
+      <div id="control-replies-list" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
   </div>
 
   <!-- Personal Mini Map (Only shows THIS officer's location, NO other officers) -->
@@ -897,6 +907,9 @@
       // Subscribe to Control Room remote commands
       const controlTopic = `srikakulam_police_tracker/${roomCode}/control_command`;
       mqttClient.subscribe(controlTopic, { qos: 1 });
+      // Subscribe to Control Room replies to field officers
+      mqttClient.subscribe(`srikakulam_police_tracker/${roomCode}/control_reply`, { qos: 1 });
+      mqttClient.subscribe(`srikakulam_police_tracker/${roomCode}/reply/+`, { qos: 1 });
     });
 
     mqttClient.on('message', (t, msg) => {
@@ -904,6 +917,11 @@
         const str = msg.toString().trim();
         if (!str) return;
         const payload = JSON.parse(str);
+        // Control Room reply handling
+        if (payload.type === 'control_reply' || t.includes('/control_reply') || t.includes('/reply/')) {
+          handleIncomingControlReply(payload);
+          return;
+        }
 
         // Control Room force stop command: completely stops tracking
         if (payload.action === 'clear_all' || (payload.action === 'clear_unit' && currentSelectedUnit && (payload.unitId === currentSelectedUnit.id || payload.unitId === currentSelectedUnit.unitId))) {
@@ -1502,27 +1520,90 @@
     selectedQuickPriority = priority || 'NORMAL';
   };
 
-  window.sendOfficerMessageToControl = function() {
+  function ensureMqttConnected(timeoutMs = 6000) {
+    return new Promise((resolve, reject) => {
+      if (mqttClient && mqttClient.connected) {
+        return resolve(mqttClient);
+      }
+      if (!mqttClient) {
+        initMQTT();
+      }
+      let timer = null;
+      const onConn = () => {
+        if (timer) clearTimeout(timer);
+        if (mqttClient) mqttClient.off('connect', onConn);
+        resolve(mqttClient);
+      };
+      timer = setTimeout(() => {
+        if (mqttClient) mqttClient.off('connect', onConn);
+        if (mqttClient && mqttClient.connected) {
+          resolve(mqttClient);
+        } else {
+          reject(new Error('Connection timeout to Control Room server. Please check internet connection.'));
+        }
+      }, timeoutMs);
+      mqttClient.once('connect', onConn);
+    });
+  }
+
+  window.sendOfficerMessageToControl = async function() {
     const input = document.getElementById('officer-msg-input');
+    const btn = document.getElementById('btn-send-officer-msg');
     const msgText = (input ? input.value : '').trim();
+
     if (!msgText) {
       alert('Please enter or select a message to send to Control Room.');
       return;
     }
 
+    // Auto-detect unit if not yet set in variable
     if (!currentSelectedUnit) {
-      alert('Please select your duty unit / mandal first.');
+      const selUnit = document.getElementById('select-unit');
+      if (selUnit && selUnit.value && typeof allUnitsData !== 'undefined') {
+        currentSelectedUnit = allUnitsData.find(u => u.id === selUnit.value);
+      }
+    }
+
+    if (!currentSelectedUnit) {
+      alert('Please select your duty unit (Mandal / Route / Party) above first.');
+      const selMandal = document.getElementById('select-mandal');
+      if (selMandal) selMandal.focus();
       return;
     }
 
-    if (!mqttClient || !mqttClient.connected) {
-      initMQTT();
+    const origBtnHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting & Sending to Control Room...';
+      btn.disabled = true;
+    }
+
+    // Fast GPS fix
+    let curLat = lastKnownPosition ? lastKnownPosition.coords.latitude : (lastLat || 0);
+    let curLng = lastKnownPosition ? lastKnownPosition.coords.longitude : (lastLng || 0);
+
+    if ((!curLat || !curLng) && navigator.geolocation) {
+      try {
+        await new Promise((res) => {
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              curLat = pos.coords.latitude;
+              curLng = pos.coords.longitude;
+              lastLat = curLat;
+              lastLng = curLng;
+              res();
+            },
+            () => res(),
+            { timeout: 2500, enableHighAccuracy: true }
+          );
+        });
+      } catch (e) {}
     }
 
     const isUrgent = selectedQuickPriority === 'URGENT' || msgText.toLowerCase().includes('emergency') || msgText.toLowerCase().includes('sos');
 
     const msgPayload = {
       type: 'officer_message',
+      msgId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       unitId: currentSelectedUnit.id,
       unitName: currentSelectedUnit.unitName,
       category: currentSelectedUnit.category,
@@ -1532,24 +1613,153 @@
       phone: currentSelectedUnit.phone,
       message: msgText,
       priority: isUrgent ? 'URGENT' : selectedQuickPriority,
-      latitude: lastKnownPosition ? lastKnownPosition.coords.latitude : 0,
-      longitude: lastKnownPosition ? lastKnownPosition.coords.longitude : 0,
+      latitude: curLat || 0,
+      longitude: curLng || 0,
       timestamp: Date.now()
     };
 
     const msgTopic = `srikakulam_police_tracker/${roomCode}/officer_messages`;
     const generalTopic = `srikakulam_police_tracker/${roomCode}/locations`;
 
-    if (mqttClient && mqttClient.connected) {
-      mqttClient.publish(msgTopic, JSON.stringify(msgPayload), { qos: 1 });
-      mqttClient.publish(generalTopic, JSON.stringify(msgPayload), { qos: 0 });
-    }
+    try {
+      const client = await ensureMqttConnected(6000);
+      await new Promise((resolve, reject) => {
+        client.publish(msgTopic, JSON.stringify(msgPayload), { qos: 1 }, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        client.publish(generalTopic, JSON.stringify(msgPayload), { qos: 0 });
+      });
 
-    showToast('✅ Message sent to Control Room!');
-    if (input) input.value = '';
-    selectedQuickPriority = 'NORMAL';
+      showToast('âœ… Message Delivered to Control Room!');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
+        setTimeout(() => {
+          btn.innerHTML = origBtnHtml;
+          btn.disabled = false;
+        }, 2200);
+      }
+      if (input) input.value = '';
+      selectedQuickPriority = 'NORMAL';
+      playOfficerChime();
+    } catch (err) {
+      console.error('Failed to send officer message:', err);
+      alert('Message Delivery Failed: ' + err.message + '\n\nPlease check mobile data / WiFi and tap Send again.');
+      if (btn) {
+        btn.innerHTML = origBtnHtml;
+        btn.disabled = false;
+      }
+    }
   };
 
+  // Handle Incoming Control Room Reply on Officer Phone
+  window.handleIncomingControlReply = function(payload) {
+    if (!payload || !payload.replyMessage) return;
+
+    if (payload.unitId && currentSelectedUnit && payload.unitId !== currentSelectedUnit.id && payload.unitId !== 'ALL') {
+      return;
+    }
+
+    playControlReplySiren();
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate([300, 150, 300, 150, 500]); } catch (e) {}
+    }
+
+    const popup = document.getElementById('officer-reply-popup');
+    const msgEl = document.getElementById('popup-reply-msg');
+    const timeEl = document.getElementById('popup-reply-time');
+    if (popup && msgEl) {
+      msgEl.innerText = `"${payload.replyMessage}"`;
+      if (timeEl) timeEl.innerText = new Date(payload.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      popup.style.display = 'flex';
+    }
+
+    appendControlReplyToCard(payload);
+  };
+
+  window.closeOfficerReplyPopup = function() {
+    const popup = document.getElementById('officer-reply-popup');
+    if (popup) popup.style.display = 'none';
+  };
+
+  function appendControlReplyToCard(payload) {
+    const box = document.getElementById('control-replies-box');
+    const list = document.getElementById('control-replies-list');
+    if (!box || !list) return;
+
+    box.style.display = 'block';
+
+    const item = document.createElement('div');
+    item.style.cssText = 'background: rgba(30, 58, 138, 0.4); border-left: 3px solid #38bdf8; padding: 8px 10px; border-radius: 6px; font-size: 11.5px; color: #f1f5f9; line-height: 1.4;';
+    const timeStr = new Date(payload.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    item.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+        <span style="font-weight:bold; color:#7dd3fc; font-size:11px;"><i class="fa-solid fa-headset"></i> Control Room</span>
+        <span style="font-size:10px; color:#94a3b8;">${timeStr}</span>
+      </div>
+      <div style="color:#ffffff; font-weight:600;">"${escapeHtml(payload.replyMessage)}"</div>
+    `;
+
+    list.insertBefore(item, list.firstChild);
+  }
+
+  function playOfficerChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.setValueAtTime(880, now + 0.12);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } catch (e) {}
+  }
+
+  function playControlReplySiren() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        const st = now + (i * 0.35);
+        osc.frequency.setValueAtTime(650, st);
+        osc.frequency.exponentialRampToValueAtTime(1200, st + 0.18);
+        osc.frequency.exponentialRampToValueAtTime(650, st + 0.34);
+        gain.gain.setValueAtTime(0.35, st);
+        gain.gain.exponentialRampToValueAtTime(0.01, st + 0.34);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(st);
+        osc.stop(st + 0.35);
+      }
+    } catch (e) {}
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  
   // Prevent back button exit when tracking
   window.history.pushState({ page: 'officer' }, '', window.location.href);
   window.addEventListener('popstate', () => {
@@ -1565,5 +1775,26 @@
   }
 </script>
 
+  <!-- Modal Popup for New Incoming Control Room Reply on Officer Phone -->
+  <div id="officer-reply-popup" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(10, 17, 40, 0.88); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #0f172a; border: 2px solid #38bdf8; box-shadow: 0 10px 30px rgba(0,0,0,0.85); border-radius: 14px; width: 100%; max-width: 360px; padding: 18px; color: white;">
+      <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 12px;">
+        <div style="width: 38px; height: 38px; border-radius: 50%; background: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: bold; color: #38bdf8;">Police Control Room</div>
+          <div style="font-size: 11px; color: #94a3b8;" id="popup-reply-time">Just now</div>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Reply from Control Room:</div>
+      <div style="background: #1e293b; border-left: 3.5px solid #38bdf8; padding: 12px; border-radius: 6px; font-size: 13.5px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 16px;" id="popup-reply-msg">
+        Reply content
+      </div>
+      <button type="button" onclick="closeOfficerReplyPopup()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-check"></i> Acknowledge (à°§à±ƒà°µà±€à°•à°°à°¿à°‚à°šà°‚à°¡à°¿)
+      </button>
+    </div>
+  </div>
 </body>
 </html>
