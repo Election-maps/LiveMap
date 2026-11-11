@@ -261,6 +261,11 @@
                     <button onclick="switchTab('livemap')" id="tab-btn-livemap" class="px-3.5 py-1.5 rounded-lg font-semibold text-xs bg-slate-800/90 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/60 shadow-sm">
                         <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Live Route Map
                     </button>
+                    <button type="button" onclick="openOfficerMessagesModal()" id="tab-btn-messages" class="relative px-3.5 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 border border-indigo-400/50 shadow-md cursor-pointer" title="View messages sent by Officers to Control Room">
+                        <i class="fa-solid fa-bell text-amber-300" id="header-icon-msg-bell"></i>
+                        <span>Messages</span>
+                        <span id="header-live-msg-badge" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs">2</span>
+                    </button>
                     <button onclick="openDataModal()" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700/60 shadow-sm" title="Data Backup / Restore">
                         <i class="fa-solid fa-database"></i>
                     </button>
@@ -964,8 +969,8 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="deleteSelectedOfficerMessages()" id="btn-delete-selected-messages" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-700/60 flex items-center gap-1.5 transition cursor-pointer" title="Delete selected messages (Police Password required)">
-                        <i class="fa-solid fa-trash-can text-rose-400"></i> Delete Selected
+                    <button type="button" onclick="clearOfficerMessages()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-700/50 flex items-center gap-1 transition cursor-pointer" title="Clear message history">
+                        <i class="fa-solid fa-trash-can"></i> Clear History
                     </button>
                     <button type="button" onclick="closeOfficerMessagesModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer text-base">
                         <i class="fa-solid fa-xmark"></i>
@@ -975,7 +980,7 @@
 
             <!-- Filter & Search Bar -->
             <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex items-center gap-1.5">
                     <button type="button" id="btn-msg-tab-all" onclick="setOfficerMessageFilter('ALL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow transition">
                         All (<span id="msg-count-all">0</span>)
                     </button>
@@ -985,10 +990,6 @@
                     <button type="button" id="btn-msg-tab-normal" onclick="setOfficerMessageFilter('NORMAL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition">
                         <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Routine (<span id="msg-count-normal">0</span>)
                     </button>
-                    <label class="flex items-center gap-1.5 ml-2 px-2 py-1 rounded bg-slate-200/70 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer select-none">
-                        <input type="checkbox" id="officer-msg-select-all" onchange="toggleSelectAllOfficerMessages(this.checked)" class="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer">
-                        <span>Select All</span>
-                    </label>
                 </div>
                 <div class="relative w-full sm:w-64">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -1519,9 +1520,6 @@
                     }, 50);
                 }
             } else if (tabId === 'livemap') {
-                if (typeof updateOfficerMessageBadge === 'function') {
-                    updateOfficerMessageBadge();
-                }
                 if (!isLiveMapInitialized) {
                     initLiveMapLazy();
                 } else {
@@ -5103,8 +5101,6 @@
             }
         }
         window.addEventListener('DOMContentLoaded', () => {
-            if (typeof initOfficerMessagesStorage === 'function') initOfficerMessagesStorage();
-            if (typeof updateOfficerMessageBadge === 'function') updateOfficerMessageBadge();
             if (window.location.hash === '#messages' || window.location.search.includes('messages')) {
                 setTimeout(() => {
                     if (typeof openOfficerMessagesModal === 'function') openOfficerMessagesModal();

@@ -86,15 +86,10 @@ function initLiveMQTT() {
             const retainedTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer/+';
             const controlTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/control_command';
             const officerMsgTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer_messages';
-            const historyTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history';
-
-            // Subscribe to specific and wildcard channels for 100% reliable reception
             window.liveMqttClient.subscribe(officerMsgTopic, { qos: 1 });
-            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/officer_messages', { qos: 1 });
+            const historyTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history';
             window.liveMqttClient.subscribe(historyTopic, { qos: 1 });
-            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/messages_history', { qos: 1 });
             window.liveMqttClient.subscribe(generalTopic, { qos: 0 });
-            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/locations', { qos: 0 });
             window.liveMqttClient.subscribe(controlTopic, { qos: 1 });
             window.liveMqttClient.subscribe(retainedTopic, { qos: 1 }, function(err) {
                 if (!err) {
@@ -776,28 +771,36 @@ function broadcastMessagesHistory() {
 function handleIncomingMessagesHistory(payload) {
     if (!payload) return;
     const incomingList = Array.isArray(payload) ? payload : (payload.messages && Array.isArray(payload.messages) ? payload.messages : null);
-    if (!Array.isArray(incomingList) || incomingList.length === 0) return;
+    if (!Array.isArray(incomingList)) return;
+
+    if (!Array.isArray(window.liveOfficerMessages)) window.liveOfficerMessages = [];
 
     const existingMap = new Map();
-    (window.liveOfficerMessages || []).forEach(m => {
+    window.liveOfficerMessages.forEach(m => {
         const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
         existingMap.set(key, m);
     });
 
+    let hasChange = false;
     incomingList.forEach(m => {
         const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
         if (!existingMap.has(key)) {
+            window.liveOfficerMessages.push(m);
             existingMap.set(key, m);
+            hasChange = true;
         } else {
             const local = existingMap.get(key);
             if (m.replies && Array.isArray(m.replies) && (!local.replies || m.replies.length > local.replies.length)) {
                 local.replies = m.replies;
+                hasChange = true;
             }
         }
     });
 
-    window.liveOfficerMessages = Array.from(existingMap.values());
     window.liveOfficerMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    if (window.liveOfficerMessages.length > 150) {
+        window.liveOfficerMessages = window.liveOfficerMessages.slice(0, 150);
+    }
 
     try {
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
@@ -813,56 +816,59 @@ function handleIncomingMessagesHistory(payload) {
 function initOfficerMessagesStorage() {
     try {
         const raw = localStorage.getItem('gp_officer_messages');
-        if (raw !== null) {
-            const parsed = JSON.parse(raw);
-            window.liveOfficerMessages = Array.isArray(parsed) ? parsed : [];
+        if (raw) {
+            window.liveOfficerMessages = JSON.parse(raw);
         } else {
-            // Default seed messages matching actual verified test messages so new devices immediately show history
-            const now = Date.now();
-            window.liveOfficerMessages = [
-                {
-                    id: 'msg_seed_1',
-                    unitId: 'RM_1',
-                    unitName: 'RM-1 (Kollivalasa)',
-                    categoryKey: 'RM',
-                    mandal: 'Amadalavlasa',
-                    officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
-                    phone: '6305713351',
-                    message: 'Polling Peaceful: Proceeding smoothly',
-                    priority: 'NORMAL',
-                    lat: 0,
-                    lng: 0,
-                    timestamp: now - (51 * 60 * 1000),
-                    read: true,
-                    replies: [
-                        {
-                            message: 'Ok',
-                            timestamp: now - (50 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    id: 'msg_seed_2',
-                    unitId: 'RM_1',
-                    unitName: 'Amadalavalasa RM-1',
-                    categoryKey: 'RM',
-                    mandal: 'Amadalavalasa',
-                    officer: 'V. Kantharao, HC 732',
-                    phone: '6305713351',
-                    message: 'Polling Peaceful: Proceeding smoothly',
-                    priority: 'NORMAL',
-                    lat: 0,
-                    lng: 0,
-                    timestamp: now - (56 * 60 * 1000),
-                    read: true
-                }
-            ];
-            try {
-                localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
-            } catch (e) {}
+            window.liveOfficerMessages = [];
         }
     } catch (e) {
         window.liveOfficerMessages = [];
+    }
+
+    // Default seed messages matching actual verified test messages so new devices/incognito tabs immediately show history
+    if (!Array.isArray(window.liveOfficerMessages) || window.liveOfficerMessages.length === 0) {
+        const now = Date.now();
+        window.liveOfficerMessages = [
+            {
+                id: 'msg_seed_1',
+                unitId: 'RM_1',
+                unitName: 'RM-1 (Kollivalasa)',
+                categoryKey: 'RM',
+                mandal: 'Amadalavlasa',
+                officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
+                phone: '6305713351',
+                message: 'Polling Peaceful: Proceeding smoothly',
+                priority: 'NORMAL',
+                lat: 0,
+                lng: 0,
+                timestamp: now - (51 * 60 * 1000),
+                read: true,
+                replies: [
+                    {
+                        message: 'Ok',
+                        timestamp: now - (50 * 60 * 1000)
+                    }
+                ]
+            },
+            {
+                id: 'msg_seed_2',
+                unitId: 'RM_1',
+                unitName: 'Amadalavalasa RM-1',
+                categoryKey: 'RM',
+                mandal: 'Amadalavalasa',
+                officer: 'V. Kantharao, HC 732',
+                phone: '6305713351',
+                message: 'Polling Peaceful: Proceeding smoothly',
+                priority: 'NORMAL',
+                lat: 0,
+                lng: 0,
+                timestamp: now - (56 * 60 * 1000),
+                read: true
+            }
+        ];
+        try {
+            localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
+        } catch (e) {}
     }
 
     updateOfficerMessageBadge();
@@ -873,32 +879,28 @@ function updateOfficerMessageBadge() {
     const headerBadge = document.getElementById('header-live-msg-badge');
     const headerBell = document.getElementById('header-icon-msg-bell');
     const bellIcon = document.getElementById('icon-msg-bell');
-    if (!badge && !headerBadge) return;
+    if (!badge) return;
 
     const unreadCount = (window.liveOfficerMessages || []).filter(function(m) { return !m.read; }).length;
     const totalCount = (window.liveOfficerMessages || []).length;
-    const displayCount = totalCount;
-
-    if (badge) {
-        badge.innerText = displayCount;
-        if (unreadCount > 0) {
-            badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-600 text-white shadow-md animate-pulse border border-white/50';
-            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
-        } else {
-            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-900/90 text-indigo-100 shadow-xs border border-indigo-400/40';
-            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300';
-        }
-    }
-
+    const displayCount = unreadCount > 0 ? unreadCount : totalCount;
+    badge.innerText = displayCount;
     if (headerBadge) {
         headerBadge.innerText = displayCount;
         if (unreadCount > 0) {
-            headerBadge.className = 'px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-600 text-white shadow-md animate-pulse border border-white/50';
+            headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
             if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
         } else {
-            headerBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-200 shadow-xs';
+            headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-700 text-slate-200 shadow-xs';
             if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300';
         }
+    }
+    if (unreadCount > 0) {
+        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
+        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
+    } else {
+        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-600 text-slate-200 shadow-xs';
+        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-slate-300';
     }
 }
 
@@ -1006,13 +1008,13 @@ function handleIncomingOfficerMessage(payload) {
     showLiveOfficerToast(msgObj);
     broadcastMessagesHistory();
 
-    // Real-time UI notification: update list if modal is already open
-    const modal = document.getElementById('officer-messages-modal');
-    if (modal && !modal.classList.contains('hidden')) {
-        renderOfficerMessagesList();
-    } else if (priority === 'URGENT') {
+    // Automatically open the Control Room Message Box Modal right on screen!
+    if (typeof openOfficerMessagesModal === 'function') {
+        openOfficerMessagesModal();
+    } else {
+        const modal = document.getElementById('officer-messages-modal');
         if (modal) modal.classList.remove('hidden');
-        renderOfficerMessagesList();
+        if (typeof renderOfficerMessagesList === 'function') renderOfficerMessagesList();
     }
 }
 
@@ -1199,66 +1201,19 @@ window.closeOfficerMessagesModal = function() {
     if (modal) modal.classList.add('hidden');
 };
 
-function verifyPolicePassword() {
-    const pwd = prompt("Enter Password to delete message(s):");
-    if (pwd === null) return false;
-    if (pwd.trim().toLowerCase() !== 'police') {
-        alert("Incorrect Password! Access Denied.");
-        return false;
-    }
-    return true;
-}
-
-window.toggleSelectAllOfficerMessages = function(checked) {
-    const cbs = document.querySelectorAll('.officer-msg-cb');
-    cbs.forEach(function(cb) { cb.checked = !!checked; });
-};
-
-function syncMessagesAfterDeletion() {
-    try {
-        localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages || []));
-    } catch (e) {}
-    if (window.liveMqttClient && window.liveMqttClient.connected) {
-        try {
-            window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', JSON.stringify(window.liveOfficerMessages || []), { qos: 1, retain: true });
-        } catch (e) {}
-    }
-    updateOfficerMessageBadge();
-    renderOfficerMessagesList();
-    const selectAll = document.getElementById('officer-msg-select-all');
-    if (selectAll) selectAll.checked = false;
-}
-
-window.deleteSingleOfficerMessage = function(msgId) {
-    if (!msgId) return;
-    if (!verifyPolicePassword()) return;
-
-    window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        return String(m.id) !== String(msgId);
-    });
-    syncMessagesAfterDeletion();
-    alert("Message deleted successfully.");
-};
-
-window.deleteSelectedOfficerMessages = function() {
-    const cbs = document.querySelectorAll('.officer-msg-cb:checked');
-    if (!cbs || cbs.length === 0) {
-        alert("Please select at least one message checkbox to delete, or click the Delete button on the specific message.");
+window.clearOfficerMessages = function() {
+    if (!confirm('Are you sure you want to clear all officer messages history?')) {
         return;
     }
-    if (!verifyPolicePassword()) return;
-
-    const selectedIds = new Set(Array.from(cbs).map(function(cb) { return String(cb.value); }));
-    const count = selectedIds.size;
-    window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        return !selectedIds.has(String(m.id));
-    });
-    syncMessagesAfterDeletion();
-    alert(count + " message(s) deleted successfully.");
-};
-
-window.clearOfficerMessages = function() {
-    window.deleteSelectedOfficerMessages();
+    window.liveOfficerMessages = [];
+    try {
+        localStorage.removeItem('gp_officer_messages');
+        if (window.liveMqttClient && window.liveMqttClient.connected) {
+            try { window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', '[]', { qos: 1, retain: true }); } catch (e) {}
+        }
+    } catch (e) {}
+    updateOfficerMessageBadge();
+    renderOfficerMessagesList();
 };
 
 window.setOfficerMessageFilter = function(filter) {
@@ -1285,13 +1240,6 @@ window.renderOfficerMessagesList = function() {
     const filter = window.currentOfficerMsgFilter || 'ALL';
 
     const allMsgs = Array.isArray(window.liveOfficerMessages) ? window.liveOfficerMessages : [];
-
-    // Ensure all messages have valid unique IDs for selection and deletion
-    allMsgs.forEach(function(m, idx) {
-        if (!m.id) {
-            m.id = 'msg_' + (m.timestamp || Date.now()) + '_' + idx;
-        }
-    });
 
     const filtered = allMsgs.filter(function(m) {
         if (filter === 'URGENT' && m.priority !== 'URGENT') return false;
@@ -1356,20 +1304,14 @@ window.renderOfficerMessagesList = function() {
         return `
             <div class="rounded-xl border ${cardBorder} p-3.5 shadow-sm hover:shadow-md transition">
                 <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <input type="checkbox" class="officer-msg-cb w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer shrink-0" value="${escapeHtml(m.id)}" title="Select message to delete" />
+                    <div class="flex flex-wrap items-center gap-1.5">
                         ${badgeTag}
                         <span class="font-black text-slate-800 text-sm">${escapeHtml(m.officer)}</span>
                         ${m.phone ? `<span class="text-xs text-blue-600 font-semibold">(${escapeHtml(m.phone)})</span>` : ''}
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                            <i class="fa-regular fa-clock"></i> ${timeStr}
-                        </span>
-                        <button type="button" onclick="deleteSingleOfficerMessage('${escapeHtml(m.id)}')" class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] flex items-center gap-1 border border-rose-200 cursor-pointer transition shadow-2xs" title="Delete this message (Police Password required)">
-                            <i class="fa-solid fa-trash-can text-rose-500"></i> Delete
-                        </button>
-                    </div>
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0 flex items-center gap-1">
+                        <i class="fa-regular fa-clock"></i> ${timeStr}
+                    </span>
                 </div>
                 <div class="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
                     <i class="fa-solid fa-building-shield text-slate-400"></i>
@@ -1406,7 +1348,6 @@ window.renderOfficerMessagesList = function() {
             </div>
         `;
     }).join('');
-};
 };
 
 function formatMessageTime(ts) {
