@@ -674,17 +674,17 @@
                         </select>
                     </div>
                     <!-- Search PSL / Village -->
-                    <div class="flex-1 min-w-[200px] max-w-md shrink-0">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                    <div class="flex-1 min-w-[170px] max-w-sm">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">
                             <i class="fa-solid fa-magnifying-glass text-blue-600 mr-0.5"></i> Search Village / School
                         </label>
                         <div class="relative w-full" id="live-map-search-container">
-                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" onkeydown="if(event.key==='Enter'){ applyLiveMapFilters(); hideSuggestions('live-psl-suggestions'); }" placeholder="Search Village or School (e.g. Kollivalasa, MPP School)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 pr-7 bg-white font-medium shadow-2xs">
+                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" onkeydown="if(event.key==='Enter'){ applyLiveMapFilters(); hideSuggestions('live-psl-suggestions'); }" placeholder="Type PSL (e.g. MPP School)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 pr-7 bg-white">
                             <button type="button" onclick="clearLiveMapSearch()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
-                            <!-- Dropdown List of Suggestions -->
-                            <div id="live-psl-suggestions" class="hidden absolute left-0 top-full mt-1 w-full min-w-[340px] sm:min-w-[460px] bg-white border border-slate-300 rounded-xl shadow-2xl z-[2500] max-h-80 overflow-y-auto divide-y divide-slate-100 ring-1 ring-slate-900/10">
+                            <!-- Dropdown Suggestions on Map -->
+                            <div id="live-psl-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-72 overflow-y-auto divide-y divide-slate-100">
                             </div>
                         </div>
                     </div>
@@ -3660,39 +3660,34 @@
                         lat: s.latitude,
                         lng: s.longitude
                     });
-                    if (matches.length >= 40) break;
+                    if (matches.length >= 35) break;
                 }
             }
             if (matches.length === 0) {
-                box.innerHTML = `<div class="p-3 text-center text-xs text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-slate-400 mr-1.5"></i>No matching Village or Polling Station found</div>`;
+                box.innerHTML = `<div class="p-2.5 text-center text-xs text-slate-400 font-medium">No matching PSL found</div>`;
                 box.classList.remove('hidden');
                 return;
             }
             const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapeRegex(q)})`, 'gi');
-            let html = `<div class="px-3 py-1.5 bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-700 uppercase flex justify-between items-center sticky top-0 z-10 shadow-xs">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-list-check text-blue-600"></i> Matching Locations (${matches.length})</span>
-                <span class="text-[9px] text-slate-400 font-normal">Click to Select</span>
+            let html = `<div class="px-2.5 py-1.5 bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase flex justify-between items-center sticky top-0 z-10 shadow-xs">
+                <span class="flex items-center gap-1"><i class="fa-solid fa-list-check text-blue-600"></i> NAME OF THE PSL (${matches.length})</span>
+                <span class="text-[9px] text-slate-400">(CLICK TO SELECT)</span>
             </div>`;
             matches.forEach(m => {
                 const highlightedPsl = m.psl.replace(regex, '<mark class="bg-amber-200 text-slate-900 font-bold px-0.5 rounded">$1</mark>');
-                const highlightedVillage = m.village ? m.village.replace(regex, '<mark class="bg-amber-200 text-slate-900 font-bold px-0.5 rounded">$1</mark>') : '';
                 const safePsl = m.psl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 html += `
-                    <div onclick="${selectFnName}('${safePsl}', '${m.route_no || ''}', '${m.psname || ''}', '${m.lat || ''}', '${m.lng || ''}')" class="p-2.5 hover:bg-blue-50 cursor-pointer transition text-left group border-b border-slate-100 last:border-b-0">
-                        <div class="font-bold text-xs text-slate-900 group-hover:text-blue-700 leading-snug flex items-center gap-1.5">
-                            <i class="fa-solid fa-school text-blue-600 group-hover:text-blue-700 text-xs shrink-0"></i>
-                            <span>${highlightedPsl}</span>
+                    <div onclick="${selectFnName}('${safePsl}', '${m.route_no || ''}', '${m.psname || ''}', '${m.lat || ''}', '${m.lng || ''}')" class="p-2 hover:bg-blue-50 cursor-pointer transition text-left group border-b border-slate-100 last:border-b-0">
+                        <div class="font-semibold text-xs text-slate-800 group-hover:text-blue-700 leading-tight">
+                            <i class="fa-solid fa-school text-slate-400 group-hover:text-blue-500 mr-1 text-[10px]"></i>
+                            ${highlightedPsl}
                         </div>
-                        <div class="text-[11px] text-slate-600 mt-1 flex flex-wrap items-center gap-1.5">
-                            <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                                <i class="fa-solid fa-building-shield mr-0.5"></i>${m.psname} PS
-                            </span>
-                            <span class="bg-blue-100 border border-blue-200 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                                <i class="fa-solid fa-route mr-0.5"></i>Route ${m.route_no}
-                            </span>
-                            ${m.village ? `<span class="text-slate-600 font-medium text-[11px]"><i class="fa-solid fa-location-dot text-rose-500 mr-0.5 text-[10px]"></i>Village: ${highlightedVillage}</span>` : ''}
-                            ${m.code ? `<span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.5 rounded">PS No: ${m.code}</span>` : ''}
+                        <div class="text-[10px] text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                            <span class="font-bold text-slate-700">${m.psname} PS</span>
+                            <span class="text-slate-400 text-[8px]">&#9670;</span>
+                            <span class="bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold text-[9px]">Route ${m.route_no}</span>
+                            ${m.code ? `<span class="text-slate-400 text-[8px]">&#9670;</span><span class="font-mono text-[9px] text-slate-600">Code: ${m.code}</span>` : ''}
                         </div>
                     </div>
                 `;
