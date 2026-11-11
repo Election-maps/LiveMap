@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -490,43 +490,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Active Route & Journey Banner (Visible when route, PS, or village/station is searched/filtered) -->
-                <div id="active-route-banner" class="hidden mt-2 p-2.5 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200 rounded-lg text-blue-900 shadow-sm flex flex-wrap items-center justify-between gap-2.5">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="bg-blue-600 text-white font-bold px-2.5 py-0.5 rounded text-[11px] shadow-sm flex items-center gap-1" id="banner-route-tag">
-                            <i class="fa-solid fa-route"></i> ROUTE
-                        </span>
-                        
-                        <!-- From & To Journey Indicators -->
-                        <div class="flex flex-wrap items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-blue-200 text-xs shadow-xs">
-                            <span class="font-bold text-rose-700 flex items-center gap-1">
-                                <i class="fa-solid fa-flag text-rose-600"></i> FROM:
-                            </span>
-                            <span class="font-bold text-slate-800" id="banner-from-ps">Police Station</span>
-                            
-                            <i class="fa-solid fa-arrow-right text-blue-500 mx-1"></i>
-                            
-                            <span class="font-bold text-emerald-700 flex items-center gap-1">
-                                <i class="fa-solid fa-location-dot text-emerald-600"></i> TO:
-                            </span>
-                            <span class="font-bold text-blue-950 truncate max-w-xs" id="banner-to-location">Polling Station / Village</span>
-                        </div>
-                    </div>
-                    <!-- Distance & Navigation -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="bg-rose-50 border border-rose-300 text-rose-800 px-2.5 py-0.5 rounded text-xs font-bold flex items-center gap-1.5 shadow-xs">
-                            <i class="fa-solid fa-road text-rose-600"></i>
-                            <span id="banner-distance-text">Distance: 0.00 KM</span>
-                        </div>
-                        <span class="text-xs text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 font-medium" id="banner-staff-details">
-                            Route Inchage: -
-                        </span>
-                        <a id="banner-nav-link" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 transition shadow-sm">
-                            <i class="fa-solid fa-diamond-turn-right"></i> Navigate (Google Maps)
-                        </a>
-                    </div>
-                </div>
-            </div>
+                            </div>
             <!-- Leaflet Map Container -->
             <div class="relative w-full h-[calc(100vh-175px)] min-h-[500px] rounded-lg shadow-md border border-slate-200 overflow-hidden bg-slate-200">
                 <div id="main-map" class="w-full h-full"></div>
@@ -2031,60 +1995,9 @@
                     routeStaffInfo[rKey].stations.push(s);
                 }
             });
-            // Update Active Route & Journey Banner (Visible when route, PS, or village/station is searched/filtered)
+            // Active Route Banner disabled in Route Map per user request
             const banner = document.getElementById('active-route-banner');
-            if (filteredMapStations.length > 0 && (selectedPS || selectedRoute || searchText)) {
-                banner.classList.remove('hidden');
-                
-                const firstStation = filteredMapStations[0];
-                const psName = selectedPS || firstStation.psname || 'Police Station';
-                const routeNo = selectedRoute || firstStation.route_no || '-';
-                
-                document.getElementById('banner-route-tag').innerHTML = `<i class="fa-solid fa-route mr-1"></i>ROUTE ${routeNo}`;
-                document.getElementById('banner-from-ps').innerText = `${psName} PS`;
-                
-                if (filteredMapStations.length === 1) {
-                    document.getElementById('banner-to-location').innerText = firstStation.polling_station_location || 'Polling Station';
-                    const dist = firstStation.distance_from_ps_kms ? `${firstStation.distance_from_ps_kms} KM` : 'N/A';
-                    document.getElementById('banner-distance-text').innerText = `Distance: ${dist} from ${psName} PS`;
-                } else {
-                    document.getElementById('banner-to-location').innerText = `${firstStation.polling_station_location} (+${filteredMapStations.length - 1} more)`;
-                    const distances = filteredMapStations.map(s => parseFloat(s.distance_from_ps_kms)).filter(d => !isNaN(d) && d > 0);
-                    if (distances.length > 0) {
-                        const minDist = Math.min(...distances);
-                        const maxDist = Math.max(...distances);
-                        document.getElementById('banner-distance-text').innerText = minDist === maxDist 
-                            ? `Distance: ${minDist} KM` 
-                            : `Distance: ${minDist} - ${maxDist} KM (${filteredMapStations.length} PS)`;
-                    } else {
-                        document.getElementById('banner-distance-text').innerText = `${filteredMapStations.length} Polling Stations`;
-                    }
-                }
-                
-                const bannerParts = [];
-                const rInc = firstStation.route_incharge || firstStation.route_staff;
-                if (rInc) bannerParts.push(`<b>Route Inchage:</b> ${rInc}`);
-                if (firstStation.striking_force_incharge) bannerParts.push(`<b>Striking force Incharge:</b> ${firstStation.striking_force_incharge}`);
-                if (firstStation.special_striking_force_incharge) bannerParts.push(`<b>Special Stricking force  Incharge:</b> ${firstStation.special_striking_force_incharge}`);
-                
-                document.getElementById('banner-staff-details').innerHTML = bannerParts.length > 0 
-                    ? bannerParts.join(' | ') 
-                    : '<b>Route Inchage:</b> Not Assigned';
-                
-                const fLat = parseFloat(firstStation.latitude);
-                const fLng = parseFloat(firstStation.longitude);
-                const navLink = document.getElementById('banner-nav-link');
-                if (navLink) {
-                    if (!isNaN(fLat) && !isNaN(fLng) && fLat !== 0 && fLng !== 0) {
-                        navLink.href = `https://www.google.com/maps/dir/?api=1&destination=${fLat},${fLng}`;
-                        navLink.classList.remove('hidden');
-                    } else {
-                        navLink.classList.add('hidden');
-                    }
-                }
-            } else {
-                banner.classList.add('hidden');
-            }
+            if (banner) banner.classList.add('hidden');
             // Draw road routes whenever toggled (both for individual PS and district-wide All PS view)
             const canDrawRoutes = document.getElementById('map-toggle-routes').checked;
             if (canDrawRoutes && Object.keys(routeGroups).length > 0) {
