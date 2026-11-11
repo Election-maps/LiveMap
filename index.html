@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1871,23 +1871,42 @@
             if (!rawQuery) return true;
             const cleanQ = rawQuery.replace(/\s*[\(\[].*$/, '').trim().toLowerCase();
             if (!cleanQ) return true;
+            const normCleanQ = cleanQ.replace(/[,.\(\)\-\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!normCleanQ) return true;
+
             const loc = (s.polling_station_location || '').toLowerCase();
-            const ps = (s.psname || '').toLowerCase();
-            const mandal = (s.mandal_zptc_segment || '').toLowerCase();
-            const mptc = (s.mptc_segment || '').toLowerCase();
-            const code = String(s.code || '').toLowerCase();
-            const staff = (s.route_staff || '').toLowerCase();
-            const full = `${loc} ${ps} ${mandal} ${mptc} ${code} ${staff}`;
-            if (full.includes(cleanQ)) return true;
-            const tokens = cleanQ.split(/\s+/).filter(t => t.length > 0);
+            const normLoc = loc.replace(/[,.\(\)\-\/]/g, ' ').replace(/\s+/g, ' ').trim();
+
+            // 1. Direct or normalized match on Polling Station Location (PSL)
+            if (normLoc === normCleanQ || loc === cleanQ) return true;
+            if (normLoc.includes(normCleanQ) || loc.includes(cleanQ)) return true;
+
+            // 2. Token-based matching strictly against Polling Station Location
+            const tokens = normCleanQ.split(/\s+/).filter(t => t.length > 0);
             if (tokens.length > 1) {
-                return tokens.every(t => full.includes(t) || (t.length >= 5 && full.includes(t.slice(0, -1))));
+                // When multiple words are provided (e.g. "Mpp School, Gokarnapalli"), all words MUST exist inside the PSL name!
+                if (tokens.every(t => normLoc.includes(t) || (t.length >= 5 && normLoc.includes(t.slice(0, -1))))) {
+                    return true;
+                }
             } else if (tokens.length === 1) {
                 const t = tokens[0];
-                if (full.includes(t)) return true;
-                if (t.length >= 5 && full.includes(t.slice(0, -1))) return true;
-                if (t.length >= 6 && full.includes(t.slice(0, -2))) return true;
+                if (normLoc.includes(t)) return true;
+                if (t.length >= 5 && normLoc.includes(t.slice(0, -1))) return true;
+                if (t.length >= 6 && normLoc.includes(t.slice(0, -2))) return true;
             }
+
+            // 3. Fallback: only if PSL didn't match, check village/staying point or PS name
+            const village = (s.staying_point || s.mptc_segment || '').toLowerCase();
+            const normVillage = village.replace(/[,.\(\)\-\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            const ps = (s.psname || '').toLowerCase();
+
+            if (tokens.length === 1) {
+                const t = tokens[0];
+                if (normVillage.includes(t) || ps.includes(t)) return true;
+            } else if (normVillage.includes(normCleanQ) || ps.includes(cleanQ)) {
+                return true;
+            }
+
             return false;
         }
         function applyMapFilters() {
@@ -2005,7 +2024,11 @@
             }
             // Tightly auto-zoom directly to the selected stations!
             if (bounds.length > 0) {
-                mainMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                if (bounds.length === 1) {
+                    mainMap.setView(bounds[0], 16);
+                } else {
+                    mainMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                }
             }
             // If user searched for a specific village or school and got 1 to 4 matches, auto-open popup on the first match
             if (searchText && filteredMapStations.length >= 1 && filteredMapStations.length <= 4 && bounds.length > 0) {
@@ -3523,11 +3546,25 @@
                 renderPslSuggestions(input.value, 'map-psl-suggestions', 'selectMapPslSuggestion');
             }
         }
-        function selectMapPslSuggestion(pslName) {
+        function selectMapPslSuggestion(pslName, routeNo, psName, lat, lng) {
             const input = document.getElementById('map-search-text');
             if (input) input.value = pslName;
             hideSuggestions('map-psl-suggestions');
             applyMapFilters();
+            const fLat = parseFloat(lat);
+            const fLng = parseFloat(lng);
+            if (!isNaN(fLat) && !isNaN(fLng) && mainMap) {
+                mainMap.setView([fLat, fLng], 16);
+                const st = allStations.find(s => (s.polling_station_location || '').trim().toLowerCase() === (pslName || '').trim().toLowerCase());
+                if (st) {
+                    setTimeout(() => {
+                        L.popup({ maxWidth: 440, minWidth: 320 })
+                            .setLatLng([fLat, fLng])
+                            .setContent(buildStationPopupHtml(st))
+                            .openOn(mainMap);
+                    }, 250);
+                }
+            }
         }
         function hideSuggestions(boxId) {
             const box = document.getElementById(boxId);
@@ -4669,7 +4706,9 @@
             updateLiveActiveRouteBanner(selectedPS, selectedRoute, searchText, filteredLiveMapStations);
             // Fit bounds
             if (bounds.length > 0) {
-                if (searchText || selectedRoute) {
+                if (bounds.length === 1) {
+                    liveMap.setView(bounds[0], 16);
+                } else if (searchText || selectedRoute) {
                     liveMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
                 } else if (selectedPS) {
                     liveMap.fitBounds(bounds, { padding: [30, 30] });
@@ -4929,7 +4968,7 @@
             const fLng = parseFloat(lng);
             if (!isNaN(fLat) && !isNaN(fLng) && liveMap) {
                 liveMap.setView([fLat, fLng], 16);
-                const st = allStations.find(s => (s.polling_station_location || '').trim() === pslName.trim());
+                const st = allStations.find(s => (s.polling_station_location || '').trim().toLowerCase() === (pslName || '').trim().toLowerCase());
                 if (st) {
                     setTimeout(() => {
                         L.popup({ maxWidth: 440, minWidth: 320 })
