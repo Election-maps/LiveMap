@@ -843,11 +843,6 @@ function initOfficerMessagesStorage() {
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
     } catch (e) {}
 }
-        } catch (e) {}
-    }
-
-    updateOfficerMessageBadge();
-}
 
 function updateOfficerMessageBadge() {
     const badge = document.getElementById('live-msg-badge');
