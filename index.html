@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -637,7 +637,7 @@
                         <span id="txt-live-filter-toggle">Hide / Unhide</span>
                     </button>
                 </div>
-                <div id="live-filter-row-inputs" class="flex flex-wrap xl:flex-nowrap items-end gap-1.5 sm:gap-2 overflow-x-auto pb-0.5">
+                <div id="live-filter-row-inputs" class="flex flex-wrap items-end gap-1.5 sm:gap-2 pb-0.5 relative">
                     <!-- Police Station Filter -->
                     <div class="w-36 sm:w-44 shrink-0">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Police Station</label>
@@ -674,17 +674,17 @@
                         </select>
                     </div>
                     <!-- Search PSL / Village -->
-                    <div class="flex-1 min-w-[170px] max-w-sm flex-1 shrink-0">
+                    <div class="flex-1 min-w-[200px] max-w-md shrink-0">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
                             <i class="fa-solid fa-magnifying-glass text-blue-600 mr-0.5"></i> Search Village / School
                         </label>
                         <div class="relative w-full" id="live-map-search-container">
-                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" placeholder="Type PSL (e.g. MPP School)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 pr-7 bg-white">
-                            <button type="button" onclick="clearLiveMapSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
+                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" onkeydown="if(event.key==='Enter'){ applyLiveMapFilters(); hideSuggestions('live-psl-suggestions'); }" placeholder="Search Village or School (e.g. Kollivalasa, MPP School)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 pr-7 bg-white font-medium shadow-2xs">
+                            <button type="button" onclick="clearLiveMapSearch()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
-                            <!-- Suggestions on Map -->
-                            <div id="live-psl-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-2xl z-[1500] max-h-72 overflow-y-auto divide-y divide-slate-100">
+                            <!-- Dropdown List of Suggestions -->
+                            <div id="live-psl-suggestions" class="hidden absolute left-0 top-full mt-1 w-full min-w-[340px] sm:min-w-[460px] bg-white border border-slate-300 rounded-xl shadow-2xl z-[2500] max-h-80 overflow-y-auto divide-y divide-slate-100 ring-1 ring-slate-900/10">
                             </div>
                         </div>
                     </div>
@@ -713,39 +713,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Active Route & Journey Banner -->
-                <div id="live-active-route-banner" class="hidden mt-2 p-2.5 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200 rounded-lg text-blue-900 shadow-sm flex flex-wrap items-center justify-between gap-2.5">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="bg-blue-600 text-white font-bold px-2.5 py-0.5 rounded text-[11px] shadow-sm flex items-center gap-1" id="live-banner-route-tag">
-                            <i class="fa-solid fa-route"></i> ROUTE
-                        </span>
-                        
-                        <div class="flex flex-wrap items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-blue-200 text-xs shadow-xs">
-                            <span class="font-bold text-rose-700 flex items-center gap-1">
-                                <i class="fa-solid fa-flag text-rose-600"></i> FROM:
-                            </span>
-                            <span class="font-bold text-slate-800" id="live-banner-from-ps">Police Station</span>
-                            <i class="fa-solid fa-arrow-right text-blue-500 mx-1"></i>
-                            <span class="font-bold text-emerald-700 flex items-center gap-1">
-                                <i class="fa-solid fa-location-dot text-emerald-600"></i> TO:
-                            </span>
-                            <span class="font-bold text-blue-950 truncate max-w-xs" id="live-banner-to-location">Polling Station / Village</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="bg-rose-50 border border-rose-300 text-rose-800 px-2.5 py-0.5 rounded text-xs font-bold flex items-center gap-1.5 shadow-xs">
-                            <i class="fa-solid fa-road text-rose-600"></i>
-                            <span id="live-banner-distance-text">Distance: 0.00 KM</span>
-                        </div>
-                        <span class="text-xs text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 font-medium" id="live-banner-staff-details">
-                            Route Incharge: -
-                        </span>
-                        <a id="live-banner-nav-link" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 transition shadow-sm">
-                            <i class="fa-solid fa-diamond-turn-right"></i> Navigate (Google Maps)
-                        </a>
-                    </div>
-                </div>
-            </div>
+                            </div>
             <!-- Leaflet Map Container -->
             <div id="live-map-wrapper" class="relative w-full h-[calc(100vh-175px)] min-h-[500px] rounded-lg shadow-md border border-slate-200 overflow-hidden bg-slate-200">
                 <div id="live-map-canvas" class="w-full h-full"></div>
@@ -3666,45 +3634,65 @@
             for (let i = 0; i < allStations.length; i++) {
                 const s = allStations[i];
                 const psl = (s.polling_station_location || '').trim();
-                if (!psl) continue;
+                const village = (s.staying_point || s.mptc_segment || '').trim();
+                const ps = (s.psname || '').trim();
+                const mandal = (s.mandal_zptc_segment || '').trim();
                 const pslLower = psl.toLowerCase();
-                if (pslLower.includes(q) && !seenPsl.has(pslLower)) {
-                    seenPsl.add(pslLower);
+                const villageLower = village.toLowerCase();
+                const psLower = ps.toLowerCase();
+                const mandalLower = mandal.toLowerCase();
+                const codeStr = String(s.code || '').toLowerCase();
+
+                const isMatch = pslLower.includes(q) || villageLower.includes(q) || psLower.includes(q) || mandalLower.includes(q) || codeStr.includes(q);
+                if (!isMatch) continue;
+
+                const uniqueKey = `${pslLower}___${psLower}___${s.route_no || ''}`;
+                if (!seenPsl.has(uniqueKey)) {
+                    seenPsl.add(uniqueKey);
                     matches.push({
-                        psl: psl,
-                        psname: s.psname || '',
+                        psl: psl || village || 'Polling Station',
+                        village: village,
+                        psname: ps,
+                        mandal: mandal,
                         route_no: s.route_no || '',
                         voters: s.no_of_voters || 0,
-                        code: s.code || ''
+                        code: s.code || '',
+                        lat: s.latitude,
+                        lng: s.longitude
                     });
-                    if (matches.length >= 30) break;
+                    if (matches.length >= 40) break;
                 }
             }
             if (matches.length === 0) {
-                box.innerHTML = `<div class="p-2.5 text-center text-xs text-slate-400">????????? PSL ???????????? (No matching PSL found)</div>`;
+                box.innerHTML = `<div class="p-3 text-center text-xs text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-slate-400 mr-1.5"></i>No matching Village or Polling Station found</div>`;
                 box.classList.remove('hidden');
                 return;
             }
             const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapeRegex(q)})`, 'gi');
-            let html = `<div class="px-2.5 py-1.5 bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase flex justify-between items-center sticky top-0 z-10 shadow-xs">
-                <span class="flex items-center gap-1"><i class="fa-solid fa-list-check text-blue-600"></i> Name of the PSL (${matches.length})</span>
-                <span class="text-[9px] text-slate-400">?????? ?????? (Click to Select)</span>
+            let html = `<div class="px-3 py-1.5 bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-700 uppercase flex justify-between items-center sticky top-0 z-10 shadow-xs">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-list-check text-blue-600"></i> Matching Locations (${matches.length})</span>
+                <span class="text-[9px] text-slate-400 font-normal">Click to Select</span>
             </div>`;
             matches.forEach(m => {
                 const highlightedPsl = m.psl.replace(regex, '<mark class="bg-amber-200 text-slate-900 font-bold px-0.5 rounded">$1</mark>');
+                const highlightedVillage = m.village ? m.village.replace(regex, '<mark class="bg-amber-200 text-slate-900 font-bold px-0.5 rounded">$1</mark>') : '';
                 const safePsl = m.psl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 html += `
-                    <div onclick="${selectFnName}('${safePsl}')" class="p-2 hover:bg-blue-50 cursor-pointer transition text-left group border-b border-slate-100 last:border-b-0">
-                        <div class="font-semibold text-xs text-slate-800 group-hover:text-blue-700 leading-tight">
-                            <i class="fa-solid fa-school text-slate-400 group-hover:text-blue-500 mr-1 text-[10px]"></i>
-                            ${highlightedPsl}
+                    <div onclick="${selectFnName}('${safePsl}', '${m.route_no || ''}', '${m.psname || ''}', '${m.lat || ''}', '${m.lng || ''}')" class="p-2.5 hover:bg-blue-50 cursor-pointer transition text-left group border-b border-slate-100 last:border-b-0">
+                        <div class="font-bold text-xs text-slate-900 group-hover:text-blue-700 leading-snug flex items-center gap-1.5">
+                            <i class="fa-solid fa-school text-blue-600 group-hover:text-blue-700 text-xs shrink-0"></i>
+                            <span>${highlightedPsl}</span>
                         </div>
-                        <div class="text-[10px] text-slate-500 mt-1 flex flex-wrap items-center gap-2">
-                            <span class="font-bold text-slate-700">${m.psname} PS</span>
-                            <span>�</span>
-                            <span class="bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold text-[9px]">Route ${m.route_no}</span>
-                            ${m.code ? `<span>�</span><span class="font-mono text-[9px] text-slate-600">Code: ${m.code}</span>` : ''}
+                        <div class="text-[11px] text-slate-600 mt-1 flex flex-wrap items-center gap-1.5">
+                            <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[10px]">
+                                <i class="fa-solid fa-building-shield mr-0.5"></i>${m.psname} PS
+                            </span>
+                            <span class="bg-blue-100 border border-blue-200 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px]">
+                                <i class="fa-solid fa-route mr-0.5"></i>Route ${m.route_no}
+                            </span>
+                            ${m.village ? `<span class="text-slate-600 font-medium text-[11px]"><i class="fa-solid fa-location-dot text-rose-500 mr-0.5 text-[10px]"></i>Village: ${highlightedVillage}</span>` : ''}
+                            ${m.code ? `<span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.5 rounded">PS No: ${m.code}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -4884,56 +4872,9 @@
             }
         }
         function updateLiveActiveRouteBanner(selectedPS, selectedRoute, searchText, stations) {
+            // Disabled in Live Route Map per user request
             const banner = document.getElementById('live-active-route-banner');
-            if (!banner) return;
-            if (stations && stations.length > 0 && (selectedRoute || selectedPS || searchText)) {
-                banner.classList.remove('hidden');
-                const firstStation = stations[0];
-                const psName = selectedPS || firstStation.psname || 'Police Station';
-                const routeNo = selectedRoute || firstStation.route_no || '-';
-
-                const routeTagEl = document.getElementById('live-banner-route-tag');
-                if (routeTagEl) routeTagEl.innerHTML = `<i class="fa-solid fa-route mr-1"></i>ROUTE ${routeNo}`;
-
-                const fromPsEl = document.getElementById('live-banner-from-ps');
-                if (fromPsEl) fromPsEl.innerText = `${psName} PS`;
-
-                const toLocEl = document.getElementById('live-banner-to-location');
-                const distTextEl = document.getElementById('live-banner-distance-text');
-
-                if (stations.length === 1) {
-                    if (toLocEl) toLocEl.innerText = firstStation.polling_station_location || 'Polling Station';
-                    const dist = firstStation.distance_from_ps_kms ? `${firstStation.distance_from_ps_kms} KM` : 'N/A';
-                    if (distTextEl) distTextEl.innerText = `Distance: ${dist} from ${psName} PS`;
-                } else {
-                    if (toLocEl) toLocEl.innerText = `${firstStation.polling_station_location} (+${stations.length - 1} more)`;
-                    const distances = stations.map(s => parseFloat(s.distance_from_ps_kms)).filter(d => !isNaN(d) && d > 0);
-                    if (distances.length > 0) {
-                        const minDist = Math.min(...distances);
-                        const maxDist = Math.max(...distances);
-                        if (distTextEl) distTextEl.innerText = minDist === maxDist
-                            ? `Distance: ${minDist} KM`
-                            : `Distance: ${minDist} - ${maxDist} KM (${stations.length} PS)`;
-                    } else {
-                        if (distTextEl) distTextEl.innerText = `${stations.length} Polling Stations`;
-                    }
-                }
-
-                const staffEl = document.getElementById('live-banner-staff-details');
-                if (staffEl) {
-                    const bannerParts = [];
-                    const rInc = firstStation.route_incharge || firstStation.route_staff;
-                    if (rInc) bannerParts.push(`<b>Route Incharge:</b> ${rInc}`);
-                    if (firstStation.striking_force_incharge) bannerParts.push(`<b>Striking Force:</b> ${firstStation.striking_force_incharge}`);
-                    if (firstStation.special_striking_force_incharge) bannerParts.push(`<b>SSF Incharge:</b> ${firstStation.special_striking_force_incharge}`);
-                    staffEl.innerHTML = bannerParts.length > 0 ? formatPhoneLinks(bannerParts.join(' | ')) : '<span class="text-slate-400">Police Incharge: Not Assigned</span>';
-                }
-
-                const navLink = document.getElementById('live-banner-nav-link');
-                if (navLink) navLink.href = `https://www.google.com/maps/dir/?api=1&destination=${firstStation.latitude},${firstStation.longitude}`;
-            } else {
-                banner.classList.add('hidden');
-            }
+            if (banner) banner.classList.add('hidden');
         }
         function toggleLiveMapReportTable() {
             const container = document.getElementById('live-map-stations-report-container');
@@ -5071,11 +5012,25 @@
                 renderPslSuggestions(input.value, 'live-psl-suggestions', 'selectLiveMapSearchResult');
             }
         }
-        function selectLiveMapSearchResult(pslName) {
+        function selectLiveMapSearchResult(pslName, routeNo, psName, lat, lng) {
             const input = document.getElementById('live-search-text');
             if (input) input.value = pslName;
             hideSuggestions('live-psl-suggestions');
             applyLiveMapFilters();
+            const fLat = parseFloat(lat);
+            const fLng = parseFloat(lng);
+            if (!isNaN(fLat) && !isNaN(fLng) && liveMap) {
+                liveMap.setView([fLat, fLng], 16);
+                const st = allStations.find(s => (s.polling_station_location || '').trim() === pslName.trim());
+                if (st) {
+                    setTimeout(() => {
+                        L.popup({ maxWidth: 440, minWidth: 320 })
+                            .setLatLng([fLat, fLng])
+                            .setContent(buildStationPopupHtml(st))
+                            .openOn(liveMap);
+                    }, 250);
+                }
+            }
         }
         function clearLiveMapSearch() {
             const input = document.getElementById('live-search-text');
