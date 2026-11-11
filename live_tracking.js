@@ -86,10 +86,15 @@ function initLiveMQTT() {
             const retainedTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer/+';
             const controlTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/control_command';
             const officerMsgTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer_messages';
-            window.liveMqttClient.subscribe(officerMsgTopic, { qos: 1 });
             const historyTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history';
+
+            // Subscribe to specific and wildcard channels for 100% reliable reception
+            window.liveMqttClient.subscribe(officerMsgTopic, { qos: 1 });
+            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/officer_messages', { qos: 1 });
             window.liveMqttClient.subscribe(historyTopic, { qos: 1 });
+            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/messages_history', { qos: 1 });
             window.liveMqttClient.subscribe(generalTopic, { qos: 0 });
+            window.liveMqttClient.subscribe('srikakulam_police_tracker/+/locations', { qos: 0 });
             window.liveMqttClient.subscribe(controlTopic, { qos: 1 });
             window.liveMqttClient.subscribe(retainedTopic, { qos: 1 }, function(err) {
                 if (!err) {
@@ -771,9 +776,27 @@ function broadcastMessagesHistory() {
 function handleIncomingMessagesHistory(payload) {
     if (!payload) return;
     const incomingList = Array.isArray(payload) ? payload : (payload.messages && Array.isArray(payload.messages) ? payload.messages : null);
-    if (!Array.isArray(incomingList)) return;
+    if (!Array.isArray(incomingList) || incomingList.length === 0) return;
 
-    window.liveOfficerMessages = incomingList;
+    const existingMap = new Map();
+    (window.liveOfficerMessages || []).forEach(m => {
+        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
+        existingMap.set(key, m);
+    });
+
+    incomingList.forEach(m => {
+        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
+        if (!existingMap.has(key)) {
+            existingMap.set(key, m);
+        } else {
+            const local = existingMap.get(key);
+            if (m.replies && Array.isArray(m.replies) && (!local.replies || m.replies.length > local.replies.length)) {
+                local.replies = m.replies;
+            }
+        }
+    });
+
+    window.liveOfficerMessages = Array.from(existingMap.values());
     window.liveOfficerMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     try {
@@ -793,55 +816,56 @@ function initOfficerMessagesStorage() {
         if (raw !== null) {
             const parsed = JSON.parse(raw);
             window.liveOfficerMessages = Array.isArray(parsed) ? parsed : [];
-            return;
+        } else {
+            // Default seed messages matching actual verified test messages so new devices immediately show history
+            const now = Date.now();
+            window.liveOfficerMessages = [
+                {
+                    id: 'msg_seed_1',
+                    unitId: 'RM_1',
+                    unitName: 'RM-1 (Kollivalasa)',
+                    categoryKey: 'RM',
+                    mandal: 'Amadalavlasa',
+                    officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
+                    phone: '6305713351',
+                    message: 'Polling Peaceful: Proceeding smoothly',
+                    priority: 'NORMAL',
+                    lat: 0,
+                    lng: 0,
+                    timestamp: now - (51 * 60 * 1000),
+                    read: true,
+                    replies: [
+                        {
+                            message: 'Ok',
+                            timestamp: now - (50 * 60 * 1000)
+                        }
+                    ]
+                },
+                {
+                    id: 'msg_seed_2',
+                    unitId: 'RM_1',
+                    unitName: 'Amadalavalasa RM-1',
+                    categoryKey: 'RM',
+                    mandal: 'Amadalavalasa',
+                    officer: 'V. Kantharao, HC 732',
+                    phone: '6305713351',
+                    message: 'Polling Peaceful: Proceeding smoothly',
+                    priority: 'NORMAL',
+                    lat: 0,
+                    lng: 0,
+                    timestamp: now - (56 * 60 * 1000),
+                    read: true
+                }
+            ];
+            try {
+                localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
+            } catch (e) {}
         }
     } catch (e) {
         window.liveOfficerMessages = [];
     }
 
-    // Default seed messages matching actual verified test messages so new devices immediately show history
-    const now = Date.now();
-    window.liveOfficerMessages = [
-        {
-            id: 'msg_seed_1',
-            unitId: 'RM_1',
-            unitName: 'RM-1 (Kollivalasa)',
-            categoryKey: 'RM',
-            mandal: 'Amadalavlasa',
-            officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
-            phone: '6305713351',
-            message: 'Polling Peaceful: Proceeding smoothly',
-            priority: 'NORMAL',
-            lat: 0,
-            lng: 0,
-            timestamp: now - (51 * 60 * 1000),
-            read: true,
-            replies: [
-                {
-                    message: 'Ok',
-                    timestamp: now - (50 * 60 * 1000)
-                }
-            ]
-        },
-        {
-            id: 'msg_seed_2',
-            unitId: 'RM_1',
-            unitName: 'Amadalavalasa RM-1',
-            categoryKey: 'RM',
-            mandal: 'Amadalavalasa',
-            officer: 'V. Kantharao, HC 732',
-            phone: '6305713351',
-            message: 'Polling Peaceful: Proceeding smoothly',
-            priority: 'NORMAL',
-            lat: 0,
-            lng: 0,
-            timestamp: now - (56 * 60 * 1000),
-            read: true
-        }
-    ];
-    try {
-        localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
-    } catch (e) {}
+    updateOfficerMessageBadge();
 }
 
 function updateOfficerMessageBadge() {
@@ -849,28 +873,32 @@ function updateOfficerMessageBadge() {
     const headerBadge = document.getElementById('header-live-msg-badge');
     const headerBell = document.getElementById('header-icon-msg-bell');
     const bellIcon = document.getElementById('icon-msg-bell');
-    if (!badge) return;
+    if (!badge && !headerBadge) return;
 
     const unreadCount = (window.liveOfficerMessages || []).filter(function(m) { return !m.read; }).length;
     const totalCount = (window.liveOfficerMessages || []).length;
-    const displayCount = unreadCount > 0 ? unreadCount : totalCount;
-    badge.innerText = displayCount;
+    const displayCount = totalCount;
+
+    if (badge) {
+        badge.innerText = displayCount;
+        if (unreadCount > 0) {
+            badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-600 text-white shadow-md animate-pulse border border-white/50';
+            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
+        } else {
+            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-900/90 text-indigo-100 shadow-xs border border-indigo-400/40';
+            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300';
+        }
+    }
+
     if (headerBadge) {
         headerBadge.innerText = displayCount;
         if (unreadCount > 0) {
-            headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
+            headerBadge.className = 'px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-600 text-white shadow-md animate-pulse border border-white/50';
             if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
         } else {
-            headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-700 text-slate-200 shadow-xs';
+            headerBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-200 shadow-xs';
             if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300';
         }
-    }
-    if (unreadCount > 0) {
-        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
-        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
-    } else {
-        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-600 text-slate-200 shadow-xs';
-        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-slate-300';
     }
 }
 
@@ -978,13 +1006,13 @@ function handleIncomingOfficerMessage(payload) {
     showLiveOfficerToast(msgObj);
     broadcastMessagesHistory();
 
-    // Automatically open the Control Room Message Box Modal right on screen!
-    if (typeof openOfficerMessagesModal === 'function') {
-        openOfficerMessagesModal();
-    } else {
-        const modal = document.getElementById('officer-messages-modal');
+    // Real-time UI notification: update list if modal is already open
+    const modal = document.getElementById('officer-messages-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+        renderOfficerMessagesList();
+    } else if (priority === 'URGENT') {
         if (modal) modal.classList.remove('hidden');
-        if (typeof renderOfficerMessagesList === 'function') renderOfficerMessagesList();
+        renderOfficerMessagesList();
     }
 }
 

@@ -1665,6 +1665,9 @@
         try { client.publish(msgTopic, payloadJson, { qos: 1 }); } catch (e) {}
         try { client.publish(generalTopic, payloadJson, { qos: 1 }); } catch (e) {}
         try { client.publish(unitTopic, payloadJson, { qos: 1, retain: true }); } catch (e) {}
+        if (targetRoom !== 'SrikakulamPolice') {
+          try { client.publish('srikakulam_police_tracker/SrikakulamPolice/officer_messages', payloadJson, { qos: 1 }); } catch (e) {}
+        }
       }
 
       // 1. Ensure MQTT client initialized

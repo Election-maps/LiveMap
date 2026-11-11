@@ -1519,6 +1519,9 @@
                     }, 50);
                 }
             } else if (tabId === 'livemap') {
+                if (typeof updateOfficerMessageBadge === 'function') {
+                    updateOfficerMessageBadge();
+                }
                 if (!isLiveMapInitialized) {
                     initLiveMapLazy();
                 } else {
@@ -5100,6 +5103,8 @@
             }
         }
         window.addEventListener('DOMContentLoaded', () => {
+            if (typeof initOfficerMessagesStorage === 'function') initOfficerMessagesStorage();
+            if (typeof updateOfficerMessageBadge === 'function') updateOfficerMessageBadge();
             if (window.location.hash === '#messages' || window.location.search.includes('messages')) {
                 setTimeout(() => {
                     if (typeof openOfficerMessagesModal === 'function') openOfficerMessagesModal();
