@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="te">
 <head>
   <meta charset="UTF-8">
@@ -1588,10 +1588,16 @@
     }
 
     if (!currentSelectedUnit) {
-      alert('Please select your duty unit (Mandal / Route / Party) above first.');
-      const selMandal = document.getElementById('select-mandal');
-      if (selMandal) selMandal.focus();
-      return;
+      const storedName = localStorage.getItem('skl_officer_name') || 'Field Officer';
+      currentSelectedUnit = {
+        id: 'FIELD_' + (userId || 'OFFICER'),
+        unitName: storedName,
+        category: 'Patrol Force',
+        categoryKey: 'RM',
+        mandal: 'Srikakulam',
+        officer: storedName,
+        phone: localStorage.getItem('skl_officer_phone') || ''
+      };
     }
 
     // Immediate button feedback
@@ -1647,9 +1653,9 @@
     // Publish function across officer_messages, general locations, and unit channels
     function dispatchMessage(client) {
       if (!client) return;
-      try { client.publish(msgTopic, payloadJson, { qos: 0 }); } catch (e) {}
-      try { client.publish(generalTopic, payloadJson, { qos: 0 }); } catch (e) {}
-      try { client.publish(unitTopic, payloadJson, { qos: 0 }); } catch (e) {}
+      try { client.publish(msgTopic, payloadJson, { qos: 1 }); } catch (e) {}
+      try { client.publish(generalTopic, payloadJson, { qos: 1 }); } catch (e) {}
+      try { client.publish(unitTopic, payloadJson, { qos: 1, retain: true }); } catch (e) {}
     }
 
     // 1. Ensure MQTT client initialized

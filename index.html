@@ -896,20 +896,20 @@
                     <div class="w-56">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Select Police Station</label>
                         <select id="route-tab-psname" onchange="onRouteTabPSChange(this.value)" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs font-semibold bg-white focus:ring-1 focus:ring-blue-500">
-                            <option value="">-- ???????? ?????? ??????? --</option>
+                            <option value="">-- Select Police Station --</option>
                         </select>
                     </div>
                     <div class="w-48">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Select Route No</label>
                         <select id="route-tab-routeno" onchange="loadRouteWiseDetails()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs font-semibold bg-white focus:ring-1 focus:ring-blue-500">
-                            <option value="">-- ??????? PS ?? ????????? --</option>
+                            <option value="">-- Select Route No --</option>
                         </select>
                     </div>
                     <!-- Category Filter in PS Route Wise -->
                     <div class="w-52">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Category (Sensitivity)</label>
                         <select id="route-tab-category" onchange="loadRouteWiseDetails()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs font-semibold bg-white focus:ring-1 focus:ring-blue-500">
-                            <option value="">-- All Categories (?????) --</option>
+                            <option value="">-- All Categories --</option>
                             <option value="NORMAL">Normal</option>
                             <option value="SENSITIVE">Sensitive</option>
                             <option value="CRITICAL">Critical</option>
@@ -918,7 +918,7 @@
                     </div>
                     <div class="pt-4">
                         <button onclick="loadRouteWiseDetails()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded text-xs flex items-center gap-1.5 shadow transition">
-                            <i class="fa-solid fa-location-crosshairs"></i> ?????? ????????
+                            <i class="fa-solid fa-location-crosshairs"></i> View Route Details
                         </button>
                     </div>
                 </div>
@@ -944,10 +944,10 @@
                         </div>
                         <!-- Sensitivity Breakdown Badges in Route Summary -->
                         <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-1.5 text-[10px]">
-                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold">?? Normal: <b id="route-count-normal">0</b></span>
-                            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 font-bold">?? Sensitive: <b id="route-count-sensitive">0</b></span>
-                            <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-800 border border-orange-300 font-bold">?? Critical: <b id="route-count-critical">0</b></span>
-                            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-300 font-bold">?? Hyper: <b id="route-count-hyper">0</b></span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Normal: <b id="route-count-normal">0</b></span>
+                            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 font-bold"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i>Sensitive: <b id="route-count-sensitive">0</b></span>
+                            <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-800 border border-orange-300 font-bold"><i class="fa-solid fa-circle-exclamation text-orange-500 mr-1"></i>Critical: <b id="route-count-critical">0</b></span>
+                            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-300 font-bold"><i class="fa-solid fa-radiation text-rose-500 mr-1"></i>Hyper: <b id="route-count-hyper">0</b></span>
                         </div>
                     </div>
                     <!-- Step by step station itinerary -->
@@ -957,7 +957,7 @@
                             <span class="text-[10px] text-slate-500" id="route-shown-count">0 Stations Shown</span>
                         </div>
                         <div class="overflow-y-auto max-h-[380px] p-2 space-y-2" id="route-stations-list">
-                            <p class="text-slate-400 text-center py-6 text-xs">?????? ?????? ??????? ????? ???? ????? ?????????.</p>
+                            <p class="text-slate-400 text-center py-6 text-xs">Please select Police Station and Route No above to view details.</p>
                         </div>
                     </div>
                 </div>
@@ -1121,9 +1121,9 @@
                 <div>
                     <h3 class="font-bold text-sm flex items-center gap-2">
                         <i class="fa-solid fa-route text-amber-400"></i>
-                        <span>District Police Patrol Routes & Villages (?????? & ??????? ?????????)</span>
+                        <span>District Police Patrol Routes & Villages Directory</span>
                     </h3>
-                    <p class="text-[11px] text-blue-200 mt-0.5">????? ???? ????????? ????????? ? ????????? ??????? ?????? ??????? ???????????.</p>
+                    <p class="text-[11px] text-blue-200 mt-0.5">Click any route to view complete village itinerary and Google Maps navigation.</p>
                 </div>
                 <button onclick="closeAllRoutesModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition text-sm">
                     <i class="fa-solid fa-xmark"></i>
@@ -1213,7 +1213,7 @@
             <div class="px-4 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between gap-3">
                 <div class="relative flex-1">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" id="enlarged-route-search" oninput="filterEnlargedRouteVillages()" placeholder="? ???? ???? ?????? ???? ?????? ?????? ??????? (Search Village / School in this route)..." class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
+                    <input type="text" id="enlarged-route-search" oninput="filterEnlargedRouteVillages()" placeholder="Search Village or School in this route..." class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
                 </div>
                 <span id="enlarged-route-shown-count" class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded border border-slate-200 whitespace-nowrap">
                     0 Villages
@@ -1225,7 +1225,7 @@
             </div>
             <!-- Modal Footer -->
             <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
-                <span class="text-slate-500 text-[11px]"><i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>????? ???????? ?????? ?????? ????????? ?????? ? ?????????? ???? ????????.</span>
+                <span class="text-slate-500 text-[11px]"><i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>Showing all villages and polling stations along this route.</span>
                 <button onclick="closeEnlargedRouteModal()" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg transition shadow-xs cursor-pointer">
                     Close
                 </button>
@@ -1345,7 +1345,7 @@
                 </div>
                 <div class="sm:col-span-2 md:col-span-3 flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-3 py-1.5 rounded text-xs">
-                        Cancel / ????????
+                        Cancel
                     </button>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Save Polling Station
@@ -1366,25 +1366,25 @@
                 </button>
             </div>
             <div class="space-y-3 text-xs">
-                <p class="text-slate-600">???? ????? ????? ???????? ?? ??????? ????? ???????? (LocalStorage) ?? ??????????? ???? ???????.</p>
+                <p class="text-slate-600">You can download complete election polling station data as a backup JSON file or restore from a previously saved file.</p>
                 
                 <div class="p-2.5 bg-slate-50 rounded border border-slate-200 space-y-2">
-                    <b class="text-slate-800">1. ????????? ??????? (JSON File):</b>
-                    <p class="text-slate-500 text-[11px]">???? ?????? ????????? ???? GitHub ?? ??????????.</p>
+                    <b class="text-slate-800">1. Download Backup (JSON File):</b>
+                    <p class="text-slate-500 text-[11px]">Save complete polling stations dataset to your computer as a JSON file.</p>
                     <button onclick="downloadJsonBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-download"></i> Download stations.json Backup
                     </button>
                 </div>
                 <div class="p-2.5 bg-slate-50 rounded border border-slate-200 space-y-2">
-                    <b class="text-slate-800">2. ???????? ??????? ????:</b>
+                    <b class="text-slate-800">2. Restore from JSON File:</b>
                     <input type="file" id="json-upload-input" accept=".json" class="w-full text-[11px]">
                     <button onclick="uploadJsonBackup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-upload"></i> Restore from JSON
                     </button>
                 </div>
                 <div class="p-2.5 bg-rose-50 rounded border border-rose-200 space-y-2">
-                    <b class="text-rose-800">3. ???????? ???? ??????:</b>
-                    <p class="text-rose-600 text-[11px]">????? ????????? ???????? ????? 1,329 ??????????? ?????? ?????????.</p>
+                    <b class="text-rose-800">3. Reset to Default Dataset:</b>
+                    <p class="text-rose-600 text-[11px]">Restore the original dataset of 1,329 polling stations.</p>
                     <button onclick="resetDataToDefault()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-triangle-exclamation"></i> Reset to Default (1329 Records)
                     </button>
@@ -1590,7 +1590,7 @@
             const psOptions = sortedPS.map(ps => `<option value="${ps}">${ps}</option>`).join('');
             if (mapPsSelect) mapPsSelect.innerHTML = '<option value="">-- All Police Stations --</option>' + psOptions;
             if (tablePsSelect) tablePsSelect.innerHTML = '<option value="">-- All Police Stations --</option>' + psOptions;
-            if (routeTabPsSelect) routeTabPsSelect.innerHTML = '<option value="">-- ???????? ?????? ??????? --</option>' + psOptions;
+            if (routeTabPsSelect) routeTabPsSelect.innerHTML = '<option value="">-- Select Police Station --</option>' + psOptions;
             const livePsSelect = document.getElementById('live-filter-psname');
             if (livePsSelect) livePsSelect.innerHTML = '<option value="">-- All Police Stations --</option>' + psOptions;
             // Populate Table Routes
@@ -2276,16 +2276,16 @@
                     <!-- Prominent Travel Route Card (From Police Station to Polling Station) -->
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded p-2 mb-2 text-xs shadow-xs">
                         <div class="flex items-center justify-between text-[10px] font-bold text-blue-900 border-b border-blue-200 pb-1 mb-1">
-                            <span><i class="fa-solid fa-route text-blue-600 mr-1"></i> TRAVEL ROUTE (?????? ??????)</span>
+                            <span><i class="fa-solid fa-route text-blue-600 mr-1"></i> TRAVEL ROUTE DETAILS</span>
                             <span class="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">${distDisplay}</span>
                         </div>
                         <div class="space-y-1">
                             <div class="flex items-start gap-1.5 text-slate-800 text-[11px]">
-                                <span class="text-rose-600 font-bold shrink-0">?? FROM:</span>
+                                <span class="text-rose-600 font-bold shrink-0"><i class="fa-solid fa-flag text-rose-500 mr-1"></i>FROM:</span>
                                 <span class="font-bold text-slate-900">${station.psname || 'Police Station'} Police Station</span>
                             </div>
                             <div class="flex items-start gap-1.5 text-slate-800 text-[11px]">
-                                <span class="text-emerald-700 font-bold shrink-0">?? TO:</span>
+                                <span class="text-emerald-700 font-bold shrink-0"><i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i>TO:</span>
                                 <span class="font-bold text-blue-950">${station.polling_station_location || 'Polling Station'}</span>
                             </div>
                             <div class="flex items-center justify-between pt-1 text-[10px] text-slate-600 border-t border-blue-100">
@@ -2627,7 +2627,7 @@
                                 <span class="text-[10px] font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded shadow-xs">
                                     ${distBadge}
                                 </span>
-                                <button onclick="openEnlargedRouteModal('${rKey}')" title="??????? ?????? (Enlarge View)" class="bg-white text-red-700 hover:bg-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[10px] font-black tracking-wide shadow-xs flex items-center gap-1 transition cursor-pointer">
+                                <button onclick="openEnlargedRouteModal('${rKey}')" title="Enlarge View" class="bg-white text-red-700 hover:bg-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[10px] font-black tracking-wide shadow-xs flex items-center gap-1 transition cursor-pointer">
                                     <i class="fa-solid fa-up-right-and-down-left-from-center text-[9px]"></i> Enlarge
                                 </button>
                             </div>
@@ -2684,13 +2684,13 @@
                     <!-- Villages List Title -->
                     <div class="flex items-center justify-between font-bold text-slate-800 text-xs border-b pb-1 mb-1.5">
                         <span class="flex items-center gap-1 text-slate-900">
-                            <i class="fa-solid fa-list-check text-rose-600"></i> ???? ???? ???????? (${stations.length} Villages):
+                            <i class="fa-solid fa-list-check text-rose-600"></i> Route Villages & Stations (${stations.length}):
                         </span>
-                        <span class="text-[10px] text-slate-500 font-normal">???????? ?????? ???? ??????</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Click station to navigate</span>
                     </div>
                     <!-- Scrollable Village Stations List -->
                     <div class="max-h-64 overflow-y-auto space-y-1.5 pr-0.5">
-                        ${listHtml || '<div class="text-slate-400 text-center py-2">? ???? ?? ?????? ??????? ????????? ????.</div>'}
+                        ${listHtml || '<div class="text-slate-400 text-center py-2">No stations found for this route.</div>'}
                     </div>
                 </div>
             `;
@@ -2752,7 +2752,7 @@
             if (!container) return;
             if (countEl) countEl.innerText = `${stations.length} Villages Shown`;
             if (stations.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm font-semibold">?????? ???????? ???????????? (No matching villages found).</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm font-semibold">No matching villages found.</div>`;
                 return;
             }
             let html = `
@@ -2952,7 +2952,7 @@
                 className: 'cursor-pointer'
             });
             polyline.bindPopup(() => buildRouteVillagesPopupHtml(info, distKm), { maxWidth: 395, minWidth: 320, maxHeight: 460 });
-            polyline.bindTooltip(`<b>Route ${info.route || ''} (${info.ps || ''} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">??? ?????? ?????? - ${(info.stations || []).length} ??????? ??????</span>`, { sticky: true, className: 'ps-tooltip-badge' });
+            polyline.bindTooltip(`<b>Route ${info.route || ''} (${info.ps || ''} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">Route Path - ${(info.stations || []).length} Polling Stations</span>`, { sticky: true, className: 'ps-tooltip-badge' });
             mainRoutesGroup.addLayer(outline);
             mainRoutesGroup.addLayer(polyline);
         }
@@ -2976,7 +2976,7 @@
             });
             const popupHtml = buildRouteVillagesPopupHtml(info, null);
             polyline.bindPopup(popupHtml, { maxWidth: 395, minWidth: 320, maxHeight: 460 });
-            polyline.bindTooltip(`<b>Route ${info.route || ''} (${info.ps || ''} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">??? ?????? ?????? - ${(info.stations || []).length} ??????? ??????</span>`, { sticky: true, className: 'ps-tooltip-badge' });
+            polyline.bindTooltip(`<b>Route ${info.route || ''} (${info.ps || ''} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">Route Path - ${(info.stations || []).length} Polling Stations</span>`, { sticky: true, className: 'ps-tooltip-badge' });
             mainRoutesGroup.addLayer(outline);
             mainRoutesGroup.addLayer(polyline);
         }
@@ -2994,7 +2994,7 @@
                     const polyline = L.polyline(routeCoords, { color: '#dc2626', weight: 5, opacity: 0.95, smoothFactor: 1.0, className: 'cursor-pointer' });
                     const popupHtml = buildRouteVillagesPopupHtml(info, distKm);
                     polyline.bindPopup(popupHtml, { maxWidth: 395, minWidth: 320, maxHeight: 460 });
-                    polyline.bindTooltip(`<b>Route ${info.route} (${info.ps} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">??? ?????? ???? ? ????????? ??????? ?????? ?????? (${(info.stations || []).length} ????????)</span>`, { sticky: true, className: 'ps-tooltip-badge' });
+                    polyline.bindTooltip(`<b>Route ${info.route} (${info.ps} PS)</b><br><span style="font-size:10px; color:#1e3a8a;">Route Path & Village Stations (${(info.stations || []).length} Stations)</span>`, { sticky: true, className: 'ps-tooltip-badge' });
                     if (mainRoutesGroup && token === currentMapFilterToken) {
                         mainRoutesGroup.addLayer(outline);
                         mainRoutesGroup.addLayer(polyline);
@@ -3053,7 +3053,7 @@
             if (countEl) countEl.innerText = `${filteredKeys.length} Routes`;
             container.innerHTML = '';
             if (filteredKeys.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs"><i class="fa-solid fa-folder-open text-2xl mb-2"></i><br>?????? ?????? ???? ???????? ???????????? (No matching routes found).</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs"><i class="fa-solid fa-folder-open text-2xl mb-2"></i><br>No matching routes found.</div>`;
                 return;
             }
             let cardsHtml = '';
@@ -3819,7 +3819,7 @@
             const tbody = document.getElementById('master-table-tbody');
             if (!tbody) return;
             if (pageData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${tableColumnsOrder.length}" class="p-8 text-center text-slate-400"><i class="fa-solid fa-folder-open text-2xl mb-2"></i><br>?????? ?????????? ???????????? (No matching records found).</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${tableColumnsOrder.length}" class="p-8 text-center text-slate-400"><i class="fa-solid fa-folder-open text-2xl mb-2"></i><br>No matching records found.</td></tr>`;
             } else {
                 let rowsHtml = '';
                 pageData.forEach((s, idx) => {
@@ -3926,13 +3926,13 @@
         function onRouteTabPSChange(psname) {
             const routeSelect = document.getElementById('route-tab-routeno');
             if (!routeSelect) return;
-            let opts = '<option value="">-- ???????? Route No --</option>';
+            let opts = '<option value="">-- Select Route No --</option>';
             if (psname) {
                 const routesInPS = new Set();
                 allStations.filter(s => (s.psname || '').trim() === psname.trim()).forEach(s => {
                     if (s.route_no) routesInPS.add(s.route_no.trim());
                 });
-                opts += Array.from(routesInPS).sort().map(r => `<option value="${r}">???? - ${r}</option>`).join('');
+                opts += Array.from(routesInPS).sort().map(r => `<option value="${r}">Route - ${r}</option>`).join('');
             }
             routeSelect.innerHTML = opts;
         }
@@ -3946,13 +3946,13 @@
             const selectedRoute = (document.getElementById('route-tab-routeno')?.value || '').trim();
             const selectedCat = (document.getElementById('route-tab-category')?.value || '').trim();
             if (!selectedPS || !selectedRoute) {
-                alert('?????? ?????? ??????? ????? ???? ????? ?????????.');
+                alert('Please select Police Station and Route No first.');
                 return;
             }
             // All stations for this specific route (to compute totals and breakdown)
             const routeStations = allStations.filter(s => (s.psname || '').trim() === selectedPS && (s.route_no || '').trim() === selectedRoute);
             if (routeStations.length === 0) {
-                alert('? ???? ?? ?????? ??????? ????????? ????.');
+                alert('No stations found for this route.');
                 return;
             }
             // Calculate category counts for this route:
@@ -4003,7 +4003,7 @@
             const listContainer = document.getElementById('route-stations-list');
             listContainer.innerHTML = '';
             if (displayStations.length === 0) {
-                listContainer.innerHTML = `<div class="p-4 text-center text-slate-500 text-xs">? ???? ?? ????? ????? ??????? (${selectedCat}) ??????? ????????? ????.</div>`;
+                listContainer.innerHTML = `<div class="p-4 text-center text-slate-500 text-xs">No stations matching category (${selectedCat}) found in this route.</div>`;
                 document.getElementById('route-total-km').innerText = '0.00 km';
                 return;
             }
@@ -4173,10 +4173,10 @@
             renderDashboard();
             renderTable();
             if (mainMap) applyMapFilters();
-            alert(isEdit ? '??????? ??????? ??????? ?????????? ???????? ???????!' : '????? ??????? ??????? ?????????? ????????????!');
+            alert(isEdit ? 'Station updated successfully!' : 'New station added successfully!');
         }
         function deleteStation(id) {
-            if (!confirm('? ??????? ??????? ?????????? ????????? ???????????????????????')) return;
+            if (!confirm('Are you sure you want to delete this polling station?')) return;
             allStations = allStations.filter(s => s.id !== id);
             saveDatasetLocally();
             renderDashboard();
@@ -4186,7 +4186,7 @@
         function pickCoordinatesOnMap() {
             closeModal();
             switchTab('map');
-            alert('?????? ?? ???? ????????? ????????? ?????? ??????. ????????????? ???????????? ???? ???????.');
+            alert('Please click on the map to set latitude and longitude coordinates.');
             const onClickCoord = function(e) {
                 mainMap.off('click', onClickCoord);
                 const lat = e.latlng.lat.toFixed(6);
@@ -4214,7 +4214,7 @@
         function uploadJsonBackup() {
             const fileInput = document.getElementById('json-upload-input');
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('?????? JSON ???? ?? ?????????.');
+                alert('Please select a valid JSON backup file.');
                 return;
             }
             const reader = new FileReader();
@@ -4229,18 +4229,18 @@
                         renderTable();
                         if (mainMap) applyMapFilters();
                         closeDataModal();
-                        alert(`${allStations.length} ?????????? ?????????? ???? ??????????!`);
+                        alert(${allStations.length} polling stations restored successfully!);
                     } else {
-                        alert('??????? JSON ???? ????????.');
+                        alert('Invalid JSON file format.');
                     }
                 } catch(err) {
-                    alert('JSON ???? ??????? ????: ' + err.message);
+                    alert('JSON parse error: ' + err.message);
                 }
             };
             reader.readAsText(fileInput.files[0]);
         }
         function resetDataToDefault() {
-            if (!confirm('????? ????? ????????? ???????? ????? ??????????? ?????? ???????????????????')) return;
+            if (!confirm('Are you sure you want to reset all data to default? Current changes will be overwritten.')) return;
             localStorage.removeItem('POLICE_ELECTION_STATIONS_DATA');
             if (window.INITIAL_STATIONS) {
                 allStations = window.INITIAL_STATIONS;
@@ -4250,7 +4250,7 @@
             renderTable();
             if (mainMap) applyMapFilters();
             closeDataModal();
-            alert('???? ?????????? ?????? ?????????.');
+            alert('Data reset to default successfully.');
         }
         async function exportToExcel() {
             if (typeof XLSX === 'undefined') {
@@ -4266,7 +4266,7 @@
                         document.head.appendChild(script);
                     });
                 } catch (err) {
-                    alert('Excel ??????? ???? ??????? ???? ?????????: ' + err.message);
+                    alert('Excel export error: ' + err.message);
                     if (btn) btn.innerHTML = origHtml;
                     return;
                 }
