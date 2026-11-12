@@ -99,6 +99,11 @@ function initLiveMQTT() {
                     window.liveMqttClient.publish(syncTopic, JSON.stringify({ type: 'sync_request', from: liveUserId }), { qos: 0 });
                 }
             });
+
+            if (window._pendingHistoryBroadcast) {
+                window._pendingHistoryBroadcast = false;
+                broadcastMessagesHistory();
+            }
         });
 
         window.liveMqttClient.on('message', function(topic, message) {
@@ -117,7 +122,7 @@ function initLiveMQTT() {
 
                         if (Array.isArray(window.liveOfficerMessages)) {
                             window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
-                                return !delIds.has(String(m.id));
+                                return !isMessageDeleted(m, localDeleted);
                             });
                             try {
                                 localStorage.setItem('gp_messages_seeded', 'true');
@@ -810,6 +815,36 @@ function saveDeletedMessageIds(delSet) {
     } catch (e) {}
 }
 
+function getMessageSignatures(m) {
+    if (!m) return [];
+    const sigs = [];
+    if (m.id) sigs.push(String(m.id));
+    if (m.unitId && m.timestamp) sigs.push(String(m.unitId) + '_' + String(m.timestamp));
+    if (m.unitId && m.message) sigs.push(String(m.unitId) + '_' + String(m.message).trim());
+    if (m.officer && m.message) sigs.push(String(m.officer).trim() + '_' + String(m.message).trim());
+    if (m.timestamp && m.message) sigs.push(String(m.timestamp) + '_' + String(m.message).trim());
+    const fullKey = (m.unitId || '') + '_' + (m.timestamp || '') + '_' + (m.message || '').trim();
+    if (fullKey.length > 2) sigs.push(fullKey);
+    return sigs;
+}
+
+function isMessageDeleted(m, delSet) {
+    if (!m) return false;
+    // Permanently eliminate hardcoded mock seed messages so they NEVER appear or revive
+    const mId = String(m.id || '');
+    if (mId === 'msg_seed_1' || mId === 'msg_seed_2' || mId.indexOf('msg_seed') !== -1) return true;
+    const off = String(m.officer || '');
+    const msg = String(m.message || '');
+    if (off.indexOf('Kantharao') !== -1 && msg.indexOf('Polling Peaceful') !== -1) return true;
+
+    if (!delSet || delSet.size === 0) return false;
+    const sigs = getMessageSignatures(m);
+    for (let i = 0; i < sigs.length; i++) {
+        if (delSet.has(sigs[i])) return true;
+    }
+    return false;
+}
+
 function handleIncomingMessagesHistory(payload) {
     if (!payload) return;
     const incomingList = Array.isArray(payload) ? payload : (payload.messages && Array.isArray(payload.messages) ? payload.messages : null);
@@ -826,10 +861,10 @@ function handleIncomingMessagesHistory(payload) {
 
     let hasChange = false;
     incomingList.forEach(m => {
-        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
-        if (m.id && deletedIds.has(String(m.id))) {
-            return; // Never re-add messages deleted by user
+        if (isMessageDeleted(m, deletedIds)) {
+            return; // Never re-add deleted or mock messages
         }
+        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
         if (!existingMap.has(key)) {
             window.liveOfficerMessages.push(m);
             existingMap.set(key, m);
@@ -844,7 +879,7 @@ function handleIncomingMessagesHistory(payload) {
     });
 
     window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
-        return !deletedIds.has(String(m.id));
+        return !isMessageDeleted(m, deletedIds);
     });
     window.liveOfficerMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     if (window.liveOfficerMessages.length > 150) {
@@ -864,58 +899,16 @@ function handleIncomingMessagesHistory(payload) {
 
 function initOfficerMessagesStorage() {
     const deletedIds = getDeletedMessageIds();
-    const hasBeenInitialized = localStorage.getItem('gp_messages_seeded') === 'true';
+    // Mark seeded as true so mock seed data is NEVER re-created
+    try {
+        localStorage.setItem('gp_messages_seeded', 'true');
+    } catch (e) {}
 
     try {
         const raw = localStorage.getItem('gp_officer_messages');
         if (raw !== null) {
             const parsed = JSON.parse(raw);
             window.liveOfficerMessages = Array.isArray(parsed) ? parsed : [];
-        } else if (!hasBeenInitialized) {
-            // Seed sample messages ONLY ONCE on clean setup if storage was never used
-            const now = Date.now();
-            window.liveOfficerMessages = [
-                {
-                    id: 'msg_seed_1',
-                    unitId: 'RM_1',
-                    unitName: 'RM-1 (Kollivalasa)',
-                    categoryKey: 'RM',
-                    mandal: 'Amadalavlasa',
-                    officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
-                    phone: '6305713351',
-                    message: 'Polling Peaceful: Proceeding smoothly',
-                    priority: 'NORMAL',
-                    lat: 0,
-                    lng: 0,
-                    timestamp: now - (51 * 60 * 1000),
-                    read: true,
-                    replies: [
-                        {
-                            message: 'Ok',
-                            timestamp: now - (50 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    id: 'msg_seed_2',
-                    unitId: 'RM_1',
-                    unitName: 'Amadalavalasa RM-1',
-                    categoryKey: 'RM',
-                    mandal: 'Amadalavalasa',
-                    officer: 'V. Kantharao, HC 732',
-                    phone: '6305713351',
-                    message: 'Polling Peaceful: Proceeding smoothly',
-                    priority: 'NORMAL',
-                    lat: 0,
-                    lng: 0,
-                    timestamp: now - (56 * 60 * 1000),
-                    read: true
-                }
-            ];
-            try {
-                localStorage.setItem('gp_messages_seeded', 'true');
-                localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
-            } catch (e) {}
         } else {
             window.liveOfficerMessages = [];
         }
@@ -923,15 +916,14 @@ function initOfficerMessagesStorage() {
         window.liveOfficerMessages = [];
     }
 
-    // Filter out any messages whose IDs were previously deleted
-    if (deletedIds.size > 0 && Array.isArray(window.liveOfficerMessages)) {
+    // Filter out any messages that were deleted or mock messages
+    if (Array.isArray(window.liveOfficerMessages)) {
         window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
-            return !deletedIds.has(String(m.id));
+            return !isMessageDeleted(m, deletedIds);
         });
     }
 
     try {
-        localStorage.setItem('gp_messages_seeded', 'true');
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
     } catch (e) {}
 
@@ -1019,6 +1011,9 @@ function handleIncomingOfficerMessage(payload) {
     if (!payload || !payload.message) return;
     const msgText = String(payload.message).trim();
     if (!msgText) return;
+
+    const deletedIds = getDeletedMessageIds();
+    if (isMessageDeleted(payload, deletedIds)) return;
 
     const unitKey = payload.unitId || payload.id || '';
     const meta = getPartyUnitMeta(unitKey) || {};
@@ -1280,23 +1275,24 @@ window.toggleSelectAllOfficerMessages = function(checked) {
     cbs.forEach(function(cb) { cb.checked = !!checked; });
 };
 
-function syncMessagesAfterDeletion(deletedIds) {
-    const delSet = getDeletedMessageIds();
-    (deletedIds || []).forEach(function(id) {
-        delSet.add(String(id));
-    });
+function syncMessagesAfterDeletion(delSet) {
+    if (!delSet) delSet = getDeletedMessageIds();
     saveDeletedMessageIds(delSet);
 
     try {
         localStorage.setItem('gp_messages_seeded', 'true');
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages || []));
     } catch (e) {}
+
+    const remaining = window.liveOfficerMessages || [];
     if (window.liveMqttClient && window.liveMqttClient.connected) {
         try {
             const delTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_delete';
-            window.liveMqttClient.publish(delTopic, JSON.stringify({ action: 'delete_messages', ids: Array.from(delSet), remaining: window.liveOfficerMessages || [] }), { qos: 1 });
-            window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', JSON.stringify(window.liveOfficerMessages || []), { qos: 1, retain: true });
+            window.liveMqttClient.publish(delTopic, JSON.stringify({ action: 'delete_messages', ids: Array.from(delSet), remaining: remaining }), { qos: 1 });
+            window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', JSON.stringify(remaining), { qos: 1, retain: true });
         } catch (e) {}
+    } else {
+        window._pendingHistoryBroadcast = true;
     }
     updateOfficerMessageBadge();
     renderOfficerMessagesList();
@@ -1308,10 +1304,27 @@ window.deleteSingleOfficerMessage = function(msgId) {
     if (!msgId) return;
     if (!verifyPolicePassword()) return;
 
+    const delSet = getDeletedMessageIds();
+    const targetIdStr = String(msgId);
+    delSet.add(targetIdStr);
+
+    const targets = [];
     window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        return String(m.id) !== String(msgId);
+        const isTarget = String(m.id) === targetIdStr || isMessageDeleted(m, new Set([targetIdStr]));
+        if (isTarget) {
+            targets.push(m);
+            return false;
+        }
+        return true;
     });
-    syncMessagesAfterDeletion([msgId]);
+
+    targets.forEach(function(m) {
+        getMessageSignatures(m).forEach(function(sig) {
+            delSet.add(sig);
+        });
+    });
+
+    syncMessagesAfterDeletion(delSet);
     alert("Message deleted successfully.");
 };
 
@@ -1325,10 +1338,26 @@ window.deleteSelectedOfficerMessages = function() {
 
     const selectedIds = new Set(Array.from(cbs).map(function(cb) { return String(cb.value); }));
     const count = selectedIds.size;
+    const delSet = getDeletedMessageIds();
+    selectedIds.forEach(function(id) { delSet.add(String(id)); });
+
+    const targets = [];
     window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        return !selectedIds.has(String(m.id));
+        const isTarget = selectedIds.has(String(m.id)) || isMessageDeleted(m, selectedIds);
+        if (isTarget) {
+            targets.push(m);
+            return false;
+        }
+        return true;
     });
-    syncMessagesAfterDeletion(selectedIds);
+
+    targets.forEach(function(m) {
+        getMessageSignatures(m).forEach(function(sig) {
+            delSet.add(sig);
+        });
+    });
+
+    syncMessagesAfterDeletion(delSet);
     alert(count + " message(s) deleted successfully.");
 };
 
