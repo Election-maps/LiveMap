@@ -969,8 +969,8 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="clearOfficerMessages()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-700/50 flex items-center gap-1 transition cursor-pointer" title="Clear message history">
-                        <i class="fa-solid fa-trash-can"></i> Clear History
+                    <button type="button" onclick="deleteSelectedOfficerMessages()" id="btn-delete-selected-messages" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-700/60 flex items-center gap-1.5 transition cursor-pointer" title="Delete selected messages (Police Password required)">
+                        <i class="fa-solid fa-trash-can text-rose-400"></i> Delete Selected
                     </button>
                     <button type="button" onclick="closeOfficerMessagesModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer text-base">
                         <i class="fa-solid fa-xmark"></i>
@@ -980,7 +980,7 @@
 
             <!-- Filter & Search Bar -->
             <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5">
+                <div class="flex flex-wrap items-center gap-1.5">
                     <button type="button" id="btn-msg-tab-all" onclick="setOfficerMessageFilter('ALL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow transition">
                         All (<span id="msg-count-all">0</span>)
                     </button>
@@ -990,6 +990,10 @@
                     <button type="button" id="btn-msg-tab-normal" onclick="setOfficerMessageFilter('NORMAL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition">
                         <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Routine (<span id="msg-count-normal">0</span>)
                     </button>
+                    <label class="flex items-center gap-1.5 ml-2 px-2 py-1 rounded bg-slate-200/70 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer select-none">
+                        <input type="checkbox" id="officer-msg-select-all" onchange="toggleSelectAllOfficerMessages(this.checked)" class="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer">
+                        <span>Select All</span>
+                    </label>
                 </div>
                 <div class="relative w-full sm:w-64">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>

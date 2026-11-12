@@ -86,9 +86,11 @@ function initLiveMQTT() {
             const retainedTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer/+';
             const controlTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/control_command';
             const officerMsgTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer_messages';
+            const deleteTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_delete';
             window.liveMqttClient.subscribe(officerMsgTopic, { qos: 1 });
             const historyTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history';
             window.liveMqttClient.subscribe(historyTopic, { qos: 1 });
+            window.liveMqttClient.subscribe(deleteTopic, { qos: 1 });
             window.liveMqttClient.subscribe(generalTopic, { qos: 0 });
             window.liveMqttClient.subscribe(controlTopic, { qos: 1 });
             window.liveMqttClient.subscribe(retainedTopic, { qos: 1 }, function(err) {
@@ -104,6 +106,23 @@ function initLiveMQTT() {
                 const str = message.toString().trim();
                 if (!str) return;
                 const payload = JSON.parse(str);
+
+                // Handle remote selective delete commands
+                if (topic.indexOf('/messages_delete') !== -1 || payload.action === 'delete_messages') {
+                    const delIds = new Set(payload.ids || []);
+                    if (delIds.size > 0 && Array.isArray(window.liveOfficerMessages)) {
+                        window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
+                            return !delIds.has(String(m.id));
+                        });
+                        try { localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages)); } catch (e) {}
+                        updateOfficerMessageBadge();
+                        const modal = document.getElementById('officer-messages-modal');
+                        if (modal && !modal.classList.contains('hidden')) {
+                            renderOfficerMessagesList();
+                        }
+                    }
+                    return;
+                }
 
                 // Handle remote clear commands
                 if (topic.indexOf('/messages_history') !== -1) {
@@ -1201,19 +1220,68 @@ window.closeOfficerMessagesModal = function() {
     if (modal) modal.classList.add('hidden');
 };
 
-window.clearOfficerMessages = function() {
-    if (!confirm('Are you sure you want to clear all officer messages history?')) {
-        return;
+function verifyPolicePassword() {
+    const pwd = prompt("Enter Password to delete message(s):");
+    if (pwd === null) return false;
+    if (pwd.trim().toLowerCase() !== 'police') {
+        alert("Incorrect Password! Access Denied.");
+        return false;
     }
-    window.liveOfficerMessages = [];
+    return true;
+}
+
+window.toggleSelectAllOfficerMessages = function(checked) {
+    const cbs = document.querySelectorAll('.officer-msg-cb');
+    cbs.forEach(function(cb) { cb.checked = !!checked; });
+};
+
+function syncMessagesAfterDeletion(deletedIds) {
     try {
-        localStorage.removeItem('gp_officer_messages');
-        if (window.liveMqttClient && window.liveMqttClient.connected) {
-            try { window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', '[]', { qos: 1, retain: true }); } catch (e) {}
-        }
+        localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages || []));
     } catch (e) {}
+    if (window.liveMqttClient && window.liveMqttClient.connected) {
+        try {
+            const delTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_delete';
+            window.liveMqttClient.publish(delTopic, JSON.stringify({ action: 'delete_messages', ids: Array.from(deletedIds || []), remaining: window.liveOfficerMessages || [] }), { qos: 1 });
+            window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', JSON.stringify(window.liveOfficerMessages || []), { qos: 1, retain: true });
+        } catch (e) {}
+    }
     updateOfficerMessageBadge();
     renderOfficerMessagesList();
+    const selectAll = document.getElementById('officer-msg-select-all');
+    if (selectAll) selectAll.checked = false;
+}
+
+window.deleteSingleOfficerMessage = function(msgId) {
+    if (!msgId) return;
+    if (!verifyPolicePassword()) return;
+
+    window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
+        return String(m.id) !== String(msgId);
+    });
+    syncMessagesAfterDeletion([msgId]);
+    alert("Message deleted successfully.");
+};
+
+window.deleteSelectedOfficerMessages = function() {
+    const cbs = document.querySelectorAll('.officer-msg-cb:checked');
+    if (!cbs || cbs.length === 0) {
+        alert("Please select at least one message checkbox to delete, or click the Delete button on the specific message.");
+        return;
+    }
+    if (!verifyPolicePassword()) return;
+
+    const selectedIds = new Set(Array.from(cbs).map(function(cb) { return String(cb.value); }));
+    const count = selectedIds.size;
+    window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
+        return !selectedIds.has(String(m.id));
+    });
+    syncMessagesAfterDeletion(selectedIds);
+    alert(count + " message(s) deleted successfully.");
+};
+
+window.clearOfficerMessages = function() {
+    window.deleteSelectedOfficerMessages();
 };
 
 window.setOfficerMessageFilter = function(filter) {
@@ -1240,6 +1308,12 @@ window.renderOfficerMessagesList = function() {
     const filter = window.currentOfficerMsgFilter || 'ALL';
 
     const allMsgs = Array.isArray(window.liveOfficerMessages) ? window.liveOfficerMessages : [];
+
+    allMsgs.forEach(function(m, idx) {
+        if (!m.id) {
+            m.id = 'msg_' + (m.timestamp || Date.now()) + '_' + idx;
+        }
+    });
 
     const filtered = allMsgs.filter(function(m) {
         if (filter === 'URGENT' && m.priority !== 'URGENT') return false;
@@ -1304,14 +1378,20 @@ window.renderOfficerMessagesList = function() {
         return `
             <div class="rounded-xl border ${cardBorder} p-3.5 shadow-sm hover:shadow-md transition">
                 <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
-                    <div class="flex flex-wrap items-center gap-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="checkbox" class="officer-msg-cb w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer shrink-0" value="${escapeHtml(m.id)}" title="Select message to delete" />
                         ${badgeTag}
                         <span class="font-black text-slate-800 text-sm">${escapeHtml(m.officer)}</span>
                         ${m.phone ? `<span class="text-xs text-blue-600 font-semibold">(${escapeHtml(m.phone)})</span>` : ''}
                     </div>
-                    <span class="text-[11px] text-slate-400 font-medium shrink-0 flex items-center gap-1">
-                        <i class="fa-regular fa-clock"></i> ${timeStr}
-                    </span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                            <i class="fa-regular fa-clock"></i> ${timeStr}
+                        </span>
+                        <button type="button" onclick="deleteSingleOfficerMessage('${escapeHtml(m.id)}')" class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] flex items-center gap-1 border border-rose-200 cursor-pointer transition shadow-2xs" title="Delete this message (Police Password required)">
+                            <i class="fa-solid fa-trash-can text-rose-500"></i> Delete
+                        </button>
+                    </div>
                 </div>
                 <div class="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
                     <i class="fa-solid fa-building-shield text-slate-400"></i>
@@ -1348,6 +1428,7 @@ window.renderOfficerMessagesList = function() {
             </div>
         `;
     }).join('');
+};
 };
 
 function formatMessageTime(ts) {
