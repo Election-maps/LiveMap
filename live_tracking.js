@@ -1429,7 +1429,6 @@ window.renderOfficerMessagesList = function() {
         `;
     }).join('');
 };
-};
 
 function formatMessageTime(ts) {
     if (!ts) return '';
