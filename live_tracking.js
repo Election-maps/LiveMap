@@ -110,15 +110,24 @@ function initLiveMQTT() {
                 // Handle remote selective delete commands
                 if (topic.indexOf('/messages_delete') !== -1 || payload.action === 'delete_messages') {
                     const delIds = new Set(payload.ids || []);
-                    if (delIds.size > 0 && Array.isArray(window.liveOfficerMessages)) {
-                        window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
-                            return !delIds.has(String(m.id));
-                        });
-                        try { localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages)); } catch (e) {}
-                        updateOfficerMessageBadge();
-                        const modal = document.getElementById('officer-messages-modal');
-                        if (modal && !modal.classList.contains('hidden')) {
-                            renderOfficerMessagesList();
+                    if (delIds.size > 0) {
+                        const localDeleted = getDeletedMessageIds();
+                        delIds.forEach(id => localDeleted.add(String(id)));
+                        saveDeletedMessageIds(localDeleted);
+
+                        if (Array.isArray(window.liveOfficerMessages)) {
+                            window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
+                                return !delIds.has(String(m.id));
+                            });
+                            try {
+                                localStorage.setItem('gp_messages_seeded', 'true');
+                                localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
+                            } catch (e) {}
+                            updateOfficerMessageBadge();
+                            const modal = document.getElementById('officer-messages-modal');
+                            if (modal && !modal.classList.contains('hidden')) {
+                                renderOfficerMessagesList();
+                            }
                         }
                     }
                     return;
@@ -787,6 +796,20 @@ function broadcastMessagesHistory() {
     }
 }
 
+function getDeletedMessageIds() {
+    try {
+        const raw = localStorage.getItem('gp_deleted_msg_ids');
+        if (raw) return new Set(JSON.parse(raw));
+    } catch (e) {}
+    return new Set();
+}
+
+function saveDeletedMessageIds(delSet) {
+    try {
+        localStorage.setItem('gp_deleted_msg_ids', JSON.stringify(Array.from(delSet || [])));
+    } catch (e) {}
+}
+
 function handleIncomingMessagesHistory(payload) {
     if (!payload) return;
     const incomingList = Array.isArray(payload) ? payload : (payload.messages && Array.isArray(payload.messages) ? payload.messages : null);
@@ -794,6 +817,7 @@ function handleIncomingMessagesHistory(payload) {
 
     if (!Array.isArray(window.liveOfficerMessages)) window.liveOfficerMessages = [];
 
+    const deletedIds = getDeletedMessageIds();
     const existingMap = new Map();
     window.liveOfficerMessages.forEach(m => {
         const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
@@ -803,6 +827,9 @@ function handleIncomingMessagesHistory(payload) {
     let hasChange = false;
     incomingList.forEach(m => {
         const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
+        if (m.id && deletedIds.has(String(m.id))) {
+            return; // Never re-add messages deleted by user
+        }
         if (!existingMap.has(key)) {
             window.liveOfficerMessages.push(m);
             existingMap.set(key, m);
@@ -816,6 +843,9 @@ function handleIncomingMessagesHistory(payload) {
         }
     });
 
+    window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
+        return !deletedIds.has(String(m.id));
+    });
     window.liveOfficerMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     if (window.liveOfficerMessages.length > 150) {
         window.liveOfficerMessages = window.liveOfficerMessages.slice(0, 150);
@@ -833,10 +863,59 @@ function handleIncomingMessagesHistory(payload) {
 }
 
 function initOfficerMessagesStorage() {
+    const deletedIds = getDeletedMessageIds();
+    const hasBeenInitialized = localStorage.getItem('gp_messages_seeded') === 'true';
+
     try {
         const raw = localStorage.getItem('gp_officer_messages');
-        if (raw) {
-            window.liveOfficerMessages = JSON.parse(raw);
+        if (raw !== null) {
+            const parsed = JSON.parse(raw);
+            window.liveOfficerMessages = Array.isArray(parsed) ? parsed : [];
+        } else if (!hasBeenInitialized) {
+            // Seed sample messages ONLY ONCE on clean setup if storage was never used
+            const now = Date.now();
+            window.liveOfficerMessages = [
+                {
+                    id: 'msg_seed_1',
+                    unitId: 'RM_1',
+                    unitName: 'RM-1 (Kollivalasa)',
+                    categoryKey: 'RM',
+                    mandal: 'Amadalavlasa',
+                    officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
+                    phone: '6305713351',
+                    message: 'Polling Peaceful: Proceeding smoothly',
+                    priority: 'NORMAL',
+                    lat: 0,
+                    lng: 0,
+                    timestamp: now - (51 * 60 * 1000),
+                    read: true,
+                    replies: [
+                        {
+                            message: 'Ok',
+                            timestamp: now - (50 * 60 * 1000)
+                        }
+                    ]
+                },
+                {
+                    id: 'msg_seed_2',
+                    unitId: 'RM_1',
+                    unitName: 'Amadalavalasa RM-1',
+                    categoryKey: 'RM',
+                    mandal: 'Amadalavalasa',
+                    officer: 'V. Kantharao, HC 732',
+                    phone: '6305713351',
+                    message: 'Polling Peaceful: Proceeding smoothly',
+                    priority: 'NORMAL',
+                    lat: 0,
+                    lng: 0,
+                    timestamp: now - (56 * 60 * 1000),
+                    read: true
+                }
+            ];
+            try {
+                localStorage.setItem('gp_messages_seeded', 'true');
+                localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
+            } catch (e) {}
         } else {
             window.liveOfficerMessages = [];
         }
@@ -844,51 +923,17 @@ function initOfficerMessagesStorage() {
         window.liveOfficerMessages = [];
     }
 
-    // Default seed messages matching actual verified test messages so new devices/incognito tabs immediately show history
-    if (!Array.isArray(window.liveOfficerMessages) || window.liveOfficerMessages.length === 0) {
-        const now = Date.now();
-        window.liveOfficerMessages = [
-            {
-                id: 'msg_seed_1',
-                unitId: 'RM_1',
-                unitName: 'RM-1 (Kollivalasa)',
-                categoryKey: 'RM',
-                mandal: 'Amadalavlasa',
-                officer: 'V. Kantharao, HC 732, Amadalavalasa PS, 6305713351',
-                phone: '6305713351',
-                message: 'Polling Peaceful: Proceeding smoothly',
-                priority: 'NORMAL',
-                lat: 0,
-                lng: 0,
-                timestamp: now - (51 * 60 * 1000),
-                read: true,
-                replies: [
-                    {
-                        message: 'Ok',
-                        timestamp: now - (50 * 60 * 1000)
-                    }
-                ]
-            },
-            {
-                id: 'msg_seed_2',
-                unitId: 'RM_1',
-                unitName: 'Amadalavalasa RM-1',
-                categoryKey: 'RM',
-                mandal: 'Amadalavalasa',
-                officer: 'V. Kantharao, HC 732',
-                phone: '6305713351',
-                message: 'Polling Peaceful: Proceeding smoothly',
-                priority: 'NORMAL',
-                lat: 0,
-                lng: 0,
-                timestamp: now - (56 * 60 * 1000),
-                read: true
-            }
-        ];
-        try {
-            localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
-        } catch (e) {}
+    // Filter out any messages whose IDs were previously deleted
+    if (deletedIds.size > 0 && Array.isArray(window.liveOfficerMessages)) {
+        window.liveOfficerMessages = window.liveOfficerMessages.filter(function(m) {
+            return !deletedIds.has(String(m.id));
+        });
     }
+
+    try {
+        localStorage.setItem('gp_messages_seeded', 'true');
+        localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
+    } catch (e) {}
 
     updateOfficerMessageBadge();
 }
@@ -1236,13 +1281,20 @@ window.toggleSelectAllOfficerMessages = function(checked) {
 };
 
 function syncMessagesAfterDeletion(deletedIds) {
+    const delSet = getDeletedMessageIds();
+    (deletedIds || []).forEach(function(id) {
+        delSet.add(String(id));
+    });
+    saveDeletedMessageIds(delSet);
+
     try {
+        localStorage.setItem('gp_messages_seeded', 'true');
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages || []));
     } catch (e) {}
     if (window.liveMqttClient && window.liveMqttClient.connected) {
         try {
             const delTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_delete';
-            window.liveMqttClient.publish(delTopic, JSON.stringify({ action: 'delete_messages', ids: Array.from(deletedIds || []), remaining: window.liveOfficerMessages || [] }), { qos: 1 });
+            window.liveMqttClient.publish(delTopic, JSON.stringify({ action: 'delete_messages', ids: Array.from(delSet), remaining: window.liveOfficerMessages || [] }), { qos: 1 });
             window.liveMqttClient.publish('srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/messages_history', JSON.stringify(window.liveOfficerMessages || []), { qos: 1, retain: true });
         } catch (e) {}
     }
