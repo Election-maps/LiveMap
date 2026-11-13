@@ -790,6 +790,12 @@ window.liveOfficerMessages = [];
 window.currentOfficerMsgFilter = 'ALL';
 let liveOfficerToastTimer = null;
 
+let broadcastHistoryTimer = null;
+function queueBroadcastMessagesHistory() {
+    if (broadcastHistoryTimer) clearTimeout(broadcastHistoryTimer);
+    broadcastHistoryTimer = setTimeout(broadcastMessagesHistory, 400);
+}
+
 function broadcastMessagesHistory() {
     if (!window.liveMqttClient || !window.liveMqttClient.connected) return;
     try {
@@ -804,45 +810,30 @@ function broadcastMessagesHistory() {
 function getDeletedMessageIds() {
     try {
         const raw = localStorage.getItem('gp_deleted_msg_ids');
-        if (raw) return new Set(JSON.parse(raw));
+        if (raw) {
+            const list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+                // Only keep explicit unique message IDs (e.g. msg_...)
+                return new Set(list.filter(id => typeof id === 'string' && id.startsWith('msg_')));
+            }
+        }
     } catch (e) {}
     return new Set();
 }
 
 function saveDeletedMessageIds(delSet) {
     try {
-        localStorage.setItem('gp_deleted_msg_ids', JSON.stringify(Array.from(delSet || [])));
+        const arr = Array.from(delSet || []).filter(id => typeof id === 'string' && id.startsWith('msg_'));
+        localStorage.setItem('gp_deleted_msg_ids', JSON.stringify(arr));
     } catch (e) {}
-}
-
-function getMessageSignatures(m) {
-    if (!m) return [];
-    const sigs = [];
-    if (m.id) sigs.push(String(m.id));
-    if (m.unitId && m.timestamp) sigs.push(String(m.unitId) + '_' + String(m.timestamp));
-    if (m.unitId && m.message) sigs.push(String(m.unitId) + '_' + String(m.message).trim());
-    if (m.officer && m.message) sigs.push(String(m.officer).trim() + '_' + String(m.message).trim());
-    if (m.timestamp && m.message) sigs.push(String(m.timestamp) + '_' + String(m.message).trim());
-    const fullKey = (m.unitId || '') + '_' + (m.timestamp || '') + '_' + (m.message || '').trim();
-    if (fullKey.length > 2) sigs.push(fullKey);
-    return sigs;
 }
 
 function isMessageDeleted(m, delSet) {
     if (!m) return false;
-    // Permanently eliminate hardcoded mock seed messages so they NEVER appear or revive
-    const mId = String(m.id || '');
+    const mId = String(m.id || m.msgId || '');
     if (mId === 'msg_seed_1' || mId === 'msg_seed_2' || mId.indexOf('msg_seed') !== -1) return true;
-    const off = String(m.officer || '');
-    const msg = String(m.message || '');
-    if (off.indexOf('Kantharao') !== -1 && msg.indexOf('Polling Peaceful') !== -1) return true;
-
     if (!delSet || delSet.size === 0) return false;
-    const sigs = getMessageSignatures(m);
-    for (let i = 0; i < sigs.length; i++) {
-        if (delSet.has(sigs[i])) return true;
-    }
-    return false;
+    return delSet.has(mId);
 }
 
 function handleIncomingMessagesHistory(payload) {
@@ -855,16 +846,16 @@ function handleIncomingMessagesHistory(payload) {
     const deletedIds = getDeletedMessageIds();
     const existingMap = new Map();
     window.liveOfficerMessages.forEach(m => {
-        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
+        const key = m.id || m.msgId || (m.unitId + '_' + m.timestamp + '_' + m.message);
         existingMap.set(key, m);
     });
 
     let hasChange = false;
     incomingList.forEach(m => {
         if (isMessageDeleted(m, deletedIds)) {
-            return; // Never re-add deleted or mock messages
+            return; // Never re-add deleted or mock seed messages
         }
-        const key = m.id || (m.unitId + '_' + m.timestamp + '_' + m.message);
+        const key = m.id || m.msgId || (m.unitId + '_' + m.timestamp + '_' + m.message);
         if (!existingMap.has(key)) {
             window.liveOfficerMessages.push(m);
             existingMap.set(key, m);
@@ -935,28 +926,37 @@ function updateOfficerMessageBadge() {
     const headerBadge = document.getElementById('header-live-msg-badge');
     const headerBell = document.getElementById('header-icon-msg-bell');
     const bellIcon = document.getElementById('icon-msg-bell');
-    if (!badge) return;
 
-    const unreadCount = (window.liveOfficerMessages || []).filter(function(m) { return !m.read; }).length;
-    const totalCount = (window.liveOfficerMessages || []).length;
-    const displayCount = unreadCount > 0 ? unreadCount : totalCount;
-    badge.innerText = displayCount;
-    if (headerBadge) {
-        headerBadge.innerText = displayCount;
+    const msgs = Array.isArray(window.liveOfficerMessages) ? window.liveOfficerMessages : [];
+    const unreadCount = msgs.filter(function(m) { return !m.read; }).length;
+    const totalCount = msgs.length;
+
+    if (badge) {
         if (unreadCount > 0) {
+            badge.innerText = unreadCount + ' NEW';
+            badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-600 text-white shadow-md animate-pulse border border-rose-300';
+            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
+        } else if (totalCount > 0) {
+            badge.innerText = totalCount;
+            badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-900 text-indigo-200 border border-indigo-400/40 shadow-xs';
+            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-slate-300';
+        } else {
+            badge.innerText = '0';
+            badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300 shadow-xs';
+            if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-slate-400';
+        }
+    }
+
+    if (headerBadge) {
+        if (unreadCount > 0) {
+            headerBadge.innerText = unreadCount;
             headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
             if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
         } else {
+            headerBadge.innerText = totalCount;
             headerBadge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-700 text-slate-200 shadow-xs';
-            if (headerBell) headerBell.className = 'fa-solid fa-bell text-amber-300';
+            if (headerBell) headerBell.className = 'fa-solid fa-bell text-slate-300';
         }
-    }
-    if (unreadCount > 0) {
-        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse';
-        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-amber-300 animate-bounce';
-    } else {
-        badge.className = 'px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-600 text-slate-200 shadow-xs';
-        if (bellIcon) bellIcon.className = 'fa-solid fa-bell text-slate-300';
     }
 }
 
@@ -1012,8 +1012,9 @@ function handleIncomingOfficerMessage(payload) {
     const msgText = String(payload.message).trim();
     if (!msgText) return;
 
-    const deletedIds = getDeletedMessageIds();
-    if (isMessageDeleted(payload, deletedIds)) return;
+    // Filter obsolete mock seed test messages only
+    const testId = String(payload.id || payload.msgId || '');
+    if (testId === 'msg_seed_1' || testId === 'msg_seed_2') return;
 
     const unitKey = payload.unitId || payload.id || '';
     const meta = getPartyUnitMeta(unitKey) || {};
@@ -1027,14 +1028,18 @@ function handleIncomingOfficerMessage(payload) {
     const priority = (payload.priority || (msgText.toLowerCase().includes('emergency') || msgText.toLowerCase().includes('sos') ? 'URGENT' : 'NORMAL')).toUpperCase();
     const timestamp = payload.timestamp || Date.now();
 
-    // Prevent duplicate spam packets within 3 seconds
+    const incomingId = payload.msgId || payload.id || ('msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
+
+    // Prevent duplicate spam packets within 4 seconds or same msgId
     const isDuplicate = (window.liveOfficerMessages || []).some(function(m) {
-        return m.unitId === unitKey && m.message === msgText && Math.abs(m.timestamp - timestamp) < 3000;
+        if (incomingId && (m.id === incomingId || m.msgId === incomingId)) return true;
+        return m.unitId === unitKey && m.message === msgText && Math.abs((m.timestamp || 0) - timestamp) < 4000;
     });
     if (isDuplicate) return;
 
     const msgObj = {
-        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        id: incomingId,
+        msgId: incomingId,
         unitId: unitKey,
         unitName: unitName,
         categoryKey: categoryKey,
@@ -1059,21 +1064,17 @@ function handleIncomingOfficerMessage(payload) {
         localStorage.setItem('gp_officer_messages', JSON.stringify(window.liveOfficerMessages));
     } catch (e) {}
 
-    // Audio & Badge
+    // Audio & Badge immediately updated without delay
     playOfficerAudioAlert(priority === 'URGENT');
     updateOfficerMessageBadge();
 
     // Show floating banner toast on Live Route Map
     showLiveOfficerToast(msgObj);
-    broadcastMessagesHistory();
+    queueBroadcastMessagesHistory();
 
-    // Automatically open the Control Room Message Box Modal right on screen!
-    if (typeof openOfficerMessagesModal === 'function') {
-        openOfficerMessagesModal();
-    } else {
-        const modal = document.getElementById('officer-messages-modal');
-        if (modal) modal.classList.remove('hidden');
-        if (typeof renderOfficerMessagesList === 'function') renderOfficerMessagesList();
+    const modal = document.getElementById('officer-messages-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+        renderOfficerMessagesList();
     }
 }
 
@@ -1308,20 +1309,9 @@ window.deleteSingleOfficerMessage = function(msgId) {
     const targetIdStr = String(msgId);
     delSet.add(targetIdStr);
 
-    const targets = [];
     window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        const isTarget = String(m.id) === targetIdStr || isMessageDeleted(m, new Set([targetIdStr]));
-        if (isTarget) {
-            targets.push(m);
-            return false;
-        }
-        return true;
-    });
-
-    targets.forEach(function(m) {
-        getMessageSignatures(m).forEach(function(sig) {
-            delSet.add(sig);
-        });
+        const id = String(m.id || m.msgId || '');
+        return id !== targetIdStr;
     });
 
     syncMessagesAfterDeletion(delSet);
@@ -1341,20 +1331,9 @@ window.deleteSelectedOfficerMessages = function() {
     const delSet = getDeletedMessageIds();
     selectedIds.forEach(function(id) { delSet.add(String(id)); });
 
-    const targets = [];
     window.liveOfficerMessages = (window.liveOfficerMessages || []).filter(function(m) {
-        const isTarget = selectedIds.has(String(m.id)) || isMessageDeleted(m, selectedIds);
-        if (isTarget) {
-            targets.push(m);
-            return false;
-        }
-        return true;
-    });
-
-    targets.forEach(function(m) {
-        getMessageSignatures(m).forEach(function(sig) {
-            delSet.add(sig);
-        });
+        const id = String(m.id || m.msgId || '');
+        return !selectedIds.has(id);
     });
 
     syncMessagesAfterDeletion(delSet);

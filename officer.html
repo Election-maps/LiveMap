@@ -593,7 +593,7 @@
 
     <!-- Custom Message Input -->
     <div style="margin-bottom: 10px;">
-      <textarea id="officer-msg-input" rows="2" placeholder="Type your message to Control Room here..." style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 12px; resize: none; font-family: inherit;"></textarea>
+      <textarea id="officer-msg-input" onfocus="if (!mqttClient || !mqttClient.connected) initMQTT();" rows="2" placeholder="Type your message to Control Room here..." style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 12px; resize: none; font-family: inherit;"></textarea>
     </div>
 
     <!-- Send Button -->
@@ -902,9 +902,10 @@
       mqttClient = mqtt.connect(brokerUrl, {
         clientId: `skl_field_${userId}_${Math.random().toString(16).substring(2, 8)}`,
         clean: true,
-        connectTimeout: 5000,
-        reconnectPeriod: 2000,
-        keepalive: 15,
+        connectTimeout: 4000,
+        reconnectPeriod: 1000,
+        keepalive: 10,
+        reschedulePings: true,
         queueQoSZero: true
       });
     } catch (e) {
@@ -1540,6 +1541,10 @@
     const input = document.getElementById('officer-msg-input');
     if (input) input.value = text;
     selectedQuickPriority = priority || 'NORMAL';
+    // Warm up MQTT connection immediately on preset tap
+    if (!mqttClient || !mqttClient.connected) {
+      initMQTT();
+    }
   };
 
   function resetOfficerSendButton() {
@@ -1558,6 +1563,8 @@
       resetOfficerSendButton();
       if (!mqttClient || !mqttClient.connected) {
         initMQTT();
+      } else {
+        try { mqttClient.ping(); } catch (e) {}
       }
     }
   });
@@ -1609,29 +1616,12 @@
         btn.disabled = true;
       }
 
-      // Safe GPS coordinates resolution
+      // Safe GPS coordinates resolution (instant without blocking)
       let curLat = (typeof lastLat === 'number' && !isNaN(lastLat) && lastLat !== 0) ? lastLat : 0;
       let curLng = (typeof lastLng === 'number' && !isNaN(lastLng) && lastLng !== 0) ? lastLng : 0;
       if ((!curLat || !curLng) && typeof lastKnownPosition !== 'undefined' && lastKnownPosition && lastKnownPosition.coords) {
         curLat = lastKnownPosition.coords.latitude || 0;
         curLng = lastKnownPosition.coords.longitude || 0;
-      }
-
-      // If zero, trigger non-blocking background location query for future messages
-      if ((!curLat || !curLng) && navigator.geolocation) {
-        try {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              if (pos && pos.coords) {
-                lastLat = pos.coords.latitude;
-                lastLng = pos.coords.longitude;
-                lastKnownPosition = pos;
-              }
-            },
-            () => {},
-            { timeout: 3000, enableHighAccuracy: false }
-          );
-        } catch (e) {}
       }
 
       const isUrgent = selectedQuickPriority === 'URGENT' || msgText.toLowerCase().includes('emergency') || msgText.toLowerCase().includes('sos');
@@ -1657,22 +1647,21 @@
       const targetRoom = (typeof roomCode !== 'undefined' && roomCode) ? roomCode : 'SrikakulamPolice';
       const msgTopic = `srikakulam_police_tracker/${targetRoom}/officer_messages`;
       const generalTopic = `srikakulam_police_tracker/${targetRoom}/locations`;
-      const unitTopic = `srikakulam_police_tracker/${targetRoom}/officer/${currentSelectedUnit.id}`;
 
-      // Publish function across officer_messages, general locations, and unit channels
+      // Fast immediate dispatch function:
+      // Sends via QoS 0 instantly over wire (zero delay), plus QoS 1 for delivery assurance
       function dispatchMessage(client) {
         if (!client) return;
+        try { client.publish(msgTopic, payloadJson, { qos: 0 }); } catch (e) {}
         try { client.publish(msgTopic, payloadJson, { qos: 1 }); } catch (e) {}
-        try { client.publish(generalTopic, payloadJson, { qos: 1 }); } catch (e) {}
-        try { client.publish(unitTopic, payloadJson, { qos: 1, retain: true }); } catch (e) {}
+        try { client.publish(generalTopic, payloadJson, { qos: 0 }); } catch (e) {}
       }
 
-      // 1. Ensure MQTT client initialized
+      // Ensure MQTT client initialized
       if (!mqttClient || !mqttClient.connected) {
         initMQTT();
       }
 
-      // 2. Transmit message
       if (mqttClient) {
         dispatchMessage(mqttClient);
 
@@ -1683,21 +1672,19 @@
         }
       }
 
-      // 3. Guaranteed immediate UI success & auto-reset
-      setTimeout(() => {
-        if (btn) {
-          btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
-          btn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
-        }
-        if (input) input.value = '';
-        selectedQuickPriority = 'NORMAL';
-        try { showToast('Message Delivered to Control Room!'); } catch (e) {}
-        try { playOfficerChime(); } catch (e) {}
+      // Immediate UI update without waiting for timeouts
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent to Control Room!';
+        btn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+      }
+      if (input) input.value = '';
+      selectedQuickPriority = 'NORMAL';
+      try { showToast('Message Delivered to Control Room!'); } catch (e) {}
+      try { playOfficerChime(); } catch (e) {}
 
-        setTimeout(() => {
-          resetOfficerSendButton();
-        }, 2200);
-      }, 400);
+      setTimeout(() => {
+        resetOfficerSendButton();
+      }, 1500);
 
     } catch (err) {
       console.error('Error sending officer message:', err);
