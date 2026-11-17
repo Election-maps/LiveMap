@@ -19,7 +19,7 @@
     <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
     <script src="route_mobiles_data.js"></script>
     <!-- Live Forces Real-time Tracking Engine -->
-    <script src="live_tracking.js?v=20261117_04"></script>
+    <script src="live_tracking.js?v=20261117_05"></script>
     <style>
         .ps-tooltip-badge {
             background-color: rgba(255, 255, 255, 0.96);
@@ -519,7 +519,7 @@
         <!-- ================= TAB: LIVE ROUTE MAP ================= -->
         <section id="tab-livemap" class="hidden space-y-2">
             <!-- Live Forces & Tracker Status Bar (Routes, SF, SSF, QRTs, Reserve Parties) -->
-            <div class="flex items-center justify-between gap-2 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-md overflow-x-auto whitespace-nowrap">
+            <div class="flex flex-nowrap items-center justify-between gap-2 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-md overflow-x-auto whitespace-nowrap">
                 <div class="flex items-center gap-1 text-xs shrink-0">
                     <span class="font-bold text-amber-400 mr-1 flex items-center gap-1 text-[11px] sm:text-xs">
                         <i class="fa-solid fa-satellite-dish animate-pulse text-emerald-400"></i> Live Forces (364):
@@ -601,7 +601,7 @@
                         <span id="txt-live-filter-toggle">Hide / Unhide</span>
                     </button>
                 </div>
-                <div id="live-filter-row-inputs" class="flex items-end gap-1.5 pb-0.5 relative overflow-x-auto whitespace-nowrap">
+                <div id="live-filter-row-inputs" class="flex flex-nowrap items-end gap-1.5 pb-1 relative overflow-x-auto whitespace-nowrap">
                     <!-- Police Station Filter -->
                     <div class="w-32 sm:w-36 shrink-0">
                         <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">Police Station</label>
@@ -3668,6 +3668,25 @@
                 `;
             });
             box.innerHTML = html;
+            if (boxId === 'live-psl-suggestions') {
+                if (box.parentElement !== document.body) {
+                    document.body.appendChild(box);
+                }
+                const inp = document.getElementById('live-search-text');
+                if (inp) {
+                    const r = inp.getBoundingClientRect();
+                    const w = Math.min(320, window.innerWidth - 20);
+                    let l = r.left;
+                    if (l + w > window.innerWidth - 10) l = window.innerWidth - w - 10;
+                    if (l < 10) l = 10;
+                    box.style.position = 'fixed';
+                    box.style.top = (r.bottom + 6) + 'px';
+                    box.style.left = l + 'px';
+                    box.style.width = w + 'px';
+                    box.style.zIndex = '999999';
+                    box.style.whiteSpace = 'normal';
+                }
+            }
             box.classList.remove('hidden');
         }
         // Close PSL suggestions when clicking outside
@@ -3681,11 +3700,17 @@
                 hideSuggestions('map-psl-suggestions');
             }
             const liveMapContainer = document.getElementById('live-map-search-container');
-            if (liveMapContainer && !liveMapContainer.contains(e.target)) {
+            const livePslBox = document.getElementById('live-psl-suggestions');
+            if (livePslBox && livePslBox.contains(e.target)) {
+                // Clicked inside PSL suggestions
+            } else if (liveMapContainer && !liveMapContainer.contains(e.target)) {
                 hideSuggestions('live-psl-suggestions');
             }
             const liveOfficerContainer = document.getElementById('live-officer-search-container');
-            if (liveOfficerContainer && !liveOfficerContainer.contains(e.target)) {
+            const liveOfficerSuggestions = document.getElementById('live-officer-suggestions');
+            if (liveOfficerSuggestions && liveOfficerSuggestions.contains(e.target)) {
+                // Clicked inside Officer suggestions
+            } else if (liveOfficerContainer && !liveOfficerContainer.contains(e.target)) {
                 if (typeof window.hideOnlineOfficerSuggestions === 'function') {
                     window.hideOnlineOfficerSuggestions();
                 }
