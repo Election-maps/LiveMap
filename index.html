@@ -19,7 +19,7 @@
     <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
     <script src="route_mobiles_data.js"></script>
     <!-- Live Forces Real-time Tracking Engine -->
-    <script src="live_tracking.js?v=20261117_01"></script>
+    <script src="live_tracking.js?v=20261117_02"></script>
     <style>
         .ps-tooltip-badge {
             background-color: rgba(255, 255, 255, 0.96);
@@ -551,6 +551,11 @@
                         <span class="text-slate-300">Live Active: <strong id="live-party-active-count" class="text-emerald-300">0</strong> / 364</span>
                     </div>
 
+                    <button type="button" onclick="focusLiveOfficerSearch()" id="btn-top-search-officer" class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Search currently Online Officers by Name or Mobile No">
+                        <i class="fa-solid fa-magnifying-glass text-emerald-200"></i>
+                        <span>Search Officer</span>
+                    </button>
+
                     <button type="button" onclick="openOfficerMessagesModal()" id="btn-officer-messages" class="relative px-2.5 py-1 rounded text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="View messages sent by Officers to Control Room">
                         <i class="fa-solid fa-bell text-amber-300" id="icon-msg-bell"></i>
                         <span>Messages</span>
@@ -649,6 +654,27 @@
                             </button>
                             <!-- Dropdown Suggestions on Map -->
                             <div id="live-psl-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-72 overflow-y-auto divide-y divide-slate-100">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Search Online Officer (Name / Mobile No) -->
+                    <div class="flex-1 min-w-[200px] max-w-sm">
+                        <label class="block text-[10px] font-bold text-emerald-700 uppercase mb-1 flex items-center justify-between">
+                            <span><i class="fa-solid fa-user-shield text-emerald-600 mr-1"></i> Search Online Officer</span>
+                            <span class="text-[9px] text-slate-400 font-normal">Name / Mobile</span>
+                        </label>
+                        <div class="relative w-full flex items-center gap-1" id="live-officer-search-container">
+                            <div class="relative flex-1">
+                                <input type="text" id="live-officer-search-text" oninput="onLiveOfficerSearchInput(this.value)" onfocus="onLiveOfficerSearchFocus()" onkeydown="if(event.key==='Enter'){ triggerOnlineOfficerSearch(); }" placeholder="Officer Name or Mobile..." autocomplete="off" class="w-full border border-emerald-400/80 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 pr-7 bg-emerald-50/20 text-slate-900 font-semibold placeholder-slate-400">
+                                <button type="button" onclick="clearLiveOfficerSearch()" id="btn-clear-live-officer-search" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <button type="button" onclick="triggerOnlineOfficerSearch()" id="btn-search-live-officer" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition flex items-center gap-1 shadow-sm shrink-0 cursor-pointer" title="Search Online Officers by Name or Mobile">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                            <!-- Dropdown Suggestions on Map for Online Officers -->
+                            <div id="live-officer-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full sm:w-96 bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-80 overflow-y-auto divide-y divide-slate-100">
                             </div>
                         </div>
                     </div>
@@ -3662,6 +3688,12 @@
             const liveMapContainer = document.getElementById('live-map-search-container');
             if (liveMapContainer && !liveMapContainer.contains(e.target)) {
                 hideSuggestions('live-psl-suggestions');
+            }
+            const liveOfficerContainer = document.getElementById('live-officer-search-container');
+            if (liveOfficerContainer && !liveOfficerContainer.contains(e.target)) {
+                if (typeof window.hideOnlineOfficerSuggestions === 'function') {
+                    window.hideOnlineOfficerSuggestions();
+                }
             }
         });
         function changePageSize(val) {

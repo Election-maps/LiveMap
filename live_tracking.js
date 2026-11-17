@@ -1756,6 +1756,241 @@ window.submitControlReply = function() {
     }
 };
 
+// ================= SEARCH ONLINE OFFICERS BY NAME & MOBILE (LIVE ROUTE MAP) =================
+window.onLiveOfficerSearchInput = function(query) {
+    const clearBtn = document.getElementById('btn-clear-live-officer-search');
+    if (clearBtn) {
+        if (query && query.trim().length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+    renderOnlineOfficerSuggestions(query);
+};
+
+window.onLiveOfficerSearchFocus = function() {
+    const input = document.getElementById('live-officer-search-text');
+    const q = input ? input.value : '';
+    renderOnlineOfficerSuggestions(q);
+};
+
+window.clearLiveOfficerSearch = function() {
+    const input = document.getElementById('live-officer-search-text');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('btn-clear-live-officer-search');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    hideOnlineOfficerSuggestions();
+};
+
+window.hideOnlineOfficerSuggestions = function() {
+    const box = document.getElementById('live-officer-suggestions');
+    if (box) box.classList.add('hidden');
+};
+
+window.focusLiveOfficerSearch = function() {
+    const row = document.getElementById('live-filter-row-inputs');
+    if (row && row.classList.contains('hidden')) {
+        if (typeof toggleLiveMapFilterBar === 'function') {
+            toggleLiveMapFilterBar();
+        }
+    }
+    const input = document.getElementById('live-officer-search-text');
+    if (input) {
+        input.focus();
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        renderOnlineOfficerSuggestions(input.value);
+    }
+};
+
+window.triggerOnlineOfficerSearch = function() {
+    const input = document.getElementById('live-officer-search-text');
+    const query = input ? input.value.trim().toLowerCase() : '';
+
+    const now = Date.now();
+    const onlineList = [];
+    for (const k in window.livePartyMarkers) {
+        const u = window.livePartyMarkers[k];
+        if ((now - (u.lastUpdated || 0)) <= LIVE_UNIT_EXPIRY_MS) {
+            onlineList.push(u);
+        }
+    }
+
+    if (onlineList.length === 0) {
+        alert('ప్రస్తుతం ఆన్‌లైన్‌లో ఏ ఫీల్డ్ ఆఫీసర్ కూడా లేరు (No officers currently online transmitting live).');
+        return;
+    }
+
+    if (!query) {
+        // If query is empty, show all currently online officers in dropdown
+        renderOnlineOfficerSuggestions('');
+        return;
+    }
+
+    // Filter matching online officers by Name or Mobile No
+    const cleanDigits = query.replace(/\D/g, '');
+    const matches = onlineList.filter(function(u) {
+        const nameMatch = String(u.officer || '').toLowerCase().includes(query);
+        const phone = String(u.phone || '');
+        const phoneMatch = cleanDigits.length >= 3 ? phone.replace(/\D/g, '').includes(cleanDigits) : phone.toLowerCase().includes(query);
+        const unitMatch = String(u.unitName || '').toLowerCase().includes(query);
+        const mandalMatch = String(u.mandal || '').toLowerCase().includes(query);
+        return nameMatch || phoneMatch || unitMatch || mandalMatch;
+    });
+
+    if (matches.length === 0) {
+        alert('"' + input.value.trim() + '" పేరు లేదా మొబైల్ నంబర్‌తో ఆన్‌లైన్ ఆఫీసర్లు ఎవరూ లేరు.\n\n(No online officer found matching this Name or Mobile Number)');
+        renderOnlineOfficerSuggestions(query);
+        return;
+    }
+
+    if (matches.length === 1) {
+        // Exactly one match - fly to officer immediately on map!
+        selectOnlineOfficerSearchResult(matches[0].key);
+    } else {
+        // Multiple matches - show dropdown list
+        renderOnlineOfficerSuggestions(query);
+    }
+};
+
+function renderOnlineOfficerSuggestions(rawQuery) {
+    const box = document.getElementById('live-officer-suggestions');
+    if (!box) return;
+
+    const query = String(rawQuery || '').trim().toLowerCase();
+    const cleanDigits = query.replace(/\D/g, '');
+
+    const now = Date.now();
+    const onlineList = [];
+    for (const k in window.livePartyMarkers) {
+        const u = window.livePartyMarkers[k];
+        if ((now - (u.lastUpdated || 0)) <= LIVE_UNIT_EXPIRY_MS) {
+            onlineList.push(u);
+        }
+    }
+
+    if (onlineList.length === 0) {
+        box.innerHTML = `
+            <div class="p-3 text-xs text-slate-500 text-center">
+                <i class="fa-solid fa-circle-exclamation text-amber-500 mr-1"></i>
+                ప్రస్తుతం ఆన్‌లైన్‌లో ఏ ఆఫీసర్ కూడా లేరు (0 Online).
+            </div>
+        `;
+        box.classList.remove('hidden');
+        return;
+    }
+
+    let filtered = onlineList;
+    if (query) {
+        filtered = onlineList.filter(function(u) {
+            const nameMatch = String(u.officer || '').toLowerCase().includes(query);
+            const phone = String(u.phone || '');
+            const phoneMatch = cleanDigits.length >= 3 ? phone.replace(/\D/g, '').includes(cleanDigits) : phone.toLowerCase().includes(query);
+            const unitMatch = String(u.unitName || '').toLowerCase().includes(query);
+            const mandalMatch = String(u.mandal || '').toLowerCase().includes(query);
+            return nameMatch || phoneMatch || unitMatch || mandalMatch;
+        });
+    }
+
+    if (filtered.length === 0) {
+        box.innerHTML = `
+            <div class="p-3 text-xs text-rose-600 text-center font-medium">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 mr-1"></i>
+                ఆన్‌లైన్‌లో ఉన్న వారిలో "${escapeHtml(rawQuery)}" తో సరిపోలే ఆఫీసర్ కనిపించలేదు.
+            </div>
+        `;
+        box.classList.remove('hidden');
+        return;
+    }
+
+    let html = `
+        <div class="px-3 py-1.5 bg-slate-100 text-[10px] font-bold text-slate-700 flex items-center justify-between border-b">
+            <span><i class="fa-solid fa-satellite-dish text-emerald-600 mr-1"></i> ఆన్‌లైన్ ఆఫీసర్లు (${filtered.length} of ${onlineList.length})</span>
+            <span class="text-slate-400 font-normal">మ్యాప్‌పై చూడటానికి క్లిక్ చేయండి</span>
+        </div>
+    `;
+
+    filtered.forEach(function(u) {
+        const theme = getLivePartyCategoryTheme(u.catKey);
+        const timeDiff = Math.max(0, Math.round((now - (u.lastUpdated || now)) / 1000));
+        const timeAgoText = timeDiff < 60 ? (timeDiff + 's ago') : (Math.round(timeDiff / 60) + 'm ago');
+        const phoneDisplay = u.phone ? u.phone : 'No Phone';
+        const speedText = u.speedKmh ? (u.speedKmh + ' km/h') : (u.isMoving ? 'Moving' : 'Stationary');
+
+        html += `
+            <div onclick="selectOnlineOfficerSearchResult('${escapeHtml(u.key)}')" class="p-2.5 hover:bg-emerald-50/70 cursor-pointer transition flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0 group">
+                <div class="flex items-start gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0 text-xs shadow-xs mt-0.5" style="background:${theme.color};">
+                        <i class="fa-solid ${theme.icon}"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs text-slate-900 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
+                            <span>${escapeHtml(u.officer || 'Officer')}</span>
+                            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold text-white shrink-0" style="background:${theme.color};">${escapeHtml(u.catKey)}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600 flex items-center gap-2 mt-0.5">
+                            <span class="font-semibold text-emerald-700 flex items-center gap-1">
+                                <i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(phoneDisplay)}
+                            </span>
+                            <span class="text-slate-400 text-[9px]">•</span>
+                            <span class="truncate text-slate-600 font-medium">${escapeHtml(u.mandal ? (u.mandal + ' - ' + u.unitName) : u.unitName)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${u.isMoving ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${u.isMoving ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}"></span>
+                        ${speedText}
+                    </span>
+                    <div class="text-[9px] text-slate-400 mt-0.5">${timeAgoText}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    box.innerHTML = html;
+    box.classList.remove('hidden');
+}
+
+window.selectOnlineOfficerSearchResult = function(key) {
+    hideOnlineOfficerSuggestions();
+    const unit = window.livePartyMarkers && window.livePartyMarkers[key];
+    if (!unit) {
+        alert('ఈ ఆఫీసర్ ప్రస్తుతం ఆన్‌లైన్‌లో లేరు (Officer is no longer online).');
+        return;
+    }
+
+    const input = document.getElementById('live-officer-search-text');
+    if (input) {
+        input.value = `${unit.officer || ''} (${unit.phone || unit.unitName || ''})`.trim();
+        const clearBtn = document.getElementById('btn-clear-live-officer-search');
+        if (clearBtn) clearBtn.classList.remove('hidden');
+    }
+
+    // If active category hides this unit, switch to ALL so user sees the marker on map
+    if (typeof shouldShowLivePartyUnit === 'function' && !shouldShowLivePartyUnit(unit.catKey)) {
+        if (typeof window.setLivePartyCategory === 'function') {
+            window.setLivePartyCategory('ALL');
+        }
+    }
+
+    if (typeof liveMap !== 'undefined' && liveMap && unit.lat && unit.lng) {
+        liveMap.setView([unit.lat, unit.lng], 16, { animate: true });
+        setTimeout(function() {
+            if (unit.marker) {
+                unit.marker.openPopup();
+            }
+        }, 350);
+    }
+};
+
+document.addEventListener('click', function(e) {
+    const container = document.getElementById('live-officer-search-container');
+    if (container && !container.contains(e.target)) {
+        hideOnlineOfficerSuggestions();
+    }
+});
+
 // Automatically start Real-time MQTT connection and message storage on page load
 if (typeof initOfficerMessagesStorage === 'function') {
     initOfficerMessagesStorage();
