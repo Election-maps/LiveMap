@@ -19,7 +19,7 @@
     <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
     <script src="route_mobiles_data.js"></script>
     <!-- Live Forces Real-time Tracking Engine -->
-    <script src="live_tracking.js?v=20261117_02"></script>
+    <script src="live_tracking.js?v=20261117_03"></script>
     <style>
         .ps-tooltip-badge {
             background-color: rgba(255, 255, 255, 0.96);
@@ -519,57 +519,52 @@
         <!-- ================= TAB: LIVE ROUTE MAP ================= -->
         <section id="tab-livemap" class="hidden space-y-2">
             <!-- Live Forces & Tracker Status Bar (Routes, SF, SSF, QRTs, Reserve Parties) -->
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white p-2.5 rounded-lg border border-slate-800 shadow-md">
-                <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                    <span class="font-bold text-amber-400 mr-1 flex items-center gap-1.5">
+            <div class="flex items-center justify-between gap-2 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-md overflow-x-auto whitespace-nowrap">
+                <div class="flex items-center gap-1 text-xs shrink-0">
+                    <span class="font-bold text-amber-400 mr-1 flex items-center gap-1 text-[11px] sm:text-xs">
                         <i class="fa-solid fa-satellite-dish animate-pulse text-emerald-400"></i> Live Forces (364):
                     </span>
-                    <button type="button" onclick="setLivePartyCategory('ALL')" id="live-pill-party-all" class="px-2.5 py-1 rounded text-[11px] font-bold bg-blue-600 text-white transition shadow-sm">
+                    <button type="button" onclick="setLivePartyCategory('ALL')" id="live-pill-party-all" class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-600 text-white transition shadow-sm">
                         All (364)
                     </button>
-                    <button type="button" onclick="setLivePartyCategory('RM')" id="live-pill-party-rm" class="px-2.5 py-1 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-blue-300 border border-blue-500/40 transition">
-                        <i class="fa-solid fa-car-side text-blue-400 mr-1"></i> Routes (264)
+                    <button type="button" onclick="setLivePartyCategory('RM')" id="live-pill-party-rm" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-blue-300 border border-blue-500/40 transition">
+                        <i class="fa-solid fa-car-side text-blue-400 mr-0.5"></i> Routes (264)
                     </button>
-                    <button type="button" onclick="setLivePartyCategory('SF')" id="live-pill-party-sf" class="px-2.5 py-1 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-500/40 transition">
-                        <i class="fa-solid fa-shield-halved text-rose-400 mr-1"></i> SF (59)
+                    <button type="button" onclick="setLivePartyCategory('SF')" id="live-pill-party-sf" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-500/40 transition">
+                        <i class="fa-solid fa-shield-halved text-rose-400 mr-0.5"></i> SF (59)
                     </button>
-                    <button type="button" onclick="setLivePartyCategory('SSF')" id="live-pill-party-ssf" class="px-2.5 py-1 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/40 transition">
-                        <i class="fa-solid fa-user-shield text-purple-400 mr-1"></i> SSF (30)
+                    <button type="button" onclick="setLivePartyCategory('SSF')" id="live-pill-party-ssf" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/40 transition">
+                        <i class="fa-solid fa-user-shield text-purple-400 mr-0.5"></i> SSF (30)
                     </button>
-                    <button type="button" onclick="setLivePartyCategory('QRT')" id="live-pill-party-qrt" class="px-2.5 py-1 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 transition">
-                        <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> QRT (6)
+                    <button type="button" onclick="setLivePartyCategory('QRT')" id="live-pill-party-qrt" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 transition">
+                        <i class="fa-solid fa-bolt text-amber-400 mr-0.5"></i> QRT (6)
                     </button>
-                    <button type="button" onclick="setLivePartyCategory('RESERVE')" id="live-pill-party-reserve" class="px-2.5 py-1 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 transition">
-                        <i class="fa-solid fa-building-columns text-emerald-400 mr-1"></i> Reserve (5)
+                    <button type="button" onclick="setLivePartyCategory('RESERVE')" id="live-pill-party-reserve" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 transition">
+                        <i class="fa-solid fa-building-columns text-emerald-400 mr-0.5"></i> Reserve (5)
                     </button>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/90 border border-slate-700 text-xs font-semibold">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800/90 border border-slate-700 text-xs font-semibold">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block" id="live-mqtt-indicator-dot"></span>
                         <span id="live-mqtt-status-text" class="text-emerald-400 font-bold">Online</span>
                         <span class="text-slate-400 font-normal">|</span>
                         <span class="text-slate-300">Live Active: <strong id="live-party-active-count" class="text-emerald-300">0</strong> / 364</span>
                     </div>
 
-                    <button type="button" onclick="focusLiveOfficerSearch()" id="btn-top-search-officer" class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Search currently Online Officers by Name or Mobile No">
-                        <i class="fa-solid fa-magnifying-glass text-emerald-200"></i>
-                        <span>Search Officer</span>
-                    </button>
-
-                    <button type="button" onclick="openOfficerMessagesModal()" id="btn-officer-messages" class="relative px-2.5 py-1 rounded text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="View messages sent by Officers to Control Room">
+                    <button type="button" onclick="openOfficerMessagesModal()" id="btn-officer-messages" class="relative px-2 py-0.5 rounded text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="View messages sent by Officers to Control Room">
                         <i class="fa-solid fa-bell text-amber-300" id="icon-msg-bell"></i>
                         <span>Messages</span>
                         <span id="live-msg-badge" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-600 text-slate-200 shadow-xs">0</span>
                     </button>
 
-                    <button type="button" onclick="exportLiveOfficersToExcel()" id="btn-export-live-officers" class="px-2.5 py-1 rounded text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white transition flex items-center gap-1 shadow-sm cursor-pointer" title="Export Online & Offline Officers Live Status List to Excel">
+                    <button type="button" onclick="exportLiveOfficersToExcel()" id="btn-export-live-officers" class="px-2 py-0.5 rounded text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white transition flex items-center gap-1 shadow-sm cursor-pointer" title="Export Online & Offline Officers Live Status List to Excel">
                         <i class="fa-solid fa-file-excel"></i> Export Excel
                     </button>
 
-                    <button type="button" onclick="clearAllLiveTracking()" class="px-2.5 py-1 rounded text-xs font-bold bg-rose-700 hover:bg-rose-600 text-white transition flex items-center gap-1 shadow-sm" title="Clear All Live Tracking from Control Room">
+                    <button type="button" onclick="clearAllLiveTracking()" class="px-2 py-0.5 rounded text-xs font-bold bg-rose-700 hover:bg-rose-600 text-white transition flex items-center gap-1 shadow-sm cursor-pointer" title="Clear All Live Tracking from Control Room">
                         <i class="fa-solid fa-trash-can"></i> Clear Tracking
                     </button>
-                    <a href="SrikakulamPoliceTracker.apk" download="SrikakulamPoliceTracker.apk" class="px-3 py-1 rounded text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition flex items-center gap-1.5 shadow-md" title="Download Police Tracker APK for Android phones">
+                    <a href="SrikakulamPoliceTracker.apk" download="SrikakulamPoliceTracker.apk" class="px-2.5 py-0.5 rounded text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition flex items-center gap-1 shadow-md" title="Download Police Tracker APK for Android phones">
                         <i class="fa-brands fa-android text-emerald-200"></i> APK
                     </a>
                 </div>
