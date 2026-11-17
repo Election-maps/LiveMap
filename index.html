@@ -19,7 +19,7 @@
     <!-- Pre-loaded Forces Data (Routes, SF, SSF, QRTs, Reserve Parties) -->
     <script src="route_mobiles_data.js"></script>
     <!-- Live Forces Real-time Tracking Engine -->
-    <script src="live_tracking.js?v=20261117_03"></script>
+    <script src="live_tracking.js?v=20261117_04"></script>
     <style>
         .ps-tooltip-badge {
             background-color: rgba(255, 255, 255, 0.96);
@@ -601,25 +601,25 @@
                         <span id="txt-live-filter-toggle">Hide / Unhide</span>
                     </button>
                 </div>
-                <div id="live-filter-row-inputs" class="flex flex-wrap items-end gap-1.5 sm:gap-2 pb-0.5 relative">
+                <div id="live-filter-row-inputs" class="flex items-end gap-1.5 pb-0.5 relative overflow-x-auto whitespace-nowrap">
                     <!-- Police Station Filter -->
-                    <div class="w-36 sm:w-44 shrink-0">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Police Station</label>
-                        <select id="live-filter-psname" onchange="onLiveMapPSChange(this.value)" class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white font-medium">
+                    <div class="w-32 sm:w-36 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">Police Station</label>
+                        <select id="live-filter-psname" onchange="onLiveMapPSChange(this.value)" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white font-medium">
                             <option value="">-- All Police Stations --</option>
                         </select>
                     </div>
                     <!-- Route No Filter -->
-                    <div class="w-24 sm:w-28 shrink-0">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Route No</label>
-                        <select id="live-filter-route" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white font-medium">
+                    <div class="w-20 sm:w-24 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">Route No</label>
+                        <select id="live-filter-route" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white font-medium">
                             <option value="">-- All Routes --</option>
                         </select>
                     </div>
                     <!-- Category Filter -->
-                    <div class="w-24 sm:w-28 shrink-0">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Category</label>
-                        <select id="live-filter-category" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white">
+                    <div class="w-20 sm:w-24 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">Category</label>
+                        <select id="live-filter-category" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white">
                             <option value="">-- All Categories --</option>
                             <option value="NORMAL">Normal</option>
                             <option value="SENSITIVE">Sensitive</option>
@@ -628,9 +628,9 @@
                         </select>
                     </div>
                     <!-- Distance Filter in Live Route Map -->
-                    <div class="w-24 sm:w-28 shrink-0">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Distance (PS)</label>
-                        <select id="live-filter-distance" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white">
+                    <div class="w-20 sm:w-24 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">Distance (PS)</label>
+                        <select id="live-filter-distance" onchange="applyLiveMapFilters()" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 bg-white">
                             <option value="">-- All Distances --</option>
                             <option value="near">&le; 5 KM (Near)</option>
                             <option value="medium">5 - 12 KM</option>
@@ -638,62 +638,62 @@
                         </select>
                     </div>
                     <!-- Search PSL / Village -->
-                    <div class="flex-1 min-w-[170px] max-w-sm">
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">
-                            <i class="fa-solid fa-magnifying-glass text-blue-600 mr-0.5"></i> Search Village / School
+                    <div class="w-36 sm:w-44 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-0.5 truncate">
+                            <i class="fa-solid fa-magnifying-glass text-blue-600 mr-0.5"></i> Village / School
                         </label>
                         <div class="relative w-full" id="live-map-search-container">
-                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" onkeydown="if(event.key==='Enter'){ applyLiveMapFilters(); hideSuggestions('live-psl-suggestions'); }" placeholder="Type PSL (e.g. MPP School)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 pr-7 bg-white">
-                            <button type="button" onclick="clearLiveMapSearch()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
+                            <input type="text" id="live-search-text" oninput="onLiveMapSearchInput(this.value)" onfocus="onLiveMapSearchFocus()" onkeydown="if(event.key==='Enter'){ applyLiveMapFilters(); hideSuggestions('live-psl-suggestions'); }" placeholder="Type PSL (e.g. MPP)..." autocomplete="off" class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 pr-6 bg-white">
+                            <button type="button" onclick="clearLiveMapSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                             <!-- Dropdown Suggestions on Map -->
-                            <div id="live-psl-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-72 overflow-y-auto divide-y divide-slate-100">
+                            <div id="live-psl-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-72 overflow-y-auto divide-y divide-slate-100">
                             </div>
                         </div>
                     </div>
                     <!-- Search Online Officer (Name / Mobile No) -->
-                    <div class="flex-1 min-w-[200px] max-w-sm">
-                        <label class="block text-[10px] font-bold text-emerald-700 uppercase mb-1 flex items-center justify-between">
-                            <span><i class="fa-solid fa-user-shield text-emerald-600 mr-1"></i> Search Online Officer</span>
-                            <span class="text-[9px] text-slate-400 font-normal">Name / Mobile</span>
+                    <div class="w-48 sm:w-56 shrink-0">
+                        <label class="block text-[10px] font-bold text-emerald-700 uppercase mb-0.5 flex items-center justify-between">
+                            <span class="truncate"><i class="fa-solid fa-user-shield text-emerald-600 mr-0.5"></i> Online Officer</span>
+                            <span class="text-[9px] text-slate-400 font-normal">Name/Mobile</span>
                         </label>
                         <div class="relative w-full flex items-center gap-1" id="live-officer-search-container">
                             <div class="relative flex-1">
-                                <input type="text" id="live-officer-search-text" oninput="onLiveOfficerSearchInput(this.value)" onfocus="onLiveOfficerSearchFocus()" onkeydown="if(event.key==='Enter'){ triggerOnlineOfficerSearch(); }" placeholder="Officer Name or Mobile..." autocomplete="off" class="w-full border border-emerald-400/80 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 pr-7 bg-emerald-50/20 text-slate-900 font-semibold placeholder-slate-400">
-                                <button type="button" onclick="clearLiveOfficerSearch()" id="btn-clear-live-officer-search" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
+                                <input type="text" id="live-officer-search-text" oninput="onLiveOfficerSearchInput(this.value)" onfocus="onLiveOfficerSearchFocus()" onkeydown="if(event.key==='Enter'){ triggerOnlineOfficerSearch(); } else if(event.key==='Escape'){ hideOnlineOfficerSuggestions(); }" placeholder="Name / Mobile..." autocomplete="off" class="w-full border border-emerald-400/80 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-emerald-500 pr-5 bg-emerald-50/20 text-slate-900 font-semibold placeholder-slate-400">
+                                <button type="button" onclick="clearLiveOfficerSearch()" id="btn-clear-live-officer-search" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Clear">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
-                            <button type="button" onclick="triggerOnlineOfficerSearch()" id="btn-search-live-officer" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition flex items-center gap-1 shadow-sm shrink-0 cursor-pointer" title="Search Online Officers by Name or Mobile">
+                            <button type="button" onclick="triggerOnlineOfficerSearch()" id="btn-search-live-officer" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition flex items-center gap-1 shadow-sm shrink-0 cursor-pointer" title="Search Online Officers by Name or Mobile">
                                 <i class="fa-solid fa-magnifying-glass"></i> Search
                             </button>
                             <!-- Dropdown Suggestions on Map for Online Officers -->
-                            <div id="live-officer-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-full sm:w-96 bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-80 overflow-y-auto divide-y divide-slate-100">
+                            <div id="live-officer-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 w-80 bg-white border border-slate-200 rounded-lg shadow-2xl z-[2500] max-h-80 overflow-y-auto divide-y divide-slate-100">
                             </div>
                         </div>
                     </div>
                     <!-- Map Layers & Visibility Toggles -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <label class="flex items-center gap-1 px-2 py-1 bg-rose-50 border border-rose-300 rounded text-rose-900 font-bold text-[11px] cursor-pointer hover:bg-rose-100 transition shadow-2xs select-none">
+                        <label class="flex items-center gap-1 px-1.5 py-1 bg-rose-50 border border-rose-300 rounded text-rose-900 font-bold text-[11px] cursor-pointer hover:bg-rose-100 transition shadow-2xs select-none">
                             <input type="checkbox" id="live-toggle-routes" checked onchange="toggleLiveRoadRoutes(this.checked)" class="w-3.5 h-3.5 rounded text-rose-600 focus:ring-rose-500 cursor-pointer">
                             <span><i class="fa-solid fa-route text-rose-600 mr-0.5"></i> Road Routes</span>
                         </label>
-                        <label class="flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-slate-700 font-semibold text-[11px] cursor-pointer hover:bg-slate-100 transition shadow-2xs select-none">
+                        <label class="flex items-center gap-1 px-1.5 py-1 bg-slate-50 border border-slate-300 rounded text-slate-700 font-semibold text-[11px] cursor-pointer hover:bg-slate-100 transition shadow-2xs select-none">
                             <input type="checkbox" id="live-toggle-borders" checked onchange="toggleLiveBorders(this.checked)" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
                             <span>Borders</span>
                         </label>
-                        <label class="flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-slate-700 font-semibold text-[11px] cursor-pointer hover:bg-slate-100 transition shadow-2xs select-none" title="Toggle Polling Station Pins on/off">
+                        <label class="flex items-center gap-1 px-1.5 py-1 bg-slate-50 border border-slate-300 rounded text-slate-700 font-semibold text-[11px] cursor-pointer hover:bg-slate-100 transition shadow-2xs select-none" title="Toggle Polling Station Pins on/off">
                             <input type="checkbox" id="live-toggle-pins" checked onchange="toggleLiveStationPins(this.checked)" class="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                             <span><i class="fa-solid fa-location-dot text-emerald-600 mr-0.5"></i> PS Pins</span>
                         </label>
                     </div>
                     <!-- Action Buttons: Reset & Routes Directory -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="resetLiveMapFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded text-[11px] transition border border-slate-300 flex items-center justify-center gap-1 shadow-2xs cursor-pointer" title="Reset Filters">
+                        <button onclick="resetLiveMapFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded text-[11px] transition border border-slate-300 flex items-center justify-center gap-1 shadow-2xs cursor-pointer" title="Reset Filters">
                             <i class="fa-solid fa-arrows-rotate"></i> Reset
                         </button>
-                        <button onclick="openAllRoutesModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded text-[11px] transition flex items-center justify-center gap-1 shadow-sm whitespace-nowrap cursor-pointer" title="View all routes & villages directory">
+                        <button onclick="openAllRoutesModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-1 rounded text-[11px] transition flex items-center justify-center gap-1 shadow-sm whitespace-nowrap cursor-pointer" title="View all routes & villages directory">
                             <i class="fa-solid fa-list-ol"></i> Routes
                         </button>
                     </div>
