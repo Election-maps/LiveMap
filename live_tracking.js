@@ -12,6 +12,7 @@ window.liveMqttClient = null;
 const LIVE_MQTT_BROKER = 'wss://broker.emqx.io:8084/mqtt';
 const LIVE_ROOM_CODE = 'SrikakulamPolice';
 const liveUserId = 'control_room_gp_' + Math.random().toString(36).substring(2, 9);
+const LIVE_UNIT_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes active threshold for live field units
 
 // Forces metadata lookup from route_mobiles_data.js
 function getPartyUnitMeta(unitId) {
@@ -93,6 +94,8 @@ function initLiveMQTT() {
             window.liveMqttClient.subscribe(deleteTopic, { qos: 1 });
             window.liveMqttClient.subscribe(generalTopic, { qos: 0 });
             window.liveMqttClient.subscribe(controlTopic, { qos: 1 });
+            const unitsSyncTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/units_sync';
+            window.liveMqttClient.subscribe(unitsSyncTopic, { qos: 1 });
             window.liveMqttClient.subscribe(retainedTopic, { qos: 1 }, function(err) {
                 if (!err) {
                     const syncTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/sync_request';
@@ -144,10 +147,32 @@ function initLiveMQTT() {
                     return;
                 }
 
+                // Handle Control Room active units synchronization across multiple devices/browsers
+                if (topic.indexOf('/units_sync') !== -1 || payload.type === 'units_snapshot') {
+                    if (payload.action === 'clear_all' || payload.type === 'clear_all') {
+                        clearAllLiveTrackingLocally();
+                        return;
+                    }
+                    if (payload.from !== liveUserId && payload.units && typeof payload.units === 'object') {
+                        const now = Date.now();
+                        for (const k in payload.units) {
+                            const u = payload.units[k];
+                            const t = Number(u.lastUpdated || u.timestamp || 0);
+                            if (t > 0 && (now - t) <= LIVE_UNIT_EXPIRY_MS) {
+                                if (!window.livePartyMarkers[k] || Number(window.livePartyMarkers[k].lastUpdated || 0) < t) {
+                                    updateLivePartyUnitOnMap(k, u);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
+
                 if (payload.type === 'sync_request' && payload.from !== liveUserId) {
                     if (Array.isArray(window.liveOfficerMessages) && window.liveOfficerMessages.length > 0) {
                         broadcastMessagesHistory();
                     }
+                    broadcastActiveUnitsSnapshot();
                 }
 
                 if (payload.action === 'clear_all') {
@@ -167,6 +192,15 @@ function initLiveMQTT() {
                 if (payload.status === 'stopped' || payload.action === 'clear_unit') {
                     removeLivePartyUnit(unitKey);
                 } else if (payload.latitude || payload.lat) {
+                    const pktTime = Number(payload.lastUpdated || payload.timestamp || 0);
+                    const now = Date.now();
+                    // Reject stale packets older than active expiry window (e.g. old broker retained messages from days/hours ago)
+                    if (pktTime > 0 && (now - pktTime) > LIVE_UNIT_EXPIRY_MS) {
+                        if (window.livePartyMarkers && window.livePartyMarkers[unitKey]) {
+                            removeLivePartyUnit(unitKey);
+                        }
+                        return;
+                    }
                     updateLivePartyUnitOnMap(unitKey, payload);
                 }
             } catch (e) {
@@ -213,7 +247,12 @@ function updateLivePartyUnitOnMap(key, data) {
     const isMoving = speedKmh >= 2 || !!data.isMoving;
     const bearing = parseFloat(data.bearing || 0);
     const accuracy = parseFloat(data.accuracy || 10);
-    const lastUpdated = data.lastUpdated || Date.now();
+    const now = Date.now();
+    let rawTime = Number(data.lastUpdated || data.timestamp || now);
+    if (isNaN(rawTime) || rawTime <= 0 || rawTime > now + 60000) {
+        rawTime = now;
+    }
+    const lastUpdated = rawTime;
 
     let unit = window.livePartyMarkers[key];
     if (!unit) {
@@ -537,10 +576,20 @@ window.clearAllLiveTracking = function() {
     if (window.liveMqttClient && window.liveMqttClient.connected) {
         const controlTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/control_command';
         const generalTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/locations';
+        const unitsSyncTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/units_sync';
 
         window.liveMqttClient.publish(controlTopic, JSON.stringify({ action: 'clear_all', timestamp: Date.now() }), { qos: 1 });
+        window.liveMqttClient.publish(unitsSyncTopic, JSON.stringify({ type: 'clear_all', action: 'clear_all', from: liveUserId, timestamp: Date.now() }), { qos: 1 });
 
-        keys.forEach(function(k) {
+        // Collect all keys from live markers and metadata to ensure broker retained messages are fully wiped
+        const allKeysToClear = new Set(Object.keys(window.livePartyMarkers));
+        if (window.ROUTE_MOBILES_DATA && Array.isArray(window.ROUTE_MOBILES_DATA)) {
+            window.ROUTE_MOBILES_DATA.forEach(function(u) {
+                if (u && (u.id || u.unitId)) allKeysToClear.add(u.id || u.unitId);
+            });
+        }
+
+        allKeysToClear.forEach(function(k) {
             const officerTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/officer/' + k;
             window.liveMqttClient.publish(officerTopic, '', { qos: 1, retain: true });
             window.liveMqttClient.publish(generalTopic, JSON.stringify({ type: 'location', unitId: k, status: 'stopped', lastUpdated: Date.now() }), { qos: 0 });
@@ -556,7 +605,9 @@ function clearAllLiveTrackingLocally() {
     }
     window.livePartyMarkers = {};
     updateLivePartyCounter();
-    localStorage.removeItem('gp_live_units_cache');
+    try {
+        localStorage.removeItem('gp_live_units_cache');
+    } catch(e) {}
 }
 
 function updateLivePartyCounter() {
@@ -568,9 +619,95 @@ function updateLivePartyCounter() {
 function saveLiveUnitsToCache() {
     try {
         const cache = {};
+        const now = Date.now();
         for (const k in window.livePartyMarkers) {
             const u = window.livePartyMarkers[k];
-            cache[k] = {
+            const lastTime = Number(u.lastUpdated || 0);
+            if (lastTime > 0 && (now - lastTime) <= LIVE_UNIT_EXPIRY_MS) {
+                cache[k] = {
+                    unitId: k,
+                    latitude: u.lat,
+                    longitude: u.lng,
+                    speed: (u.speedKmh || 0) / 3.6,
+                    bearing: u.bearing,
+                    accuracy: u.accuracy,
+                    isMoving: u.isMoving,
+                    categoryKey: u.catKey,
+                    mandal: u.mandal,
+                    unitName: u.unitName,
+                    officer: u.officer,
+                    phone: u.phone,
+                    lastUpdated: u.lastUpdated
+                };
+            }
+        }
+        localStorage.setItem('gp_live_units_cache', JSON.stringify(cache));
+    } catch(e) {}
+}
+
+function restoreLiveUnitsFromCache() {
+    try {
+        const cachedStr = localStorage.getItem('gp_live_units_cache');
+        if (!cachedStr) return;
+        const cached = JSON.parse(cachedStr);
+        const now = Date.now();
+        let changed = false;
+        for (const k in cached) {
+            const u = cached[k];
+            const lastTime = Number(u.lastUpdated || u.timestamp || 0);
+            // ONLY restore units that transmitted within the active freshness window
+            if (lastTime > 0 && (now - lastTime) <= LIVE_UNIT_EXPIRY_MS) {
+                updateLivePartyUnitOnMap(k, u);
+            } else {
+                delete cached[k];
+                changed = true;
+            }
+        }
+        if (changed) {
+            localStorage.setItem('gp_live_units_cache', JSON.stringify(cached));
+        }
+    } catch(e) {
+        console.warn('Error restoring live units cache:', e);
+    }
+}
+
+// Background cleanup: continuously prunes inactive units that have not transmitted in >10 minutes
+function pruneStaleLiveUnits() {
+    if (!window.livePartyMarkers) return;
+    const now = Date.now();
+    let changed = false;
+    for (const k in window.livePartyMarkers) {
+        const u = window.livePartyMarkers[k];
+        const lastTime = Number(u.lastUpdated || 0);
+        if (lastTime > 0 && (now - lastTime) > LIVE_UNIT_EXPIRY_MS) {
+            if (window.livePartyMarkersGroup) {
+                if (u.marker) window.livePartyMarkersGroup.removeLayer(u.marker);
+                if (u.circle) window.livePartyMarkersGroup.removeLayer(u.circle);
+            }
+            delete window.livePartyMarkers[k];
+            changed = true;
+        }
+    }
+    if (changed) {
+        updateLivePartyCounter();
+        saveLiveUnitsToCache();
+    }
+}
+
+if (window._liveUnitsPruneInterval) clearInterval(window._liveUnitsPruneInterval);
+window._liveUnitsPruneInterval = setInterval(pruneStaleLiveUnits, 10000);
+
+// Broadcast active units snapshot to newly connected Control Room clients
+function broadcastActiveUnitsSnapshot() {
+    if (!window.liveMqttClient || !window.liveMqttClient.connected) return;
+    const now = Date.now();
+    const activeUnits = {};
+    let count = 0;
+    for (const k in window.livePartyMarkers) {
+        const u = window.livePartyMarkers[k];
+        const lastTime = Number(u.lastUpdated || 0);
+        if (lastTime > 0 && (now - lastTime) <= LIVE_UNIT_EXPIRY_MS) {
+            activeUnits[k] = {
                 unitId: k,
                 latitude: u.lat,
                 longitude: u.lng,
@@ -585,20 +722,18 @@ function saveLiveUnitsToCache() {
                 phone: u.phone,
                 lastUpdated: u.lastUpdated
             };
+            count++;
         }
-        localStorage.setItem('gp_live_units_cache', JSON.stringify(cache));
-    } catch(e) {}
-}
-
-function restoreLiveUnitsFromCache() {
-    try {
-        const cachedStr = localStorage.getItem('gp_live_units_cache');
-        if (!cachedStr) return;
-        const cached = JSON.parse(cachedStr);
-        for (const k in cached) {
-            updateLivePartyUnitOnMap(k, cached[k]);
-        }
-    } catch(e) {}
+    }
+    if (count > 0) {
+        const syncUnitsTopic = 'srikakulam_police_tracker/' + LIVE_ROOM_CODE + '/units_sync';
+        window.liveMqttClient.publish(syncUnitsTopic, JSON.stringify({
+            type: 'units_snapshot',
+            from: liveUserId,
+            timestamp: now,
+            units: activeUnits
+        }), { qos: 0 });
+    }
 }
 
 
@@ -634,7 +769,7 @@ window.exportLiveOfficersToExcel = async function() {
                              liveMarkers[String(key).toUpperCase()] || 
                              null;
 
-            const isOnline = !!liveUnit;
+            const isOnline = !!liveUnit && ((Date.now() - (liveUnit.lastUpdated || 0)) <= LIVE_UNIT_EXPIRY_MS);
             let speedText = '-';
             let moveStatus = isOnline ? 'STATIONARY' : 'OFFLINE';
             let latText = '-';
@@ -688,6 +823,8 @@ window.exportLiveOfficersToExcel = async function() {
             const cleanK = String(k || '').trim().toLowerCase();
             if (!processedKeys[cleanK]) {
                 const liveUnit = liveMarkers[k];
+                const isOnline = (Date.now() - (liveUnit.lastUpdated || 0)) <= LIVE_UNIT_EXPIRY_MS;
+                if (!isOnline) continue;
                 const speedKmh = liveUnit.speedKmh || 0;
                 allRecords.push({
                     isOnline: true,

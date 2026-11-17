@@ -1405,6 +1405,17 @@
   document.getElementById('btn-start-track').addEventListener('click', startTracking);
   document.getElementById('btn-stop-track').addEventListener('click', stopTracking);
 
+  window.addEventListener('pagehide', () => {
+    if (isTracking && mqttClient && mqttClient.connected && currentSelectedUnit) {
+      try {
+        const unitKey = currentSelectedUnit.id;
+        const unitTopic = `srikakulam_police_tracker/${roomCode}/officer/${unitKey}`;
+        mqttClient.publish(unitTopic, '', { qos: 1, retain: true });
+        mqttClient.publish(unitTopic, JSON.stringify({ type: 'location', unitId: unitKey, status: 'stopped', lastUpdated: Date.now() }), { qos: 0 });
+      } catch(e) {}
+    }
+  });
+
   // -------------------------------------------------------------
   // Dynamic 3-Level Selection: Category -> Mandal -> Team
   // -------------------------------------------------------------
